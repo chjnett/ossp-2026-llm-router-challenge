@@ -1,0 +1,11 @@
+{
+  "id": "c1-ridge-pertier",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "util": {"fast": 0.87, "balanced": 0.77, "premium": 0.97},
+    "size_penalty": 2.0
+  },
+  "note": "등급별 사용률을 따로 잡고 배치 크기로 마진을 조절한다. 각 등급에서 파산 0회가 관측된 최대 사용률(fast 0.90 / balanced 0.80 / premium 1.05)에서 한 단계(-0.03) 더 보수적으로 내렸고, premium은 예측 한도의 100%를 넘겨 목표하지 않도록 1.00에서 잘랐다."
+}

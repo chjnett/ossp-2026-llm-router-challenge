@@ -69,6 +69,8 @@ def do_run(args) -> int:
             sd=prediction.sd,
             mu=config.mu,
             trials=args.trials,
+            size_penalty=config.size_penalty,
+            headroom=config.headroom,
         )
     gate_ok = bool(gate_results) and gate_passed(gate_results)
 

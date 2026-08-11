@@ -60,6 +60,65 @@ class ConfigTest(unittest.TestCase):
         for value in Config(id="a").util.values():
             self.assertLess(value, 1.0)
 
+    def test_size_penalty_shrinks_small_batches_more(self) -> None:
+        """실현 비율의 흔들림은 표본 수의 제곱근에 반비례한다.
+
+        200문항 배치에서 파산이 몰렸다. 작은 배치일수록 마진을 더 줘야 한다.
+        """
+
+        from router.pipeline import effective_util
+
+        M = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
+        config = Config(id="a", alloc={"util": 0.90, "size_penalty": 2.0})
+        small = effective_util(config, 200, M)["fast"]
+        medium = effective_util(config, 880, M)["fast"]
+        large = effective_util(config, 2640, M)["fast"]
+        self.assertLess(small, medium)
+        self.assertLess(medium, large)
+        self.assertLess(large, 0.90)
+        self.assertAlmostEqual(0.90 - 2.0 / 200 ** 0.5, small, places=9)
+
+    def test_size_penalty_defaults_to_off(self) -> None:
+        from router.pipeline import effective_util
+
+        M = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
+        config = Config(id="a", alloc={"util": 0.9})
+        self.assertEqual(config.util, effective_util(config, 100, M))
+
+    def test_headroom_is_comparable_across_tiers(self) -> None:
+        """headroom=h면 세 등급이 모두 여윳돈의 h를 쓴다.
+
+        util은 전체 예산 대비 비율이라 같은 값이 등급마다 다른 뜻이 된다.
+        util 0.9면 Fast는 여윳돈의 50%, Premium은 87%를 쓴다. 그 비대칭
+        때문에 util에 일률적으로 마진을 빼면 Fast만 통째로 죽는다.
+        """
+
+        from router.pipeline import effective_util
+
+        M = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
+        config = Config(id="a", alloc={"headroom": 0.8})
+        util = effective_util(config, 1000, M)
+        for tier, multiplier in M.items():
+            used = util[tier] * multiplier
+            self.assertAlmostEqual(1.0 + 0.8 * (multiplier - 1.0), used, places=9)
+
+    def test_headroom_takes_priority_over_util(self) -> None:
+        from router.pipeline import effective_util
+
+        M = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
+        config = Config(id="a", alloc={"util": 0.5, "headroom": 0.9})
+        self.assertAlmostEqual(
+            1.0 + 0.9 * 0.25, effective_util(config, 1000, M)["fast"] * 1.25, places=9
+        )
+
+    def test_size_penalty_never_goes_negative(self) -> None:
+        from router.pipeline import effective_util
+
+        M = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
+        config = Config(id="a", alloc={"util": 0.5, "size_penalty": 50.0})
+        for value in effective_util(config, 4, M).values():
+            self.assertGreaterEqual(value, 0.0)
+
 
 class RegistryTest(unittest.TestCase):
     def test_unknown_name_is_rejected_with_options(self) -> None:

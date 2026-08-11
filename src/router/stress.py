@@ -135,11 +135,18 @@ def run_scenario(
     mu: float = 0.0,
     trials: int = 2000,
     seed: int = 0,
+    size_penalty: float = 0.0,
+    headroom: Dict[str, float] | None = None,
 ) -> GateResult:
-    """한 시나리오를 ``trials``회 돌려 등급별 파산 횟수를 센다."""
+    """한 시나리오를 ``trials``회 돌려 등급별 파산 횟수를 센다.
+
+    ``size_penalty``는 배치 크기에 따른 사용률 감쇠 계수다. 라우터가 실행
+    시점에 적용하는 것과 같은 규칙을 여기서도 적용해야 게이트가 실제 동작을
+    잰다.
+    """
 
     rng = np.random.default_rng(seed)
-    utils = util if isinstance(util, dict) else {t: util for t in TIERS}
+    base_utils = util if isinstance(util, dict) else {t: util for t in TIERS}
     keys = np.asarray(dataset.keys)
 
     ratios = {t: np.empty(trials, dtype=float) for t in TIERS}
@@ -154,6 +161,15 @@ def run_scenario(
         true_cost = dataset.cost[idx]
         # 한도의 분모는 실제 light 비용이다. 라우터는 이 값을 모른다.
         light = float(true_cost[:, 0].sum())
+        shrink = size_penalty / max(1.0, float(len(idx))) ** 0.5
+        if headroom is None:
+            utils = {t: max(0.0, u - shrink) for t, u in base_utils.items()}
+        else:
+            # 여윳돈 기준. 라우터가 실행 시점에 쓰는 규칙과 같아야 한다.
+            utils = {
+                t: (1.0 + max(0.0, h - shrink) * (multipliers[t] - 1.0)) / multipliers[t]
+                for t, h in headroom.items()
+            }
 
         for tier in TIERS:
             picks = allocate(
@@ -208,6 +224,8 @@ def run_gate(
     trials: int = 2000,
     seed: int = 0,
     scenarios: Dict[str, Sampler] | None = None,
+    size_penalty: float = 0.0,
+    headroom: Dict[str, float] | None = None,
 ) -> list[GateResult]:
     """모든 시나리오를 돌린다. 하나라도 파산이 있으면 게이트 불통과다."""
 
@@ -228,6 +246,8 @@ def run_gate(
                 mu=mu,
                 trials=trials,
                 seed=seed + offset * 1009,
+                size_penalty=size_penalty,
+                headroom=headroom,
             )
         )
     return results

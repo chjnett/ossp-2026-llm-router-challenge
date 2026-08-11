@@ -1,0 +1,149 @@
+{
+  "id": "ridge-z1.28L-0.5-none-u0.8",
+  "at": "2026-08-11T11:56:26+00:00",
+  "commit": "2efa8fd04c16f8ebd3ef2a6807614268a8efa038",
+  "config": {
+    "id": "ridge-z1.28L-0.5-none-u0.8",
+    "score": "family",
+    "cost": {
+      "name": "ridge",
+      "z": 1.28,
+      "z_light": -0.5
+    },
+    "gate": {
+      "name": "family_roi",
+      "min_roi": 1.0
+    },
+    "alloc": {
+      "util": 0.8
+    },
+    "note": "문항 단위 비용 회귀 + 비대칭 상방 편향"
+  },
+  "versions": {
+    "score": "family.v1",
+    "cost": "ridgecost.v2(z=1.28,zl=-0.5,a=3)",
+    "gate": "familyroi.v1(min=1)"
+  },
+  "cv": {
+    "final_score": "0.635823863636",
+    "all_passed": true,
+    "tiers": {
+      "fast": {
+        "score": "0.597301136364",
+        "budget_ratio": "1",
+        "headroom": "0.25",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 1760,
+          "ax31": 0,
+          "axk1-think": 0
+        }
+      },
+      "balanced": {
+        "score": "0.646164772727",
+        "budget_ratio": "1.225067244699",
+        "headroom": "0.774932755301",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 736,
+          "ax31": 1023,
+          "axk1-think": 1
+        }
+      },
+      "premium": {
+        "score": "0.676846590909",
+        "budget_ratio": "1.762517732775",
+        "headroom": "2.237482267225",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 299,
+          "ax31": 1412,
+          "axk1-think": 49
+        }
+      }
+    }
+  },
+  "dev": {
+    "final_score": "0.655539772727",
+    "all_passed": true,
+    "tiers": {
+      "fast": {
+        "score": "0.619318181818",
+        "budget_ratio": "1",
+        "headroom": "0.25",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 880,
+          "ax31": 0,
+          "axk1-think": 0
+        }
+      },
+      "balanced": {
+        "score": "0.669318181818",
+        "budget_ratio": "1.312715986204",
+        "headroom": "0.687284013796",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 359,
+          "ax31": 521,
+          "axk1-think": 0
+        }
+      },
+      "premium": {
+        "score": "0.690056818182",
+        "budget_ratio": "1.779870364411",
+        "headroom": "2.220129635589",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 123,
+          "ax31": 734,
+          "axk1-think": 23
+        }
+      }
+    }
+  },
+  "gate": {
+    "ran": true,
+    "trials": 150,
+    "passed": true,
+    "scenarios": {
+      "size-200": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "size-800": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "size-2640": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "shift-mild(conc=5)": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "shift-extreme(conc=0.7)": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "family-dominant(75%)": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      }
+    }
+  },
+  "seconds": 19.29
+}
