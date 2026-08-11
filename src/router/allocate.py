@@ -15,11 +15,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
+
+from .envelope import Segments, build_segments, take_within_budget
 
 NEG = -np.inf
 
@@ -85,14 +88,79 @@ def allocate(
     allow: np.ndarray | None = None,
     sd: np.ndarray | None = None,
     mu: float = 0.0,
-    iterations: int = 100,
+    keys: Sequence[str] | None = None,
 ) -> AllocationPlan:
-    """등급 예산 안에서 λ를 이분탐색해 문항별 모델을 고른다.
+    """예산 안에서 문항별 모델을 고른다 (오목 포락선 그리디).
+
+    λ 이분탐색과 같은 답을 주지만 정렬 한 번으로 끝나 파산 게이트를 수천 번
+    돌릴 수 있다. 두 구현이 일치하는지는 테스트로 고정한다.
 
     ``multiplier``는 정책의 예산 배율, ``util``은 그중 실제로 쓸 목표 비율이다.
     분모(light 기준 비용)도 예측값이라는 점에 주의한다 — 평가 시점에는
     실제 light 비용도 알 수 없다.
     """
+
+    n = len(s_hat)
+    effective = s_hat if (sd is None or not mu) else s_hat - mu * sd
+    if keys is None:
+        # 위치 기반 기본키를 쓰면 입력 순서가 동률 처리에 새어 들어간다.
+        # 예측값 자체에서 키를 만들면 예측이 같은 문항은 같은 그룹이 되어
+        # 통째로 승격되거나 통째로 남는다.
+        keys = [
+            hashlib.blake2b(
+                np.ascontiguousarray(
+                    np.concatenate([effective[i], c_hat[i]])
+                ).tobytes(),
+                digest_size=8,
+            ).hexdigest()
+            for i in range(n)
+        ]
+
+    # 예산 한도는 정책상 **light 전 문항 비용**이 기준이다. 출발 배분은 그보다
+    # 쌀 수 있으므로(가장 싼 모델에서 시작) 여유를 그 차이만큼 더 잡는다.
+    base = order_invariant_sum(c_hat[:, 0])
+    segments = build_segments(effective, c_hat, list(keys), allow=allow)
+    start_cost = order_invariant_sum(
+        c_hat[np.arange(n), segments.base_model]
+    )
+    budget_extra = base * multiplier * util - start_cost
+    picks = take_within_budget(segments, n, budget_extra)
+    used = order_invariant_sum(_row_cost(c_hat, picks))
+    return AllocationPlan(
+        picks=picks,
+        lam=_implied_lambda(segments, picks),
+        estimated_ratio=used / base,
+        demoted=0,
+        hit_floor=bool(len(segments.order)) and used < base * multiplier * util,
+    )
+
+
+def _implied_lambda(segments: Segments, picks: np.ndarray) -> float:
+    """마지막으로 집힌 구간의 ROI. λ 이분탐색이 수렴했을 값과 같은 뜻이다."""
+
+    if len(segments.order) == 0:
+        return 0.0
+    taken = [
+        k
+        for k in segments.order
+        if picks[segments.episode[k]] >= segments.to_model[k]
+        and picks[segments.episode[k]] != 0
+    ]
+    return float(segments.roi[taken[-1]]) if taken else float("inf")
+
+
+def allocate_bisect(
+    s_hat: np.ndarray,
+    c_hat: np.ndarray,
+    *,
+    multiplier: float,
+    util: float = 0.90,
+    allow: np.ndarray | None = None,
+    sd: np.ndarray | None = None,
+    mu: float = 0.0,
+    iterations: int = 100,
+) -> AllocationPlan:
+    """λ 이분탐색 구현. 느리지만 독립적이라 ``allocate``의 교차 검증에 쓴다."""
 
     n, m = s_hat.shape
     if allow is None:
