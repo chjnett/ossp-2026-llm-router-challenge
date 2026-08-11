@@ -30,11 +30,16 @@ import run as runner  # noqa: E402
 
 
 def grid():
-    """비용 편향 · K1 꼬리 컷 · 사용률의 3차원 격자."""
+    """문항 단위 비용 회귀 · 상방 편향 · K1 꼬리 컷 · 사용률의 격자.
 
-    for quantile, cap, util in itertools.product(
-        (0.75, 0.90, 0.95),
-        (None, 90.0, 75.0, 60.0),
+    편향은 light 대비 상대적으로 건다. 모든 모델을 똑같이 부풀리면 한도의
+    분모까지 커져 오히려 위험해진다.
+    """
+
+    for z, z_light, cap, util in itertools.product(
+        (0.67, 1.28),
+        (0.0, -0.5),
+        (None, 90.0, 75.0),
         (0.90, 0.85, 0.80),
     ):
         gate = (
@@ -44,12 +49,12 @@ def grid():
         )
         cap_label = "none" if cap is None else f"p{cap:g}"
         yield Config(
-            id=f"sweep-q{quantile:g}-{cap_label}-u{util:g}",
+            id=f"ridge-z{z:g}L{z_light:g}-{cap_label}-u{util:g}",
             score="family",
-            cost={"name": "family", "quantile": quantile},
+            cost={"name": "ridge", "z": z, "z_light": z_light},
             gate=gate,
             alloc={"util": util},
-            note="비용 분위 · K1 꼬리 컷 · 사용률 격자",
+            note="문항 단위 비용 회귀 + 비대칭 상방 편향",
         )
 
 

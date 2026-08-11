@@ -22,7 +22,7 @@ from typing import Callable, Dict, Protocol, Sequence
 import numpy as np
 
 from .data import MODEL_IDS, Dataset, cost_from_tokens
-from .features import FAMILIES, family_codes
+from .features import FAMILIES, extract, family_codes
 
 N_MODELS = len(MODEL_IDS)
 
@@ -152,6 +152,131 @@ class FamilyCost:
         cost = cost_from_tokens(tok_in, tok_out, self._policy)
         # 비용의 산포는 출력 토큰 산포에서 온다. 입력 토큰은 잘 맞는다.
         sd = cost_from_tokens(np.zeros_like(tok_in), self._out_sd[codes], self._policy)
+        return cost, sd
+
+
+def _ridge(design: np.ndarray, target: np.ndarray, alpha: float) -> tuple:
+    """표준화 → 절편 추가 → 절편만 규제 제외.
+
+    순서를 바꿔 절편까지 표준화하면 절편이 0이 되어 예측이 평균을 못 맞춘다.
+    로그 토큰처럼 평균이 6~8인 목표에서는 그 실수 하나로 R²가 -40까지 떨어진다.
+    """
+
+    mu = design.mean(axis=0)
+    sd = design.std(axis=0) + 1e-9
+    scaled = np.hstack([(design - mu) / sd, np.ones((len(design), 1))])
+    penalty = np.eye(scaled.shape[1])
+    penalty[-1, -1] = 0.0
+    weight = np.linalg.solve(scaled.T @ scaled + alpha * penalty, scaled.T @ target)
+    return mu, sd, weight
+
+
+def _ridge_apply(design: np.ndarray, fitted: tuple) -> np.ndarray:
+    mu, sd, weight = fitted
+    return np.hstack([(design - mu) / sd, np.ones((len(design), 1))]) @ weight
+
+
+@register(COST_HEADS, "ridge")
+class RidgeCost:
+    """계열별 회귀로 문항 단위 출력 토큰을 예측한다.
+
+    계열 평균은 계열 안에서 상수라 "비싼 문항만 골라 빼기"가 작동하지 않는다.
+    실제 K1 비용 배율은 같은 계열 안에서도 600배씩 벌어진다.
+
+    편향은 **light 대비 상대적으로** 걸어야 한다. 예산 한도의 분모가 light의
+    예측 비용이므로, 모든 모델을 똑같이 부풀리면 쓸 수 있는 돈까지 같이 늘어나
+    오히려 위험해진다(실측: z를 0 → 1.28로 올렸더니 세 등급이 전부 터졌다).
+
+    - ``z``       승격 모델(ax31·K1)에 얹는 상방 편향. 클수록 승격이 비싸 보인다.
+    - ``z_light`` light에 얹는 편향. **음수가 안전하다** — 분모를 낮게 잡으면
+      한도가 줄고 승격의 상대 가격도 올라가 양쪽으로 보수적이 된다.
+
+    0.67이면 대략 75분위, 1.28이면 90분위에 해당한다 (RULES C2).
+    """
+
+    def __init__(
+        self,
+        z: float = 0.0,
+        z_light: float = 0.0,
+        alpha: float = 3.0,
+        min_family: int = 40,
+    ) -> None:
+        self.z = float(z)
+        self.z_light = float(z_light)
+        self.alpha = float(alpha)
+        self.min_family = int(min_family)
+        self.version = (
+            f"ridgecost.v2(z={self.z:g},zl={self.z_light:g},a={self.alpha:g})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        codes = family_codes(train.texts)
+        features = extract(train.texts)
+        chars = np.array([len(t) for t in train.texts], dtype=float)
+
+        design_in = np.stack([np.ones_like(chars), chars], axis=1)
+        self._in_coef = np.linalg.lstsq(design_in, train.input_tokens, rcond=None)[0]
+
+        log_out = np.log1p(train.output_tokens)
+        self._global = [_ridge(features, log_out[:, j], self.alpha) for j in range(N_MODELS)]
+        self._global_sd = log_out.std(axis=0)
+
+        # 외삽 방지. 선형 모델은 학습 범위 밖 특징에서 로그 예측을 20~30까지
+        # 밀어올릴 수 있고, expm1을 지나면 토큰 수가 조 단위가 된다. 실제로
+        # 한 fold에서 예측 light 비용이 실제의 463배가 나와 세 등급이 전부
+        # 터졌다. 비공개 평가에서 이상한 프롬프트 하나면 같은 일이 벌어진다.
+        self._log_lo = log_out.min(axis=0)
+        self._log_hi = log_out.max(axis=0)
+        self._token_hi = train.output_tokens.max(axis=0) * 2.0
+        self._in_lo = float(train.input_tokens.min())
+        self._in_hi = float(train.input_tokens.max()) * 2.0
+
+        self._by_family: Dict[int, list] = {}
+        self._sd_by_family: Dict[int, np.ndarray] = {}
+        for f in range(len(FAMILIES)):
+            m = codes == f
+            if m.sum() < self.min_family:
+                continue
+            fitted = [_ridge(features[m], log_out[m, j], self.alpha) for j in range(N_MODELS)]
+            residual = np.stack(
+                [log_out[m, j] - _ridge_apply(features[m], fitted[j]) for j in range(N_MODELS)],
+                axis=1,
+            )
+            self._by_family[f] = fitted
+            self._sd_by_family[f] = residual.std(axis=0)
+        self._policy = train.policy
+
+    def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
+        features = extract(texts)
+        codes = family_codes(texts)
+        chars = np.array([len(t) for t in texts], dtype=float)
+        tok_in = np.clip(
+            np.stack([np.ones_like(chars), chars], axis=1) @ self._in_coef,
+            self._in_lo,
+            self._in_hi,
+        )
+
+        log_out = np.zeros((len(texts), N_MODELS))
+        sd_log = np.zeros((len(texts), N_MODELS))
+        for f in np.unique(codes):
+            m = codes == f
+            fitted = self._by_family.get(int(f), self._global)
+            spread = self._sd_by_family.get(int(f), self._global_sd)
+            for j in range(N_MODELS):
+                log_out[m, j] = _ridge_apply(features[m], fitted[j])
+            sd_log[m] = spread
+
+        # 회귀 출력을 학습에서 본 범위로 먼저 묶은 뒤 편향을 얹는다.
+        log_out = np.clip(log_out, self._log_lo, self._log_hi)
+        bias = np.full(N_MODELS, self.z)
+        bias[0] = self.z_light
+        tok_out = np.clip(np.expm1(log_out + bias * sd_log), 0.0, self._token_hi)
+        cost = cost_from_tokens(tok_in, tok_out, self._policy)
+        # 산포는 로그 공간 잔차를 비용 단위로 옮겨 근사한다.
+        spread_tokens = np.clip(
+            np.expm1(log_out + sd_log) - np.expm1(log_out), 0.0, self._token_hi
+        )
+        sd = cost_from_tokens(np.zeros_like(tok_in), spread_tokens, self._policy)
         return cost, sd
 
 
