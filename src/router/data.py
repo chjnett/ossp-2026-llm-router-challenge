@@ -81,11 +81,26 @@ class Dataset:
 
     def subset(self, index: Sequence[int]) -> "Dataset":
         idx = np.asarray(index, dtype=int)
+        keep = {self.episode_ids[i] for i in idx}
+        # inputs/outcomes도 같이 잘라 둔다. 부분집합 Dataset을 그대로 채점기에
+        # 넘겼을 때 문항 수가 어긋나는 사고를 막는다.
+        inputs = InputBatch(
+            schema_version=self.inputs.schema_version,
+            challenge_id=self.inputs.challenge_id,
+            split=self.inputs.split,
+            episodes=tuple(e for e in self.inputs.episodes if e.episode_id in keep),
+        )
+        outcomes = OutcomeBatch(
+            schema_version=self.outcomes.schema_version,
+            challenge_id=self.outcomes.challenge_id,
+            split=self.outcomes.split,
+            outcomes=tuple(o for o in self.outcomes.outcomes if o.episode_id in keep),
+        )
         return Dataset(
             split=self.split,
             challenge_id=self.challenge_id,
-            inputs=self.inputs,
-            outcomes=self.outcomes,
+            inputs=inputs,
+            outcomes=outcomes,
             policy=self.policy,
             texts=tuple(self.texts[i] for i in idx),
             episode_ids=tuple(self.episode_ids[i] for i in idx),

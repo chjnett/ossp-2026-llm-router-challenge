@@ -1,0 +1,8 @@
+{
+  "id": "a2-roi-gate",
+  "score": "family",
+  "cost": {"name": "family", "quantile": 0.75},
+  "gate": {"name": "family_roi", "min_roi": 1.0},
+  "alloc": {"util": {"fast": 0.90, "balanced": 0.90, "premium": 0.85}},
+  "note": "저ROI 계열의 K1을 막고 비용은 상방 분위 0.75로 예측한다."
+}

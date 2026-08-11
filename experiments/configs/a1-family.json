@@ -1,0 +1,8 @@
+{
+  "id": "a1-family",
+  "score": "family",
+  "cost": "family",
+  "gate": "none",
+  "alloc": {"util": {"fast": 0.90, "balanced": 0.90, "premium": 0.85}},
+  "note": "계열 평균 점수와 비용. GOAL.md의 A1 재현이자 러너 회귀 기준선."
+}

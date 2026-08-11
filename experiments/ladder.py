@@ -14,34 +14,19 @@ from __future__ import annotations
 import numpy as np
 
 from router.allocate import allocate
-from router.data import MODEL_IDS, TIERS, cost_from_tokens, load_dataset
+from router.data import MODEL_IDS, TIERS, load_dataset
 from router.features import FAMILIES, family_codes
 from router.harness import evaluate
+from router.pipeline import Config, predict
 
 MULT = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
 
 
-def family_tables(train) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """계열별 평균 점수와 로그 토큰 사용량. Train에서만 만든다."""
-
-    fam = family_codes(train.texts)
-    n_fam, n_model = len(FAMILIES), len(MODEL_IDS)
-    score = np.zeros((n_fam, n_model))
-    log_in = np.zeros((n_fam, n_model))
-    log_out = np.zeros((n_fam, n_model))
-    for f in range(n_fam):
-        m = fam == f
-        if not m.any():                       # Train에 없는 계열은 전체 평균으로
-            m = np.ones(len(train), dtype=bool)
-        score[f] = train.score[m].mean(axis=0)
-        log_in[f] = np.log1p(train.input_tokens[m]).mean(axis=0)
-        log_out[f] = np.log1p(train.output_tokens[m]).mean(axis=0)
-    return score, log_in, log_out
-
-
 def run(name: str, dev, s_hat, c_hat, *, util, allow=None, ceiling=False) -> None:
     picks = {
-        t: allocate(s_hat, c_hat, multiplier=MULT[t], util=util, allow=allow).picks
+        t: allocate(
+            s_hat, c_hat, multiplier=MULT[t], util=util, allow=allow, keys=dev.keys
+        ).picks
         for t in TIERS
     }
     ev = evaluate(dev, picks)
@@ -56,14 +41,12 @@ def run(name: str, dev, s_hat, c_hat, *, util, allow=None, ceiling=False) -> Non
 
 def main() -> None:
     train, dev = load_dataset("train"), load_dataset("dev")
-    fam_score, fam_log_in, fam_log_out = family_tables(train)
     fam_dev = family_codes(dev.texts)
 
-    # 계열 평균만으로 만든 예측 (Train -> Dev, 누수 없음)
-    s_fam = fam_score[fam_dev]
-    c_fam = cost_from_tokens(
-        np.expm1(fam_log_in[fam_dev]), np.expm1(fam_log_out[fam_dev]), dev.policy
-    )
+    # 예측은 등록된 헤드를 그대로 쓴다. 여기서만 쓰는 별도 구현을 두면
+    # 러너와 숫자가 갈려 어느 쪽이 맞는지 알 수 없게 된다 (RULES D6).
+    prediction = predict(Config(id="ladder-a1"), train, dev.texts)
+    s_fam, c_fam = prediction.s_hat, prediction.c_hat
 
     # 계열별 K1 ROI를 Train에서 계산해 하위 계열의 K1을 막는다
     roi = np.zeros(len(FAMILIES))
