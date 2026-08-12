@@ -733,26 +733,29 @@ class K1CostCapGate:
     def __init__(self, percentile: float = 90.0, min_roi: float = 1.0) -> None:
         self.percentile = float(percentile)
         self.min_roi = float(min_roi)
-        self.version = f"k1cap.v1(p={self.percentile:g},roi={self.min_roi:g})"
+        self.version = f"k1cap.v2(p={self.percentile:g},roi={self.min_roi:g})"
         self._roi_gate = FamilyRoiGate(min_roi=min_roi)
 
     def fit(self, train: Dataset) -> None:
         self._roi_gate.fit(train)
-        ratio = train.cost[:, 2] / np.maximum(train.cost[:, 0], 1e-12)
-        self._cap = float(np.percentile(ratio, self.percentile))
 
     def allow(self, texts, s_hat, c_hat) -> np.ndarray:
         allow = self._roi_gate.allow(texts, s_hat, c_hat)
+        # 임계값은 **예측 분포**에서 잡는다. 학습의 실제 비율로 잡으면
+        # 단위가 어긋난다 - z 편향이 K1/light 예측 비율을 8배 이상 부풀리므로
+        # 실제 분위와 비교하면 거의 전부 차단된다. 실측: code_io 119문항이
+        # 예측 이득 +0.40을 갖고도 통째로 막혀 있었다.
         ratio = c_hat[:, 2] / np.maximum(c_hat[:, 0], 1e-12)
-        allow[:, 2] &= ratio <= self._cap
+        cap = float(np.percentile(ratio, self.percentile))
+        allow[:, 2] &= ratio <= cap
         allow[:, 0] = True
         return allow
 
     def state(self) -> dict:
-        return {"cap": self._cap, "roi": self._roi_gate.state()}
+        return {"percentile": self.percentile, "roi": self._roi_gate.state()}
 
     def load_state(self, state: dict) -> None:
-        self._cap = float(state["cap"])
+        self.percentile = float(state["percentile"])
         self._roi_gate.load_state(state["roi"])
 
 

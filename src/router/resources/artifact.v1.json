@@ -62,9 +62,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "85d79b40e90cb8f16bc27f95d5fe3abed877ba52",
+  "commit": "2b9808e00d91faf9c35f00008a5667c4a8f3fa31",
   "config_path": "experiments/configs/f4-calibrated-bal028.json",
-  "created_at": "2026-08-12T10:53:27+00:00",
+  "created_at": "2026-08-12T11:55:54+00:00",
   "fit_episodes": 1760,
   "fit_inputs_sha256": "029a0fb1f70432a05b837a1291d86d42278bb202d808a6a12911b0dae8628ac4",
   "fit_outcomes_sha256": "97a5a787086b3e1d9fa9c7945518543540e527ea248df4a4760de581b612a4ba",
@@ -7836,7 +7836,7 @@
    ]
   },
   "gate": {
-   "cap": 151.07491024806112,
+   "percentile": 90.0,
    "roi": {
     "roi": [
      [
@@ -7939,7 +7939,7 @@
  },
  "versions": {
   "cost": "ridgecost.v4(z=1.28,zl=-0.5,a=3,sm=1)",
-  "gate": "k1cap.v1(p=90,roi=1)",
+  "gate": "k1cap.v2(p=90,roi=1)",
   "score": "family.v1"
  }
 }
