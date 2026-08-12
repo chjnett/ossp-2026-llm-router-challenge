@@ -1,7 +1,7 @@
 {
   "id": "f4-calibrated-bal028",
-  "at": "2026-08-12T10:53:02+00:00",
-  "commit": "85d79b40e90cb8f16bc27f95d5fe3abed877ba52",
+  "at": "2026-08-12T11:22:39+00:00",
+  "commit": "d320f5369fcca50ef12e4dade23fbdc973235cf5",
   "config": {
     "id": "f4-calibrated-bal028",
     "score": "family",
@@ -32,43 +32,43 @@
     "gate": "k1cap.v1(p=90,roi=1)"
   },
   "cv": {
-    "final_score": "0.631704545455",
+    "final_score": "0.634403409091",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.606392045455",
-        "budget_ratio": "1.012797938954",
-        "headroom": "0.237202061046",
+        "score": "0.608664772727",
+        "budget_ratio": "1.01929020666",
+        "headroom": "0.23070979334",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1618,
-          "ax31": 142,
+          "ax31-light": 1572,
+          "ax31": 188,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.625426136364",
-        "budget_ratio": "1.068614120109",
-        "headroom": "0.931385879891",
+        "score": "0.629971590909",
+        "budget_ratio": "1.091858296104",
+        "headroom": "0.908141703896",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1279,
-          "ax31": 481,
+          "ax31-light": 1165,
+          "ax31": 595,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.671732954545",
-        "budget_ratio": "1.56655600209",
-        "headroom": "2.43344399791",
+        "score": "0.673153409091",
+        "budget_ratio": "1.619811226244",
+        "headroom": "2.380188773756",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 296,
-          "ax31": 1439,
-          "axk1-think": 25
+          "ax31-light": 279,
+          "ax31": 1440,
+          "axk1-think": 41
         }
       }
     }
@@ -152,5 +152,5 @@
       }
     }
   },
-  "seconds": 129.77
+  "seconds": 128.8
 }
