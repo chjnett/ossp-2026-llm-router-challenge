@@ -161,18 +161,35 @@ def check_commit_is_public(submission: dict) -> str:
         _run(["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=ROOT)
     except Failed as exc:
         raise Failed(f"커밋 {commit[:12]}이 저장소에 없다") from exc
-    # 로컬 원격 추적 ref는 낡을 수 있다. push해 둔 커밋을 "없다"고 잡은 적이
-    # 있어서, 로컬 사본이 아니라 원격에 직접 묻는다.
-    _run(["git", "fetch", "--quiet", "origin"], cwd=ROOT)
-    branches = _run(
-        ["git", "branch", "--remotes", "--contains", commit], cwd=ROOT
-    ).strip()
-    if not branches:
-        raise Failed(
-            f"커밋 {commit[:12]}이 origin에 올라가 있지 않다. 심사자가 열 수 없다. "
-            "먼저 push해야 한다"
+    # 로컬 원격 추적 ref를 믿으면 안 된다. 이 저장소의 fetch refspec은
+    # main으로 제한돼 있어 다른 브랜치의 origin/<이름>이 아예 생기지 않는다.
+    # push해 둔 커밋을 "없다"고 잡았다. 원격에 직접 묻는다.
+    #
+    # 제출 커밋은 tip이 아니다. 코드 커밋 뒤에 JSON 커밋이 하나 더 오므로
+    # 코드 커밋은 항상 부모다. tip 일치만 보면 안 되고 조상 판정이 필요하다.
+    tips = []
+    for line in _run(["git", "ls-remote", "--heads", "origin"], cwd=ROOT).splitlines():
+        sha, _, ref = line.partition("\t")
+        if sha.strip() and ref.strip():
+            tips.append((sha.strip(), ref.strip()))
+    if not tips:
+        raise Failed("origin에서 브랜치 목록을 받지 못했다")
+
+    for sha, ref in tips:
+        if sha == commit:
+            return f"origin에 있음 ({ref} tip)"
+    for sha, ref in tips:
+        _run(["git", "fetch", "--quiet", "origin", ref], cwd=ROOT)
+        ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, sha],
+            cwd=ROOT, capture_output=True, check=False,
         )
-    return f"origin에 있음 ({branches.splitlines()[0].strip()})"
+        if ancestor.returncode == 0:
+            return f"origin에 있음 ({ref}의 조상)"
+    raise Failed(
+        f"커밋 {commit[:12]}이 origin의 어떤 브랜치에서도 닿지 않는다. "
+        f"심사자가 열 수 없다. 먼저 push해야 한다 (확인한 브랜치 {len(tips)}개)"
+    )
 
 
 def check_image_digest_resolves(submission: dict) -> str:
@@ -242,18 +259,26 @@ def check_image_carries_the_commit(submission: dict) -> str:
                 continue
             outside[str(path.relative_to(source))] = _sha256_bytes(path.read_bytes())
 
-        if inside != outside:
-            only_image = sorted(set(inside) - set(outside))
-            only_commit = sorted(set(outside) - set(inside))
-            changed = sorted(k for k in set(inside) & set(outside) if inside[k] != outside[k])
+        # 동일성이 아니라 부분집합이어야 한다. .dockerignore가 런타임 모듈만
+        # 허용목록으로 싣고 학습·실험 코드(cache/harness/stress)는 일부러
+        # 뺀다. 이미지에 없는 것은 정상이고, 이미지에 있는데 커밋에 없거나
+        # 내용이 다른 것이 사고다.
+        only_image = sorted(set(inside) - set(outside))
+        changed = sorted(k for k in set(inside) & set(outside) if inside[k] != outside[k])
+        if only_image or changed:
             raise Failed(
-                "이미지 안 /opt/router/router가 커밋의 src/router와 다르다.\n"
-                f"  이미지에만 있음: {only_image[:5]}\n"
-                f"  커밋에만 있음: {only_commit[:5]}\n"
+                "이미지 안 /opt/router/router가 커밋의 src/router에서 오지 않았다.\n"
+                f"  커밋에 없는 파일이 이미지에 있음: {only_image[:5]}\n"
                 f"  내용이 다름: {changed[:5]}"
             )
+        if not inside:
+            raise Failed("이미지에 라우터 파일이 하나도 없다")
+        excluded = len(set(outside) - set(inside))
 
-    return f"{len(outside)}개 파일이 커밋 {commit[:12]}과 바이트 단위로 일치"
+    return (
+        f"이미지의 {len(inside)}개 파일이 커밋 {commit[:12]}과 바이트 단위로 일치 "
+        f"(학습 전용 {excluded}개는 .dockerignore가 제외)"
+    )
 
 
 def check_artifact_is_not_stale(submission: dict) -> str:
