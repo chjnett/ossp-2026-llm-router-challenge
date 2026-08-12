@@ -161,6 +161,9 @@ def check_commit_is_public(submission: dict) -> str:
         _run(["git", "cat-file", "-e", f"{commit}^{{commit}}"], cwd=ROOT)
     except Failed as exc:
         raise Failed(f"커밋 {commit[:12]}이 저장소에 없다") from exc
+    # 로컬 원격 추적 ref는 낡을 수 있다. push해 둔 커밋을 "없다"고 잡은 적이
+    # 있어서, 로컬 사본이 아니라 원격에 직접 묻는다.
+    _run(["git", "fetch", "--quiet", "origin"], cwd=ROOT)
     branches = _run(
         ["git", "branch", "--remotes", "--contains", commit], cwd=ROOT
     ).strip()
@@ -169,7 +172,7 @@ def check_commit_is_public(submission: dict) -> str:
             f"커밋 {commit[:12]}이 origin에 올라가 있지 않다. 심사자가 열 수 없다. "
             "먼저 push해야 한다"
         )
-    return f"origin에 있음 ({branches.split()[0]})"
+    return f"origin에 있음 ({branches.splitlines()[0].strip()})"
 
 
 def check_image_digest_resolves(submission: dict) -> str:
@@ -200,7 +203,8 @@ def check_image_carries_the_commit(submission: dict) -> str:
     commit = submission["commit_sha"]
     image = submission["image_digest"]
 
-    label = _inspect(image, f"{{{{index .Config.Labels {SOURCE_MANIFEST_LABEL!r}}}}}")
+    # Go 템플릿은 작은따옴표를 문자 상수로 읽는다. 큰따옴표여야 한다.
+    label = _inspect(image, f'{{{{index .Config.Labels "{SOURCE_MANIFEST_LABEL}"}}}}')
     if not label or label in {"unbound", "<no value>"}:
         raise Failed(
             "이미지에 소스 매니페스트 라벨이 없다. "
