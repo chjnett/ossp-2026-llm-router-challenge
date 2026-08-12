@@ -1,0 +1,11 @@
+{
+  "id": "f2-calibrated-bal025",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.22, "balanced": 0.25, "premium": 0.75},
+    "size_penalty": 2.0
+  },
+  "note": "f1이 N=2000에서 balanced 2회 초과. Balanced는 500회 스크리닝에서 안 보이는 꼬리를 세 번 연속 냈다 - 이 등급만 N=2000 기준으로 정한다. Premium 0.75 개선은 유지."
+}

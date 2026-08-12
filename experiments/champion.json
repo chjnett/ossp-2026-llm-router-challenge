@@ -1,9 +1,9 @@
 {
-  "id": "d2-balanced-030",
-  "at": "2026-08-12T06:13:09+00:00",
-  "commit": "cebe453daa804bc3250e20be47be6cb41a486084",
+  "id": "f4-calibrated-bal028",
+  "at": "2026-08-12T10:53:02+00:00",
+  "commit": "85d79b40e90cb8f16bc27f95d5fe3abed877ba52",
   "config": {
-    "id": "d2-balanced-030",
+    "id": "f4-calibrated-bal028",
     "score": "family",
     "cost": {
       "name": "ridge",
@@ -19,98 +19,98 @@
     "alloc": {
       "headroom": {
         "fast": 0.25,
-        "balanced": 0.3,
-        "premium": 0.65
+        "balanced": 0.28,
+        "premium": 0.75
       },
       "size_penalty": 2.0
     },
-    "note": "d1에서 balanced만 0.35 -> 0.30으로 내렸다. d1은 N=2000에서 balanced가 2회(0.05%) 넘겼고 나머지 두 등급은 완전 통과했다."
+    "note": "총합 보정으로 예측이 정확해지자 같은 여윳돈에서도 배분이 공격적이 됐다. 챔피언이 쓰던 balanced 0.30이 이제는 과해서 0.28로 내린다. 안전 설정은 예측기에 종속이라는 RULES C5의 실례."
   },
   "versions": {
     "score": "family.v1",
-    "cost": "ridgecost.v3(z=1.28,zl=-0.5,a=3,sm=1)",
+    "cost": "ridgecost.v4(z=1.28,zl=-0.5,a=3,sm=1)",
     "gate": "k1cap.v1(p=90,roi=1)"
   },
   "cv": {
-    "final_score": "0.630866477273",
+    "final_score": "0.631704545455",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.606107954545",
-        "budget_ratio": "1.016603049169",
-        "headroom": "0.233396950831",
+        "score": "0.606392045455",
+        "budget_ratio": "1.012797938954",
+        "headroom": "0.237202061046",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1601,
-          "ax31": 159,
+          "ax31-light": 1618,
+          "ax31": 142,
           "axk1-think": 0
         }
       },
       "balanced": {
         "score": "0.625426136364",
-        "budget_ratio": "1.082955036655",
-        "headroom": "0.917044963345",
+        "budget_ratio": "1.068614120109",
+        "headroom": "0.931385879891",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1209,
-          "ax31": 551,
+          "ax31-light": 1279,
+          "ax31": 481,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.669318181818",
-        "budget_ratio": "1.567443960949",
-        "headroom": "2.432556039051",
+        "score": "0.671732954545",
+        "budget_ratio": "1.56655600209",
+        "headroom": "2.43344399791",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 350,
-          "ax31": 1392,
-          "axk1-think": 18
+          "ax31-light": 296,
+          "ax31": 1439,
+          "axk1-think": 25
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.648153409091",
+    "final_score": "0.648835227273",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.622159090909",
-        "budget_ratio": "1.020289556053",
-        "headroom": "0.229710443947",
+        "score": "0.623863636364",
+        "budget_ratio": "1.017662109933",
+        "headroom": "0.232337890067",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 785,
-          "ax31": 95,
+          "ax31-light": 794,
+          "ax31": 86,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.645454545455",
-        "budget_ratio": "1.155337740572",
-        "headroom": "0.844662259428",
+        "score": "0.644886363636",
+        "budget_ratio": "1.142442456432",
+        "headroom": "0.857557543568",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 577,
-          "ax31": 303,
+          "ax31-light": 614,
+          "ax31": 266,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.685511363636",
-        "budget_ratio": "1.611735095042",
-        "headroom": "2.388264904958",
+        "score": "0.686079545455",
+        "budget_ratio": "1.631243546625",
+        "headroom": "2.368756453375",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 151,
-          "ax31": 720,
-          "axk1-think": 9
+          "ax31-light": 107,
+          "ax31": 765,
+          "axk1-think": 8
         }
       }
     }
@@ -152,5 +152,5 @@
       }
     }
   },
-  "seconds": 124.86
+  "seconds": 129.77
 }

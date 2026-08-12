@@ -1,0 +1,11 @@
+{
+  "id": "f4-calibrated-bal028",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.28, "premium": 0.75},
+    "size_penalty": 2.0
+  },
+  "note": "총합 보정으로 예측이 정확해지자 같은 여윳돈에서도 배분이 공격적이 됐다. 챔피언이 쓰던 balanced 0.30이 이제는 과해서 0.28로 내린다. 안전 설정은 예측기에 종속이라는 RULES C5의 실례."
+}

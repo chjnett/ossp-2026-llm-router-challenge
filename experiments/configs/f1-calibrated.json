@@ -1,0 +1,11 @@
+{
+  "id": "f1-calibrated",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.22, "balanced": 0.32, "premium": 0.75},
+    "size_penalty": 2.0
+  },
+  "note": "총합 보정으로 분모 편향을 제거한 뒤 재탐색. 파산 0회 최대 여윳돈이 fast 0.25 / balanced 0.35 / premium 0.80으로 나와 각각 한 단계(-0.03~-0.05) 내렸다. Premium이 0.65에서 0.80으로 크게 열렸다."
+}

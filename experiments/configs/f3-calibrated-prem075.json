@@ -1,0 +1,11 @@
+{
+  "id": "f3-calibrated-prem075",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.30, "premium": 0.75},
+    "size_penalty": 2.0
+  },
+  "note": "챔피언(d2)에서 이미 N=2000으로 검증된 fast 0.25 / balanced 0.30은 그대로 두고, 총합 보정으로 열린 Premium만 0.65 -> 0.75로 올린다. f1은 fast/balanced까지 함께 건드려 오히려 나빠졌다."
+}

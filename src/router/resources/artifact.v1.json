@@ -2,9 +2,9 @@
  "config": {
   "alloc": {
    "headroom": {
-    "balanced": 0.3,
+    "balanced": 0.28,
     "fast": 0.25,
-    "premium": 0.65
+    "premium": 0.75
    },
    "size_penalty": 2.0
   },
@@ -19,8 +19,8 @@
    "name": "k1_cost_cap",
    "percentile": 90.0
   },
-  "id": "d2-balanced-030",
-  "note": "d1에서 balanced만 0.35 -> 0.30으로 내렸다. d1은 N=2000에서 balanced가 2회(0.05%) 넘겼고 나머지 두 등급은 완전 통과했다.",
+  "id": "f4-calibrated-bal028",
+  "note": "총합 보정으로 예측이 정확해지자 같은 여윳돈에서도 배분이 공격적이 됐다. 챔피언이 쓰던 balanced 0.30이 이제는 과해서 0.28로 내린다. 안전 설정은 예측기에 종속이라는 RULES C5의 실례.",
   "score": "family"
  },
  "features": {
@@ -62,9 +62,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "4db3bf51f9d62edc130409aab059720dfbb5e5c8",
-  "config_path": "experiments/configs/d2-balanced-030.json",
-  "created_at": "2026-08-12T10:32:27+00:00",
+  "commit": "85d79b40e90cb8f16bc27f95d5fe3abed877ba52",
+  "config_path": "experiments/configs/f4-calibrated-bal028.json",
+  "created_at": "2026-08-12T10:53:27+00:00",
   "fit_episodes": 1760,
   "fit_inputs_sha256": "029a0fb1f70432a05b837a1291d86d42278bb202d808a6a12911b0dae8628ac4",
   "fit_outcomes_sha256": "97a5a787086b3e1d9fa9c7945518543540e527ea248df4a4760de581b612a4ba",
