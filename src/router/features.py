@@ -128,7 +128,7 @@ def _row(text: str) -> list[float]:
         np.log1p(len(text)),
         np.log1p(len(words)),
         np.log1p(len(lines)),
-        np.log1p(max((len(l) for l in lines), default=0)),
+        np.log1p(max((len(line) for line in lines), default=0)),
         np.log1p(len(_SENTENCE_END.findall(text))),
         len(_HANGUL.findall(text)) / nonspace,
         sum(c.isdigit() for c in text) / nonspace,
@@ -139,7 +139,7 @@ def _row(text: str) -> list[float]:
         float(len(_QUESTION_LINE.findall(text))),
         float(len(_LATEX.findall(text))),
         float(len(_CODE_FN.findall(text)) + len(_CODE_ASSERT.findall(text))),
-        len([l for l in lines if l[:2] == "  "]) / max(1, len(lines)),
+        len([line for line in lines if line[:2] == "  "]) / max(1, len(lines)),
         len(set(words)) / max(1, len(words)),
         float(len(text) >= LONG_CONTEXT_CHARS),
     ]

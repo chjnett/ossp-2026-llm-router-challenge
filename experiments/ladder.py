@@ -14,7 +14,7 @@ from __future__ import annotations
 import numpy as np
 
 from router.allocate import allocate
-from router.data import MODEL_IDS, TIERS, load_dataset
+from router.data import TIERS, load_dataset
 from router.features import FAMILIES, family_codes
 from router.harness import evaluate
 from router.pipeline import Config, predict
@@ -58,11 +58,10 @@ def main() -> None:
         gain = train.score[m, 2].mean() - train.score[m, 0].mean()
         extra = train.cost[m, 2].mean() - train.cost[m, 0].mean()
         roi[f] = gain / extra if extra > 0 else 0.0
-    blocked = {FAMILIES[f] for f in range(len(FAMILIES)) if roi[f] < 1.0}
     allow_k1 = np.ones((len(dev), 3), dtype=bool)
     allow_k1[:, 2] = roi[fam_dev] >= 1.0
 
-    print(f"\nTrain 계열별 K1 ROI (크레딧당 점수 상승):")
+    print("\nTrain 계열별 K1 ROI (크레딧당 점수 상승):")
     for f in np.argsort(-roi):
         n = int((fam_train == f).sum())
         flag = "" if roi[f] >= 1.0 else "   ← K1 차단"

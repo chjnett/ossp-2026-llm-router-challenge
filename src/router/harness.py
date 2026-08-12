@@ -19,7 +19,6 @@ import numpy as np
 from ossp_router.protocol import (
     Decision,
     InputBatch,
-    Outcome,
     OutcomeBatch,
     Submission,
     parse_submission,

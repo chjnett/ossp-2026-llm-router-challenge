@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 
-from ossp_router.protocol import load_input, load_submission  # noqa: E402
+from ossp_router.protocol import load_submission  # noqa: E402
 
 from router.cli import ARTIFACT_PATH, main  # noqa: E402
 
@@ -194,6 +194,57 @@ class RuntimeTest(unittest.TestCase):
             run_cli(DEV, "premium", Path(tmp) / "o.json")
             elapsed = time.monotonic() - started
             self.assertLess(elapsed, 30.0, f"{elapsed:.1f}초 걸렸다")
+
+
+class WatchdogTest(unittest.TestCase):
+    """시간 예산을 넘기면 폴백으로 마감해야 한다 (RULES E2).
+
+    등급별 한도가 90초이고 초과하면 그 등급이 실행 실패로 처리된다. 계산을
+    끝까지 붙들고 있다가 강제 종료되면 출력 파일이 없어 0점이다. 예산의 60%가
+    지나면 남은 계산을 접고 지금까지의 답을 낸다.
+    """
+
+    def test_expired_budget_produces_all_light_not_a_crash(self) -> None:
+        import contextlib
+        import io
+
+        import router.cli as cli
+
+        original = cli.TIME_BUDGET_SECONDS
+        try:
+            cli.TIME_BUDGET_SECONDS = -1.0  # 시작하자마자 만료
+            with tempfile.TemporaryDirectory() as tmp:
+                out = Path(tmp) / "o.json"
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                    code = run_cli(DEV, "premium", out)
+                self.assertEqual(0, code, "시간 초과가 종료 코드를 망가뜨렸다")
+                self.assertIn("폴백", err.getvalue())
+                picks = set(decisions(out).values())
+                self.assertEqual({"ax31-light"}, picks)
+                self.assertEqual(880, len(decisions(out)), "문항이 빠졌다")
+        finally:
+            cli.TIME_BUDGET_SECONDS = original
+
+    def test_budget_is_a_sane_fraction_of_the_limit(self) -> None:
+        """한도 90초의 절반~3분의 2 사이여야 한다. 쓰기와 종료에 여유가 필요하다."""
+
+        import router.cli as cli
+
+        self.assertGreater(cli.TIME_BUDGET_SECONDS, 45.0)
+        self.assertLess(cli.TIME_BUDGET_SECONDS, 60.0)
+
+    def test_watchdog_checks_between_stages(self) -> None:
+        """단계 사이마다 확인해야 한 단계가 늦어질 때도 잡는다."""
+
+        import inspect
+
+        import router.cli as cli
+
+        source = inspect.getsource(cli._select)
+        self.assertGreaterEqual(
+            source.count("check("), 4, "단계별 시간 확인이 부족하다"
+        )
 
 
 class FallbackTest(unittest.TestCase):

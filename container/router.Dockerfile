@@ -10,7 +10,7 @@
 # 이미지를 강제하지 않는다.
 #
 # 기반 이미지 출처와 라이선스는 container/ROUTER_BASE_IMAGE.md에 기록한다.
-FROM python:3.11.15-slim-bookworm
+FROM python:3.11.15-slim-bookworm@sha256:d29f48a31a8b408ed19272ca1e7b10ebae13b240a27e862d3d4217c528e2e0c3
 
 ARG SOURCE_MANIFEST_SHA256=unbound
 LABEL org.opencontainers.image.source-manifest-sha256="${SOURCE_MANIFEST_SHA256}"

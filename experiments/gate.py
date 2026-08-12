@@ -13,7 +13,6 @@ RULES C4: 파산 0%가 처음 관측된 설정을 그대로 쓰지 않고 사용
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 
 import numpy as np

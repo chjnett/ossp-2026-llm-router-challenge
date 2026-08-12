@@ -1,0 +1,85 @@
+# SPDX-FileCopyrightText: Copyright 2026 chjnett
+# SPDX-License-Identifier: Apache-2.0
+
+# RULES C5·E9. 사람이 기억하는 규칙은 언젠가 깨진다.
+#
+# 실제로 세 번 깨졌다. 헤드 버전을 올리고 산출물을 다시 굽지 않아 런타임이
+# 조용히 all-light로 떨어졌는데, 폴백도 유효한 제출을 만들어서 형식 검사로는
+# 안 잡혔다. 그래서 산출물-코드 정합성을 CI에서 매번 확인한다.
+#
+# 파산 게이트는 무거워서(설정당 약 2분) 여기서 짧은 판(400회)만 돌린다.
+# 챔피언 승격에 쓰는 N=2000 판정은 여전히 손으로 돌린다.
+
+name: router-ci
+
+on:
+  push:
+    branches: [main, router-dev]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy ruff "reuse[charset-normalizer]"
+
+      - name: ruff
+        run: ruff check .
+
+      - name: reuse lint
+        run: reuse lint
+
+      - name: 공개 자료 생성
+        run: |
+          python -m pip install -r data/sources/requirements-materialize-public-data.txt
+          python tools/materialize_public_data.py
+
+      - name: 표준 라이브러리 테스트
+        run: PYTHONPATH=src python -m unittest discover -s tests -p 'test_*.py'
+
+      - name: 산출물과 코드 정합성
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          from ossp_router.protocol import load_bundled_policy
+          from router.artifact import load_artifact, restore
+          from router.cli import ARTIFACT_PATH
+          restore(load_artifact(ARTIFACT_PATH), load_bundled_policy())
+          print("산출물과 코드가 맞물린다")
+          PY
+
+      - name: 챔피언 설정으로 파산 게이트 짧은 판
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          import json, pathlib, sys
+          from router.data import budget_multipliers, load_dataset, TIERS
+          from router.features import family_codes
+          from router.pipeline import Config, run_on_split
+          from router.stress import gate_passed, run_gate
+
+          champion = json.loads(pathlib.Path("experiments/champion.json").read_text())
+          config = Config(**champion["config"])
+          train, dev = load_dataset("train"), load_dataset("dev")
+          evaluation, prediction, _ = run_on_split(config, train, dev)
+          results = run_gate(
+              dev, prediction.s_hat, prediction.c_hat,
+              family=family_codes(dev.texts), util=config.util,
+              multipliers=budget_multipliers(dev.policy),
+              allow=prediction.allow, sd=prediction.sd, mu=config.mu,
+              trials=400, size_penalty=config.size_penalty,
+              headroom=config.headroom, epsilon=config.epsilon,
+          )
+          failures = sum(r.tiers[t].failures for r in results for t in TIERS)
+          print(evaluation)
+          print(f"파산 {failures}회 (400회 판)")
+          sys.exit(0 if gate_passed(results) else 1)
+          PY

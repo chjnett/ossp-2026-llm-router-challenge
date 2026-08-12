@@ -21,11 +21,10 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import numpy as np
 
 from router.data import TIERS, budget_multipliers, load_dataset
 from router.features import family_codes
-from router.pipeline import Config, pick_all_tiers, predict, run_cv, run_on_split
+from router.pipeline import Config, run_cv, run_on_split
 from router.stress import gate_passed, run_gate
 
 ROOT = Path(__file__).resolve().parents[1]

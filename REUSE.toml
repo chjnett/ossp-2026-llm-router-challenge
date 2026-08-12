@@ -58,3 +58,21 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "Copyright 2026 SK TELECOM CO., LTD."
 SPDX-License-Identifier = "Apache-2.0"
+
+# 참가자가 추가한 파일. 헤더도 함께 두지만 REUSE.toml을 권위 있는 선언으로
+# 삼는다. JSON과 JSONL은 주석을 넣을 수 없어 여기서만 선언할 수 있다.
+[[annotations]]
+path = [
+  "plan/**",
+  "src/router/**",
+  "tests/test_router_*.py",
+  "experiments/**",
+  "tools/export_artifact.py",
+  "tools/verify_submission_stack.py",
+  "container/router.Dockerfile",
+  "container/router_entrypoint.py",
+  "container/router-requirements.txt",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Copyright 2026 chjnett"
+SPDX-License-Identifier = "Apache-2.0"

@@ -16,7 +16,7 @@ import numpy as np
 
 from router.allocate import allocate, allocate_bisect
 from router.data import content_key
-from router.envelope import build_segments, take_within_budget
+from router.envelope import build_segments
 
 
 def synthetic(n: int, seed: int):

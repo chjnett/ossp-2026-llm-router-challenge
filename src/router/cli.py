@@ -65,12 +65,20 @@ def _select(inputs, tier: str, deadline: float) -> list[str]:
     texts = [episode_text(episode) for episode in inputs.episodes]
     keys = [content_key(text) for text in texts]
 
-    s_hat = score_head.predict(texts)
-    c_hat, sd = cost_head.predict(texts)
-    allow = gate.allow(texts, s_hat, c_hat)
+    # 무거운 단계 사이마다 확인한다. 한 번만 보면 그 단계 안에서 늦어질 때
+    # 못 잡는다. 2,640문항이 2초라 여유는 크지만, 비공개셋 크기를 모르므로
+    # 각 구간이 끝날 때마다 남은 시간을 본다.
+    def check(stage: str) -> None:
+        if time.monotonic() > deadline:
+            raise TimeoutError(f"시간 예산 초과: {stage}")
 
-    if time.monotonic() > deadline:
-        raise TimeoutError("예측 단계에서 시간 예산을 넘겼다")
+    check("산출물 로드")
+    s_hat = score_head.predict(texts)
+    check("점수 예측")
+    c_hat, sd = cost_head.predict(texts)
+    check("비용 예측")
+    allow = gate.allow(texts, s_hat, c_hat)
+    check("게이트")
 
     multipliers = {t: float(policy.tiers[t].budget_multiplier) for t in TIERS}
     util = effective_util(config, len(texts), multipliers)

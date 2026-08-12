@@ -13,7 +13,7 @@ import unittest
 
 import numpy as np
 
-from router.data import MODEL_IDS, TIERS, Dataset, cost_from_tokens
+from router.data import TIERS, Dataset, cost_from_tokens
 from router.stress import (
     family_dominant_sampler,
     family_reweight_sampler,
