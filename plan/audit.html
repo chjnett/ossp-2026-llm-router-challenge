@@ -1,0 +1,473 @@
+<!-- SPDX-FileCopyrightText: Copyright 2026 chjnett -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<title>중간 감사 — 지금까지, 그리고 남은 15일</title>
+<style>
+  :root{
+    --paper:#ECECEB; --surface:#FFFFFF; --surface-2:#F4F4F3; --sunk:#DFDFDE;
+    --ink:#16161A; --ink-2:#3D3D44; --muted:#6B6B74;
+    --rule:#C7C7C6; --rule-2:#E0E0DF; --rule-strong:#8E8E92;
+    --ok:#1F6B45; --ok-bg:#DFEDE5;
+    --warn:#8A5A0F; --warn-bg:#F6EBD6;
+    --bad:#9B2118; --bad-bg:#F7E0DD;
+    --shadow:0 1px 0 rgba(22,22,26,.04), 0 8px 24px -18px rgba(22,22,26,.5);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#0E0E10; --surface:#17171A; --surface-2:#1E1E22; --sunk:#121215;
+      --ink:#E8E8EA; --ink-2:#B6B6BC; --muted:#84848D;
+      --rule:#2B2B30; --rule-2:#212126; --rule-strong:#4A4A52;
+      --ok:#5BBE8C; --ok-bg:#14291F96;
+      --warn:#D9A455; --warn-bg:#2E230F96;
+      --bad:#E3736A; --bad-bg:#33171496;
+      --shadow:0 1px 0 rgba(0,0,0,.4), 0 10px 28px -20px #000;
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#ECECEB; --surface:#FFFFFF; --surface-2:#F4F4F3; --sunk:#DFDFDE;
+    --ink:#16161A; --ink-2:#3D3D44; --muted:#6B6B74;
+    --rule:#C7C7C6; --rule-2:#E0E0DF; --rule-strong:#8E8E92;
+    --ok:#1F6B45; --ok-bg:#DFEDE5;
+    --warn:#8A5A0F; --warn-bg:#F6EBD6;
+    --bad:#9B2118; --bad-bg:#F7E0DD;
+    --shadow:0 1px 0 rgba(22,22,26,.04), 0 8px 24px -18px rgba(22,22,26,.5);
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E0E10; --surface:#17171A; --surface-2:#1E1E22; --sunk:#121215;
+    --ink:#E8E8EA; --ink-2:#B6B6BC; --muted:#84848D;
+    --rule:#2B2B30; --rule-2:#212126; --rule-strong:#4A4A52;
+    --ok:#5BBE8C; --ok-bg:#14291F96;
+    --warn:#D9A455; --warn-bg:#2E230F96;
+    --bad:#E3736A; --bad-bg:#33171496;
+    --shadow:0 1px 0 rgba(0,0,0,.4), 0 10px 28px -20px #000;
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Segoe UI","Malgun Gothic",sans-serif;
+    font-size:16.5px; line-height:1.72; letter-spacing:-.004em;
+  }
+  .wrap{max-width:1000px; margin:0 auto; padding:0 24px 110px;}
+  p{margin:0 0 16px; max-width:70ch;}
+  code{font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+       font-size:.85em; background:var(--surface-2); border:1px solid var(--rule-2);
+       padding:1px 5px; border-radius:2px; word-break:break-word;}
+
+  header{padding:60px 0 26px; border-bottom:3px solid var(--ink); margin-bottom:8px;}
+  .eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
+           letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin:0 0 16px;}
+  h1{font-size:clamp(30px,4.6vw,46px); line-height:1.06; font-weight:800;
+     letter-spacing:-.04em; margin:0 0 18px; text-wrap:balance; max-width:19ch;}
+  .lede{font-size:18px; color:var(--ink-2); margin:0; max-width:62ch;}
+  .lede b{color:var(--ink); font-weight:680;}
+  .stamp{display:inline-block; margin-top:22px; padding:6px 12px;
+         font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+         border:1.5px solid var(--bad); color:var(--bad); border-radius:2px; letter-spacing:.04em;}
+
+  section{margin-top:70px;}
+  .num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+       letter-spacing:.18em; color:var(--muted); display:block; margin-bottom:6px;}
+  h2{font-size:clamp(22px,3vw,29px); font-weight:780; letter-spacing:-.03em;
+     margin:0 0 6px; text-wrap:balance;}
+  .sub{font-size:15.5px; color:var(--muted); margin:0 0 26px; max-width:68ch;}
+  h3{font-size:18px; font-weight:720; letter-spacing:-.02em; margin:34px 0 10px;}
+
+  .tw{overflow-x:auto; border:1px solid var(--rule); background:var(--surface);
+      box-shadow:var(--shadow); margin:20px 0;}
+  table{border-collapse:collapse; width:100%; min-width:560px; font-size:14.5px;}
+  th,td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--rule-2);
+        vertical-align:top; line-height:1.58;}
+  thead th{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+           letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+           font-weight:600; background:var(--surface-2); border-bottom:1.5px solid var(--rule-strong);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.n,th.n{text-align:right; }
+  td.n{font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  tr.hl td{background:var(--surface-2); font-weight:600;}
+
+  .chip{display:inline-block; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+        font-size:10.5px; letter-spacing:.06em; padding:3px 8px; border-radius:2px;
+        white-space:nowrap; font-weight:700;}
+  .chip.ok{background:var(--ok-bg); color:var(--ok);}
+  .chip.warn{background:var(--warn-bg); color:var(--warn);}
+  .chip.bad{background:var(--bad-bg); color:var(--bad);}
+
+  .box{border:1px solid var(--rule); border-left:5px solid var(--ink);
+       background:var(--surface); padding:20px 24px; margin:22px 0; box-shadow:var(--shadow);}
+  .box.bad{border-left-color:var(--bad); background:var(--bad-bg); border-color:var(--bad);}
+  .box.warn{border-left-color:var(--warn); background:var(--warn-bg); border-color:var(--warn);}
+  .box.ok{border-left-color:var(--ok); background:var(--ok-bg); border-color:var(--ok);}
+  .box h4{margin:0 0 9px; font-size:16px; font-weight:760; letter-spacing:-.015em;}
+  .box.bad h4{color:var(--bad);} .box.warn h4{color:var(--warn);} .box.ok h4{color:var(--ok);}
+  .box p{font-size:15.5px; margin-bottom:10px;} .box p:last-child{margin-bottom:0;}
+
+  .gauge{background:var(--surface); border:1px solid var(--rule); padding:28px 28px 20px;
+         box-shadow:var(--shadow); margin:22px 0;}
+  .track{position:relative; height:14px; background:var(--sunk); margin:38px 0 0; border-radius:7px;}
+  .fill{position:absolute; inset:0 auto 0 0; background:var(--ok); border-radius:7px;}
+  .pip{position:absolute; top:-32px; transform:translateX(-50%); text-align:center; white-space:nowrap;}
+  .pip .v{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:14.5px;
+          font-weight:700; display:block; line-height:1.15; font-variant-numeric:tabular-nums;}
+  .pip .t{font-size:11px; color:var(--muted); display:block;}
+  .pip::after{content:""; position:absolute; left:50%; bottom:-16px; width:1px; height:14px; background:var(--rule-strong);}
+
+  ul.plain{margin:0 0 18px; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px;}
+  ul.plain li{padding-left:18px; position:relative; color:var(--ink-2); max-width:70ch;}
+  ul.plain li::before{content:""; position:absolute; left:0; top:.7em; width:6px; height:6px;
+                      background:var(--rule-strong); border-radius:50%;}
+  ul.plain li b{color:var(--ink);}
+
+  footer{margin-top:80px; padding-top:24px; border-top:1px solid var(--rule);
+         font-size:13.5px; color:var(--muted);}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">OSSP 2026 LLM 라우터 · 중간 감사 · 2026-08-12 · 마감까지 15일</p>
+  <h1>제출은 가능해졌다. 점수는 아직 baseline보다 낮다.</h1>
+  <p class="lede">
+    이 문서는 자랑이 아니라 <b>감사</b>다. 지금까지 한 일, 틀린 판단, 못 지킨 규칙,
+    그리고 남은 시간을 어디에 쓸지를 근거와 함께 적는다. 모든 숫자는 저장소에서
+    재현할 수 있다.
+  </p>
+  <span class="stamp">현재 챔피언 0.6482 &lt; 공식 baseline 0.6954</span>
+</header>
+
+<!-- 01 -->
+<section>
+  <span class="num">01</span>
+  <h2>지금 위치</h2>
+  <p class="sub">공개 Dev 880문항, 공식 채점기가 낸 값. 컨테이너가 실제로 만든 파일을 채점했다.</p>
+
+  <div class="gauge">
+    <div class="track">
+      <div class="fill" style="width:15.7%"></div>
+      <div class="pip" style="left:0%"><span class="v">0.6193</span><span class="t">아무것도 안 함</span></div>
+      <div class="pip" style="left:15.7%"><span class="v" style="color:var(--ok)">0.6482</span><span class="t">우리 챔피언</span></div>
+      <div class="pip" style="left:35.2%"><span class="v" style="color:var(--bad)">0.6842</span><span class="t">게이트 탈락분</span></div>
+      <div class="pip" style="left:41.3%; top:24px"><span class="v">0.6954</span><span class="t">공식 baseline</span></div>
+      <div class="pip" style="left:100%"><span class="v">0.8037</span><span class="t">이론 상한</span></div>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>등급</th><th class="n">점수</th><th class="n">비용 비율</th><th class="n">한도</th><th>스트레스</th></tr></thead>
+      <tbody>
+        <tr><td>Fast (가중 40%)</td><td class="n">0.6222</td><td class="n">1.020</td><td class="n">1.25</td><td><span class="chip ok">0 / 12,000</span></td></tr>
+        <tr><td>Balanced (30%)</td><td class="n">0.6455</td><td class="n">1.155</td><td class="n">2.00</td><td><span class="chip ok">0 / 12,000</span></td></tr>
+        <tr><td>Premium (30%)</td><td class="n">0.6855</td><td class="n">1.612</td><td class="n">4.00</td><td><span class="chip ok">0 / 12,000</span></td></tr>
+        <tr class="hl"><td>가중 최종</td><td class="n">0.6482</td><td class="n">—</td><td class="n">—</td><td><span class="chip ok">게이트 통과</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box bad">
+    <h4>가장 냉정한 사실 세 가지</h4>
+    <p>
+      <b>1. 우리는 지금 공식 예제보다 못한다.</b> 0.6482 vs 0.6954. 15일 동안 만든 것이
+      저장소에 들어 있던 참고 구현을 못 이겼다.
+    </p>
+    <p>
+      <b>2. 예산을 거의 안 쓰고 있다.</b> Balanced는 한도 2.0 중 1.155, Premium은 4.0 중 1.612만 쓴다.
+      Premium은 여윳돈의 <b>20%</b>밖에 안 쓴다. 안전을 사느라 점수를 통째로 남겼다.
+    </p>
+    <p>
+      <b>3. 점수 예측을 아직 시작도 안 했다.</b> 점수 헤드가 여전히 "계열 평균"이다.
+      비용 쪽에는 문항 단위 회귀를 넣었지만 점수 쪽은 9개 계열의 평균값이 전부다.
+    </p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section>
+  <span class="num">02</span>
+  <h2>지금까지 한 것</h2>
+  <p class="sub">커밋 13개, 실험 기록 114건, 테스트 330개(자체 작성 6개 파일).</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>영역</th><th>만든 것</th><th>검증</th></tr></thead>
+      <tbody>
+        <tr><td><b>평가 기반</b></td>
+            <td>공식 채점기를 그대로 호출하는 하네스, 콘텐츠 해시 fold, CV</td>
+            <td><span class="chip ok">공식 발표값 재현</span></td></tr>
+        <tr><td><b>배분기</b></td>
+            <td>오목 포락선 그리디 + 그룹 원자성 + 안전 강등</td>
+            <td><span class="chip ok">순서 불변 검증</span></td></tr>
+        <tr><td><b>비용 예측</b></td>
+            <td>계열별 릿지, 비대칭 편향, 외삽 클램프, Jensen 보정</td>
+            <td><span class="chip ok">R² .334→.484</span></td></tr>
+        <tr><td><b>안전</b></td>
+            <td>파산 게이트 6종 시나리오, 여윳돈 파라미터화, 배치 크기 감쇠</td>
+            <td><span class="chip ok">36,000회 0건</span></td></tr>
+        <tr><td><b>실험 체계</b></td>
+            <td>설정=실험, 3층 캐시, 챔피언 순위표</td>
+            <td><span class="chip ok">동작</span></td></tr>
+        <tr><td><b>런타임</b></td>
+            <td><code>router-run</code>, 학습 산출물 42KB, arm64 이미지 66MB</td>
+            <td><span class="chip ok">공식 하네스 PASS</span></td></tr>
+        <tr><td><b>점수 예측</b></td>
+            <td>계열 평균만</td>
+            <td><span class="chip bad">거의 손 안 댐</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <b>제출 경로는 완전히 뚫려 있다.</b> 컨테이너가 격리 조건에서 2,640문항을
+    2.1초에 처리하고(한도 90초), 그 출력을 공식 채점기가 받아 정상 채점한다.
+    지금 이 상태로 제출하면 <b>동작은 한다.</b> 점수가 낮을 뿐이다.
+  </p>
+</section>
+
+<!-- 03 -->
+<section>
+  <span class="num">03</span>
+  <h2>설계 피봇 6개 — 냉정한 판정</h2>
+  <p class="sub">방향을 여섯 번 바꿨다. 셋은 옳았고, 둘은 틀렸고, 하나는 아직 모른다.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>피봇</th><th>결과</th><th>판정</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>λ 이분탐색 → 오목 포락선 그리디</b></td>
+          <td>같은 답, 1.7배 빠름. 덤으로 "같은 프롬프트는 같은 선택" 위반을 잡음</td>
+          <td><span class="chip ok">옳았음</span></td>
+        </tr>
+        <tr>
+          <td><b>계열 평균 비용 → 문항 단위 릿지</b></td>
+          <td>Premium이 최대 48% 파산에서 <b>0%</b>로. 위험 순위가 완전히 뒤집힘</td>
+          <td><span class="chip ok">옳았음</span></td>
+        </tr>
+        <tr>
+          <td><b>util → 여윳돈(headroom) 파라미터화</b></td>
+          <td>일률 마진이 Fast만 죽이던 문제 해소. 등급 간 비교가 성립</td>
+          <td><span class="chip ok">옳았음</span></td>
+        </tr>
+        <tr>
+          <td><b>임베딩 모델 트랙(T4)</b></td>
+          <td>"표현을 바꾸면 뚫린다" 가설. 구조적 특징 24개로 검증했더니 오차상관이
+              여전히 .86이고 결합 시 오히려 −.044. <b>가설 기각</b></td>
+          <td><span class="chip bad">틀렸음</span></td>
+        </tr>
+        <tr>
+          <td><b>runaway 게이트</b></td>
+          <td>"폭주 문항을 예측해서 막자". 효과 정확히 0. 폭주 문항은 예측 비용이 높아
+              ROI가 낮으니 <b>애초에 선택되지 않는다</b></td>
+          <td><span class="chip bad">틀렸음</span></td>
+        </tr>
+        <tr>
+          <td><b>목표를 점수 → "파산 0%" 제약으로</b></td>
+          <td>제출 가능한 것을 확보했다. 대신 <b>0.036을 냈다</b></td>
+          <td><span class="chip warn">아직 모름</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box warn">
+    <h4>여섯 번째 피봇이 이 프로젝트의 최대 미해결 질문이다</h4>
+    <p>
+      파산 게이트는 <b>내가 만든 기준이다.</b> 원본 저장소에 이런 도구는 없다.
+      게이트가 요구하는 마진 때문에 가중 <b>0.6842 → 0.6482</b>, 즉 0.036을 포기했다.
+    </p>
+    <p>
+      비공개 채점셋이 공개 Dev와 비슷하다면 <b>우리는 점수를 그냥 버린 것</b>이고,
+      분포가 흔들린다면 <b>0점을 면한 것</b>이다. 둘 중 어느 쪽인지 확인할 방법이 없다.
+    </p>
+    <p>
+      게이트를 정당화하는 유일한 외부 근거는 조직위가 직접 적어 둔 사례다 — 공식
+      baseline이 공개 Dev에서 Premium 3.985로 통과했다가 채점셋에서 4.2가 나와 0점을
+      받았다. <b>그 baseline의 Dev 여유는 0.4%였고, 지금 우리 Premium 여유는 60%다.</b>
+      과하게 보수적일 가능성이 실재한다.
+    </p>
+  </div>
+</section>
+
+<!-- 04 -->
+<section>
+  <span class="num">04</span>
+  <h2>얻은 교훈</h2>
+  <p class="sub">전부 실험으로 확인한 것만 적는다. 대부분 틀린 뒤에 배웠다.</p>
+
+  <h3>측정에서 배운 것</h3>
+  <ul class="plain">
+    <li><b>개별 문항은 과대추정하는데 합계는 과소추정할 수 있다.</b> 비용 꼬리가 두꺼워
+        총액을 소수의 큰 문항이 지배한다. 로그 회귀를 지수로 되돌리면 합이 체계적으로
+        낮아진다(Jensen). 이걸 보정하니 Fast 파산이 155 → 31로 떨어졌다.</li>
+    <li><b>비용 예측은 절대값이 아니라 모델 간 상대비만 맞으면 된다.</b> 예산이 비율이라
+        전체에 상수를 곱하면 배분이 한 문항도 안 바뀐다. 이걸 모르고 "비용을 크게 틀렸는데
+        왜 안 터지지"에서 한참 헤맸다.</li>
+    <li><b>안전 마진을 전체 예산 기준으로 잡으면 안 된다.</b> 같은 값이 Fast에겐 여윳돈의
+        50%, Premium에겐 87%다. 일률적으로 −0.03을 뺐더니 Fast만 통째로 죽었다.</li>
+    <li><b>선형 모델은 학습 범위 밖에서 폭주한다.</b> 한 CV fold에서 예측 비용이 실제의
+        <b>463배</b>가 나와 세 등급이 전부 0점이었다. 비공개 평가에서 이상한 프롬프트
+        하나면 같은 일이 난다.</li>
+    <li><b>적은 시행에서의 "0회"는 통과가 아니다.</b> 0/150은 rule of three로 실제
+        파산확률 95% 상한이 2%다. 실제로 150회로 승격된 무효 챔피언이 있었다.</li>
+  </ul>
+
+  <h3>일하는 방식에서 배운 것</h3>
+  <ul class="plain">
+    <li><b>테스트가 설계보다 많은 것을 잡았다.</b> 중복 프롬프트 분리 승격, 릿지 절편
+        표준화, 외삽 폭주, 캐시 원자성, numpy 없는 환경에서의 import 실패 — 전부 테스트가
+        먼저 발견했다. 특히 상류 저장소의 테스트가 우리 결함 두 개를 잡았다.</li>
+    <li><b>같은 계산을 두 곳에 구현하면 반드시 갈라진다.</b> 분석 스크립트와 파이프라인이
+        비용 모델을 따로 갖고 있어 A1 수치가 어긋났다. 하나로 합치니 오히려 점수가 올랐다.</li>
+    <li><b>가설을 검증할 수 없는 실험 설계를 하지 말 것.</b> "표현을 바꾸면 뚫린다"를
+        같은 표현공간의 선형변환으로 검증하려던 적이 있다. 지적받고서야 알았다.</li>
+    <li><b>문서의 숫자는 금방 낡는다.</b> GOAL.md의 "Premium이 가장 위험"은 이틀 만에
+        정반대가 됐다. 문서-코드 접점을 테스트로 고정해 두지 않으면 문서를 못 믿게 된다.</li>
+  </ul>
+</section>
+
+<!-- 05 -->
+<section>
+  <span class="num">05</span>
+  <h2>규칙 준수 — 냉정한 자체 평가</h2>
+  <p class="sub"><code>plan/RULES.md</code>의 항목별로 기계적으로 점검했다. 못 지킨 것이 여섯 개 있다.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>규칙</th><th>내용</th><th>상태</th><th>근거 / 미비점</th></tr></thead>
+      <tbody>
+        <tr><td>A1</td><td>프롬프트·등급만 사용</td><td><span class="chip ok">지킴</span></td><td>헤드 시그니처가 텍스트만 받음. 테스트로 강제</td></tr>
+        <tr><td>A2</td><td>런타임 네트워크 0</td><td><span class="chip ok">지킴</span></td><td><code>--network none</code>으로 실제 실행 확인</td></tr>
+        <tr><td>A3</td><td>포함 파일 출처·라이선스 기록</td><td><span class="chip warn">미흡</span></td><td>numpy는 해시 고정했으나 <b>기반 이미지 기록 파일과 SBOM이 없다</b></td></tr>
+        <tr><td>A4·A5</td><td>공개 자료만 / PR 금지</td><td><span class="chip ok">지킴</span></td><td>—</td></tr>
+        <tr><td>B1~B6</td><td>ID·순서 불변</td><td><span class="chip ok">지킴</span></td><td>런타임 경로에서 880문항 ID 전부 재배정 + 순서 셔플 후 3등급 선택 완전 일치</td></tr>
+        <tr><td>C1~C4</td><td>예산 안전</td><td><span class="chip ok">지킴</span></td><td>N=2,000 게이트, 승격 최소 시행 규칙 추가</td></tr>
+        <tr><td>C5</td><td>예측기 바뀌면 게이트 <b>자동</b> 재실행</td><td><span class="chip bad">못 지킴</span></td><td><b>CI가 없다.</b> 게이트는 전부 수동 실행. 규칙이 "자동"을 요구</td></tr>
+        <tr><td>C6</td><td>실제 비용 비율 기록</td><td><span class="chip ok">지킴</span></td><td>실험 기록 114건 전부에 포함</td></tr>
+        <tr><td>D1~D4</td><td>결정 지표·Dev 격리·근거주의</td><td><span class="chip ok">지킴</span></td><td>Dev를 계수 학습에 쓴 적 없음</td></tr>
+        <tr><td>D5</td><td>트랙에 킬 기준과 마감</td><td><span class="chip warn">미흡</span></td><td>T2(GBDT)·T5(계층 축소)를 <b>착수도 안 했고 폐기 결정도 기록 안 함</b></td></tr>
+        <tr><td>D6~D8</td><td>설정 실험·챔피언·기록 보존</td><td><span class="chip ok">지킴</span></td><td>114건 추적</td></tr>
+        <tr><td>E1</td><td>예외가 등급을 죽이지 않음</td><td><span class="chip ok">지킴</span></td><td>산출물을 깨뜨려도 all-light 제출이 나옴</td></tr>
+        <tr><td>E2</td><td>워치독</td><td><span class="chip warn">미검증</span></td><td>코드는 있으나 <b>발동하는 테스트가 0건</b></td></tr>
+        <tr><td>E3·E4·E6</td><td>원자적 쓰기·로그·VOLUME</td><td><span class="chip ok">지킴</span></td><td>출력 디렉터리에 파일 1개, VOLUME 0개</td></tr>
+        <tr><td>E5</td><td>2,640문항 30초 이내</td><td><span class="chip ok">지킴</span></td><td>2.1초</td></tr>
+        <tr><td>E7</td><td>이미지 크기 한도 사전 확인</td><td><span class="chip warn">미흡</span></td><td>docker의 <code>Size</code>만 봄. <b>공식 측정(<code>router-measure-image</code>)은 레지스트리 다이제스트가 필요해 미실행</b></td></tr>
+        <tr><td>E8</td><td>커밋에 6개 숫자</td><td><span class="chip warn">미흡</span></td><td>수치는 남겼으나 형식이 일정하지 않음</td></tr>
+        <tr><td>E9</td><td>조직위 검증 명령</td><td><span class="chip bad">못 지킴</span></td><td><b><code>ruff</code>·<code>reuse</code>를 한 번도 안 돌렸다.</b> 설치되어 있지 않음</td></tr>
+        <tr><td>F1</td><td>all-light보다 낮으면 제출 금지</td><td><span class="chip ok">지킴</span></td><td>0.6482 &gt; 0.6193</td></tr>
+        <tr><td>F2~F5</td><td>동결·제출 절차</td><td><span class="chip warn">해당 없음</span></td><td>아직 제출 단계 아님</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box bad">
+    <h4>가장 뼈아픈 미준수: E9와 C5</h4>
+    <p>
+      <b>E9</b> — 조직위가 <code>REVIEW_GUIDE.md</code>에 명시한 검증 명령
+      <code>ruff check .</code>과 <code>reuse lint</code>를 <b>한 번도 실행하지 않았다.</b>
+      우리가 추가한 파일 20여 개의 스타일과 라이선스 표기가 검증되지 않은 상태다.
+      제출 전 반드시 통과시켜야 한다.
+    </p>
+    <p>
+      <b>C5</b> — "예측기를 바꾸면 게이트를 <b>자동으로</b> 재실행한다"는 규칙을 만들어
+      놓고 CI를 만들지 않았다. 지금은 내가 기억해서 손으로 돌린다. 사람이 기억하는
+      규칙은 언젠가 깨진다.
+    </p>
+  </div>
+</section>
+
+<!-- 06 -->
+<section>
+  <span class="num">06</span>
+  <h2>앞으로 어디로 갈 것인가</h2>
+  <p class="sub">남은 15일. 우선순위를 근거로 정한다.</p>
+
+  <h3>남은 점수는 어디에 있나</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th>레버</th><th>현재 상태</th><th class="n">예상 이득</th><th>근거</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td><b>L1 동점·무망 탐지기</b></td><td><span class="chip bad">미착수</span></td><td class="n">큼</td>
+            <td>문항의 58%(동점 49% + 전부 0점 9%)에 돈을 쓰고 있다. 걸러내면 예산이 직접 풀린다</td></tr>
+        <tr class="hl"><td><b>L3 문항 단위 점수 예측</b></td><td><span class="chip bad">미착수</span></td><td class="n">큼</td>
+            <td>점수 예측 완벽화의 값어치가 비용 예측의 4배(+0.087 vs +0.022)</td></tr>
+        <tr><td>게이트 강도 재검토</td><td><span class="chip warn">미검토</span></td><td class="n">0.036</td>
+            <td>지금 포기하고 있는 양. 게이트가 과하면 되찾을 수 있다</td></tr>
+        <tr><td>L2 계열 K1 배분</td><td><span class="chip ok">적용됨</span></td><td class="n">—</td><td>ROI 하위 계열 차단 중</td></tr>
+        <tr><td>L4 비용 예측</td><td><span class="chip ok">적용됨</span></td><td class="n">—</td><td>문항 단위 회귀 + 3중 보정</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box ok">
+    <h4>권장 순서</h4>
+    <p>
+      <b>① L1 동점·무망 탐지기 (가장 먼저).</b> 구현이 단순하고, 점수 예측 정확도가 아니라
+      "여기 돈 쓰지 마"만 맞히면 된다. 비용 헤드는 이미 문항 단위이므로
+      "점수만 올리면 붕괴"의 조건에서 벗어나 있다.
+    </p>
+    <p>
+      <b>② L3 문항 단위 점수 예측.</b> 비용 쪽에서 검증된 방식(계열별 릿지 + 클램프)을
+      그대로 점수에 적용한다. 이미 배관이 다 있어 설정 파일 한 줄이면 실험할 수 있다.
+    </p>
+    <p>
+      <b>③ 게이트 강도 보정 연구.</b> 지금은 "파산 0회"라는 이진 기준만 쓴다. 시나리오별로
+      위험도를 나눠 보고, 비현실적으로 가혹한 시나리오가 있는지 따진다. 다만
+      <b>통과하려고 기준을 낮추는 것은 금지</b> — 근거를 먼저 만들고 나서 조정한다.
+    </p>
+    <p>
+      <b>④ 규칙 미준수 6건 해소.</b> <code>ruff</code>·<code>reuse</code> 설치와 통과,
+      CI 구성, 워치독 테스트, 기반 이미지 기록. 제출 전 반드시.
+    </p>
+  </div>
+
+  <h3>일정 현실 점검</h3>
+  <p>
+    원래 계획(<code>plan/TODO.md</code>)은 8/14까지 P1을 끝내는 것이었다. 실제로는
+    <b>계획에 없던 런타임·컨테이너 작업을 앞당겨 끝냈고</b>, 대신 점수 예측을 통째로
+    미뤘다. 제출 리스크는 줄었지만 점수 작업 시간이 줄었다.
+  </p>
+  <p>
+    <b>8/19 새 트랙 착수 금지 · 8/22 점수 헤드 동결 · 8/25 이미지 동결</b>은 그대로
+    유효하다. 즉 점수를 올릴 시간이 <b>실질적으로 10일</b> 남았다.
+  </p>
+</section>
+
+<!-- 07 -->
+<section>
+  <span class="num">07</span>
+  <h2>읽어야 할 문서</h2>
+  <p class="sub">우선순위대로. 굵은 것만 읽어도 대화가 된다.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>순위</th><th>문서</th><th>무엇을 알게 되나</th><th class="n">분량</th></tr></thead>
+      <tbody>
+        <tr class="hl"><td>1</td><td><code>plan/audit.html</code></td><td><b>이 문서.</b> 현재 상태와 판단 근거 전부</td><td class="n">지금</td></tr>
+        <tr class="hl"><td>2</td><td><code>plan/GOAL.md</code></td><td><b>점수가 어디서 나오는지.</b> 레버 4개, 계열별 ROI, 함정</td><td class="n">10분</td></tr>
+        <tr class="hl"><td>3</td><td><code>plan/RULES.md</code></td><td><b>지키기로 한 규칙</b> 30여 개. 위 05장의 판정 기준</td><td class="n">10분</td></tr>
+        <tr><td>4</td><td><code>plan/overview.html</code></td><td>대회 전체를 쉬운 말로. 배경이 필요할 때</td><td class="n">15분</td></tr>
+        <tr><td>5</td><td><code>plan/DESIGN.md</code> §6</td><td>검증됨 / <b>기각됨</b> / 미검증 목록</td><td class="n">5분</td></tr>
+        <tr><td>6</td><td><code>docs/CHALLENGE_RULES.md</code></td><td>공식 경계선. 우리 규칙의 출처</td><td class="n">10분</td></tr>
+        <tr><td>7</td><td><code>plan/TODO.md</code></td><td>일정과 동결 시점</td><td class="n">5분</td></tr>
+        <tr><td>—</td><td><code>docs/SUBMISSION.md</code></td><td>제출 직전에. 절차 순서가 강제됨</td><td class="n">8/25 이후</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:14px; color:var(--muted)">
+    나머지 저장소 문서 20여 개는 전부 읽고 필요한 조항을 <code>plan/RULES.md</code>로 옮겨 뒀다.
+    원문은 근거 확인용이다.
+  </p>
+</section>
+
+<footer>
+  <p>
+    모든 수치는 공개 Train 1,760 · Dev 880과 공개 비용 정책으로 계산했고,
+    채점은 저장소 원본 <code>ossp_router.scoring</code>이 냈다. 파산 게이트만 자체 도구다.
+    재현: <code>PYTHONPATH=src python3 experiments/run.py leaderboard</code>
+  </p>
+  <p style="margin-top:10px">
+    공개 자료 기준 관측값이며 비공개 최종 평가 성능을 보장하지 않는다.
+  </p>
+</footer>
+
+</div>
