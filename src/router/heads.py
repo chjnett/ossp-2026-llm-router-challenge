@@ -348,7 +348,7 @@ class RidgeCost:
         self.min_family = int(min_family)
         self.smearing = bool(smearing)
         self.version = (
-            f"ridgecost.v3(z={self.z:g},zl={self.z_light:g},"
+            f"ridgecost.v4(z={self.z:g},zl={self.z_light:g},"
             f"a={self.alpha:g},sm={int(self.smearing)})"
         )
 
@@ -404,6 +404,22 @@ class RidgeCost:
             self._pool_by_family[f] = np.sort(residual, axis=0)[np.round(take).astype(int)]
         self._policy = train.policy
 
+        # 총합 보정은 계열 회귀가 다 준비된 뒤에 계산한다.
+        # smearing은 개별 문항의 Jensen 편향을 고치지만 mean(exp(잔차))가
+        # 꼬리에 지배돼 총합을 과대추정한다(실측 1.127). 예산은 총합으로
+        # 걸리므로 학습 총합이 맞도록 계열·모델별 배율을 한 번 더 곱한다.
+        self._calibration = np.ones((len(FAMILIES), N_MODELS))
+        base = self._base_tokens(train.texts)
+        global_calib = train.output_tokens.sum(axis=0) / np.maximum(base.sum(axis=0), 1e-9)
+        for f in range(len(FAMILIES)):
+            m = codes == f
+            self._calibration[f] = (
+                train.output_tokens[m].sum(axis=0) / np.maximum(base[m].sum(axis=0), 1e-9)
+                if m.sum() >= self.min_family
+                else global_calib
+            )
+        self._calibration = np.clip(self._calibration, 0.2, 5.0)
+
     def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
         features = extract(texts)
         codes = family_codes(texts)
@@ -427,14 +443,22 @@ class RidgeCost:
             if self.smearing:
                 smear[m] = self._smear_by_family.get(int(f), self._global_smear)
 
-        # 회귀 출력을 학습에서 본 범위로 먼저 묶은 뒤 편향을 얹는다.
+        # 회귀 출력을 학습에서 본 범위로 먼저 묶는다.
         log_out = np.clip(log_out, self._log_lo, self._log_hi)
+
+        # 1) 기저 예측. smearing은 exp(잔차)의 평균이라 되돌리기 전에 곱한다.
+        base = np.clip(np.exp(log_out) * smear - 1.0, 0.0, self._token_hi)
+
+        # 2) 총합 보정. smearing은 개별 문항의 Jensen 편향은 고치지만
+        #    mean(exp(잔차))가 꼬리에 지배돼 **총합을 과대추정**한다.
+        #    실측: 끄면 0.870, 켜면 1.127. 예산은 총합으로 걸리므로
+        #    학습에서 총합이 맞도록 계열·모델별 배율을 한 번 더 곱한다.
+        base = base * self._calibration[codes]
+
+        # 3) 안전 편향. 여기서부터는 의도적으로 위로 틀린다 (RULES C2).
         bias = np.full(N_MODELS, self.z)
         bias[0] = self.z_light
-        # smearing은 exp(잔차)의 평균이므로 log1p 되돌리기 전에 곱한다.
-        tok_out = np.clip(
-            np.exp(log_out + bias * sd_log) * smear - 1.0, 0.0, self._token_hi
-        )
+        tok_out = np.clip(base * np.exp(bias * sd_log), 0.0, self._token_hi)
         cost = cost_from_tokens(tok_in, tok_out, self._policy)
         # 산포는 로그 공간 잔차를 비용 단위로 옮겨 근사한다.
         spread_tokens = np.clip(
@@ -442,6 +466,23 @@ class RidgeCost:
         )
         sd = cost_from_tokens(np.zeros_like(tok_in), spread_tokens, self._policy)
         return cost, sd
+
+    def _base_tokens(self, texts: Sequence[str]) -> np.ndarray:
+        """보정·편향을 얹기 전의 출력 토큰 예측."""
+
+        features = extract(texts)
+        codes = family_codes(texts)
+        log_out = np.zeros((len(texts), N_MODELS))
+        smear = np.ones((len(texts), N_MODELS))
+        for f in np.unique(codes):
+            m = codes == f
+            fitted = self._by_family.get(int(f), self._global)
+            for j in range(N_MODELS):
+                log_out[m, j] = _ridge_apply(features[m], fitted[j])
+            if self.smearing:
+                smear[m] = self._smear_by_family.get(int(f), self._global_smear)
+        log_out = np.clip(log_out, self._log_lo, self._log_hi)
+        return np.clip(np.exp(log_out) * smear - 1.0, 0.0, self._token_hi)
 
     def residual_multipliers(
         self, texts: Sequence[str], keys: Sequence[str], draws: int
@@ -485,6 +526,7 @@ class RidgeCost:
             },
             "global_pool": self._global_pool.tolist(),
             "pool_by_family": {str(f): v.tolist() for f, v in self._pool_by_family.items()},
+            "calibration": self._calibration.tolist(),
             "log_lo": self._log_lo.tolist(),
             "log_hi": self._log_hi.tolist(),
             "token_hi": self._token_hi.tolist(),
@@ -516,6 +558,7 @@ class RidgeCost:
         self._pool_by_family = {
             int(k): np.asarray(v, dtype=float) for k, v in state["pool_by_family"].items()
         }
+        self._calibration = np.asarray(state["calibration"], dtype=float)
         self._log_lo = np.asarray(state["log_lo"], dtype=float)
         self._log_hi = np.asarray(state["log_hi"], dtype=float)
         self._token_hi = np.asarray(state["token_hi"], dtype=float)
