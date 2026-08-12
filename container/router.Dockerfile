@@ -12,8 +12,16 @@
 # 기반 이미지 출처와 라이선스는 container/ROUTER_BASE_IMAGE.md에 기록한다.
 FROM python:3.11.15-slim-bookworm@sha256:d29f48a31a8b408ed19272ca1e7b10ebae13b240a27e862d3d4217c528e2e0c3
 
+# 제출 JSON은 커밋 SHA와 이미지 다이제스트를 나란히 적을 뿐, 둘이 실제로
+# 맞물리는지는 아무도 확인하지 않는다. 공식 검증기도 형식만 본다. 산출물이
+# 낡아 런타임이 조용히 폴백으로 떨어진 일이 세 번 있었고, 같은 부류의 사고다.
+#
+# 그래서 소스 파일 목록의 SHA-256을 이미지에 새긴다. 값은 상류
+# tools/benchmark_runtime.py의 _source_tree_manifest()가 정의하며 라벨 키도
+# 상류가 읽는 것과 같게 맞춘다. tools/verify_release.py가 제출 커밋에서 이
+# 값을 다시 계산해 라벨과 대조한다.
 ARG SOURCE_MANIFEST_SHA256=unbound
-LABEL org.opencontainers.image.source-manifest-sha256="${SOURCE_MANIFEST_SHA256}"
+LABEL io.sktelecom.ossp.source-manifest-sha256="${SOURCE_MANIFEST_SHA256}"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/opt/router \
