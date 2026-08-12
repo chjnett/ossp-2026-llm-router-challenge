@@ -84,6 +84,34 @@ class ArtifactTest(unittest.TestCase):
 
 
 class RuntimeTest(unittest.TestCase):
+    def test_does_not_silently_fall_back(self) -> None:
+        """정상 입력에서 폴백이 뜨면 산출물이 낡았거나 코드와 어긋난 것이다.
+
+        폴백은 유효한 제출을 만들기 때문에 형식 검사만으로는 안 잡힌다.
+        실제로 잔차 풀을 추가하면서 헤드 버전이 바뀌자 런타임이 조용히
+        all-light로 떨어졌고, 기존 테스트는 전부 통과했다.
+        """
+
+        import io
+        import contextlib
+
+        from router.artifact import load_artifact, restore
+        from ossp_router.protocol import load_bundled_policy
+
+        # 산출물과 코드가 맞는지 직접 확인한다. 어긋나면 여기서 터진다.
+        restore(load_artifact(ARTIFACT_PATH), load_bundled_policy())
+
+        with tempfile.TemporaryDirectory() as tmp:
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                self.assertEqual(0, run_cli(DEV, "premium", Path(tmp) / "o.json"))
+            self.assertNotIn("폴백", err.getvalue(), "정상 입력인데 폴백을 썼다")
+
+            picks = set(decisions(Path(tmp) / "o.json").values())
+            self.assertGreater(
+                len(picks), 1, "모든 문항이 같은 모델이다. 폴백일 가능성이 높다"
+            )
+
     def test_produces_a_valid_submission_for_every_tier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             for tier in ("fast", "balanced", "premium"):
