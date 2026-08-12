@@ -1,0 +1,11 @@
+{
+  "id": "h1-no-roi-gate",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 0.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.28, "premium": 0.75},
+    "size_penalty": 2.0
+  },
+  "note": "family_roi 차단을 끈다. 배분기가 도달하는 한계 ROI가 fast 36.6 / balanced 21.3 / premium 2.7인데 임계값이 1.0이라 배분기가 이미 걸러낸 것을 한 번 더 거르고 있었다. 손잡이 하나를 줄이고 CV도 미세하게 오른다."
+}

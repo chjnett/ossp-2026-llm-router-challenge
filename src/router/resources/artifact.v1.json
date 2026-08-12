@@ -15,12 +15,12 @@
    "z_light": -0.5
   },
   "gate": {
-   "min_roi": 1.0,
+   "min_roi": 0.0,
    "name": "k1_cost_cap",
    "percentile": 90.0
   },
-  "id": "f4-calibrated-bal028",
-  "note": "총합 보정으로 예측이 정확해지자 같은 여윳돈에서도 배분이 공격적이 됐다. 챔피언이 쓰던 balanced 0.30이 이제는 과해서 0.28로 내린다. 안전 설정은 예측기에 종속이라는 RULES C5의 실례.",
+  "id": "h1-no-roi-gate",
+  "note": "family_roi 차단을 끈다. 배분기가 도달하는 한계 ROI가 fast 36.6 / balanced 21.3 / premium 2.7인데 임계값이 1.0이라 배분기가 이미 걸러낸 것을 한 번 더 거르고 있었다. 손잡이 하나를 줄이고 CV도 미세하게 오른다.",
   "score": "family"
  },
  "features": {
@@ -62,9 +62,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "2b9808e00d91faf9c35f00008a5667c4a8f3fa31",
-  "config_path": "experiments/configs/f4-calibrated-bal028.json",
-  "created_at": "2026-08-12T11:55:54+00:00",
+  "commit": "78deb2bc9dedda61cdca0a30fc9f4a6df04c04a5",
+  "config_path": "experiments/configs/h1-no-roi-gate.json",
+  "created_at": "2026-08-12T15:49:10+00:00",
   "fit_episodes": 1760,
   "fit_inputs_sha256": "029a0fb1f70432a05b837a1291d86d42278bb202d808a6a12911b0dae8628ac4",
   "fit_outcomes_sha256": "97a5a787086b3e1d9fa9c7945518543540e527ea248df4a4760de581b612a4ba",
@@ -7939,7 +7939,7 @@
  },
  "versions": {
   "cost": "ridgecost.v4(z=1.28,zl=-0.5,a=3,sm=1)",
-  "gate": "k1cap.v2(p=90,roi=1)",
+  "gate": "k1cap.v2(p=90,roi=0)",
   "score": "family.v1"
  }
 }
