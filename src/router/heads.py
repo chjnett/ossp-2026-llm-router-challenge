@@ -470,6 +470,56 @@ class K1CostCapGate:
         self._roi_gate.load_state(state["roi"])
 
 
+@register(GATES, "runaway_guard")
+class RunawayGuardGate:
+    """생성이 폭주할 것 같은 문항의 승격을 막는다.
+
+    파산의 대부분은 예측 실패 몇 건이 만든다. 실측: Fast 파산 트라이얼에서
+    추가비용의 83~89%를 단일 문항 하나가 만들었고, 그 문항은 실제 비용이
+    예측의 36배였다. 모델이 답을 못 내고 수만 토큰을 뱉은 경우다.
+
+    이런 폭주는 로그 회귀의 조건부 평균으로는 절대 못 맞힌다. 대신 **폭주는
+    모델을 가리지 않는다** — 계열 안에서 light 출력과 ax31 출력의 상관이
+    0.75~0.78이다. 그리고 light 출력은 비교적 잘 예측된다(R² 0.61).
+
+    그래서 "light가 이미 많이 뱉을 것 같은 문항"을 승격 후보에서 뺀다.
+    개별 문항의 비용을 위로 크게 부풀리는 방식은 전체를 망가뜨리는데,
+    이 방식은 꼬리만 잘라낸다.
+    """
+
+    def __init__(self, percentile: float = 97.0, inner: str = "k1_cost_cap",
+                 **inner_kwargs) -> None:
+        self.percentile = float(percentile)
+        self._inner = GATES[inner](**inner_kwargs)
+        self.version = f"runaway.v1(p={self.percentile:g})+{self._inner.version}"
+
+    def fit(self, train: Dataset) -> None:
+        self._inner.fit(train)
+        # 임계값은 **예측 분포**에서 잡아야 한다. 실제 비용 분위로 잡으면
+        # 예측이 평균으로 수축돼 있어 아무 문항도 안 걸린다(실측: 효과 0).
+        # 예측 상위 5%가 실제 폭주의 85%를 잡는다.
+        from .features import extract  # noqa: F401  (헤드 내부 일관성용)
+
+        self._threshold = 0.0
+        self._threshold_percentile = self.percentile
+
+    def allow(self, texts, s_hat, c_hat) -> np.ndarray:
+        allow = self._inner.allow(texts, s_hat, c_hat)
+        # 배치 안의 예측 분포에서 자른다. 배치 구성은 규칙상 볼 수 있는
+        # 정보이고, 문항 ID나 입력 순서를 쓰는 것과 다르다.
+        cut = float(np.percentile(c_hat[:, 0], self._threshold_percentile))
+        allow[c_hat[:, 0] > cut, 1:] = False
+        allow[:, 0] = True
+        return allow
+
+    def state(self) -> dict:
+        return {"percentile": self._threshold_percentile, "inner": self._inner.state()}
+
+    def load_state(self, state: dict) -> None:
+        self._threshold_percentile = float(state["percentile"])
+        self._inner.load_state(state["inner"])
+
+
 def build_score_head(spec) -> ScoreHead:
     return _build(SCORE_HEADS, spec, "score")
 

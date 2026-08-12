@@ -1,0 +1,11 @@
+{
+  "id": "d1-smearing-pertier",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.35, "premium": 0.65},
+    "size_penalty": 2.0
+  },
+  "note": "여윳돈 기준 등급별 마진. 파산 0회가 관측된 최대치(fast 0.30 / balanced 0.40 / premium 0.70)에서 한 단계(-0.05) 더 보수적으로 내렸다."
+}
