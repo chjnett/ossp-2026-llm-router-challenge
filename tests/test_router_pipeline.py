@@ -286,12 +286,43 @@ class CacheTest(unittest.TestCase):
 
 
 class ChampionTest(unittest.TestCase):
-    def _record(self, cv: str, gate: bool, cv_passed: bool = True) -> dict:
+    def _record(
+        self, cv: str, gate: bool, cv_passed: bool = True, trials: int = 2000
+    ) -> dict:
         return {
             "id": "r",
             "cv": {"final_score": cv, "all_passed": cv_passed},
-            "gate": {"passed": gate},
+            "gate": {"passed": gate, "trials": trials},
         }
+
+    def test_promotion_requires_enough_gate_trials(self) -> None:
+        """적은 시행에서의 0회는 통과가 아니다 (RULES C4).
+
+        실제로 150회 게이트로 승격된 챔피언이 있었다. rule of three로
+        0/150은 실제 파산확률 95% 상한이 2%다.
+        """
+
+        import run as runner
+
+        with tempfile.TemporaryDirectory() as tmp:
+            original = runner.CHAMPION
+            runner.CHAMPION = Path(tmp) / "champion.json"
+            try:
+                self.assertFalse(
+                    runner.maybe_promote(self._record("0.9", gate=True, trials=150))
+                )
+                self.assertFalse(
+                    runner.maybe_promote(
+                        self._record("0.9", gate=True, trials=runner.MIN_GATE_TRIALS - 1)
+                    )
+                )
+                self.assertTrue(
+                    runner.maybe_promote(
+                        self._record("0.9", gate=True, trials=runner.MIN_GATE_TRIALS)
+                    )
+                )
+            finally:
+                runner.CHAMPION = original
 
     def test_promotion_requires_gate_and_cv_budget(self) -> None:
         import run as runner

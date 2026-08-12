@@ -1,15 +1,16 @@
 {
  "config": {
   "alloc": {
-   "size_penalty": 2.0,
-   "util": {
-    "balanced": 0.77,
-    "fast": 0.87,
-    "premium": 0.97
-   }
+   "headroom": {
+    "balanced": 0.3,
+    "fast": 0.25,
+    "premium": 0.65
+   },
+   "size_penalty": 2.0
   },
   "cost": {
    "name": "ridge",
+   "smearing": true,
    "z": 1.28,
    "z_light": -0.5
   },
@@ -18,8 +19,8 @@
    "name": "k1_cost_cap",
    "percentile": 90.0
   },
-  "id": "c1-ridge-pertier",
-  "note": "등급별 사용률을 따로 잡고 배치 크기로 마진을 조절한다. 각 등급에서 파산 0회가 관측된 최대 사용률(fast 0.90 / balanced 0.80 / premium 1.05)에서 한 단계(-0.03) 더 보수적으로 내렸고, premium은 예측 한도의 100%를 넘겨 목표하지 않도록 1.00에서 잘랐다.",
+  "id": "d2-balanced-030",
+  "note": "d1에서 balanced만 0.35 -> 0.30으로 내렸다. d1은 N=2000에서 balanced가 2회(0.05%) 넘겼고 나머지 두 등급은 완전 통과했다.",
   "score": "family"
  },
  "features": {
@@ -61,9 +62,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "798b362be66d736cb968a5e0405e7e3f2d4f38e6",
-  "config_path": "experiments/configs/c1-ridge-pertier.json",
-  "created_at": "2026-08-12T05:15:37+00:00",
+  "commit": "cebe453daa804bc3250e20be47be6cb41a486084",
+  "config_path": "experiments/configs/d2-balanced-030.json",
+  "created_at": "2026-08-12T06:13:35+00:00",
   "fit_episodes": 1760,
   "fit_inputs_sha256": "029a0fb1f70432a05b837a1291d86d42278bb202d808a6a12911b0dae8628ac4",
   "fit_outcomes_sha256": "97a5a787086b3e1d9fa9c7945518543540e527ea248df4a4760de581b612a4ba",

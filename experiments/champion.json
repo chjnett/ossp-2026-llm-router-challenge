@@ -1,116 +1,123 @@
 {
-  "id": "ridge-z1.28L-0.5-none-u0.8",
-  "at": "2026-08-11T11:56:26+00:00",
-  "commit": "2efa8fd04c16f8ebd3ef2a6807614268a8efa038",
+  "id": "d2-balanced-030",
+  "at": "2026-08-12T06:13:09+00:00",
+  "commit": "cebe453daa804bc3250e20be47be6cb41a486084",
   "config": {
-    "id": "ridge-z1.28L-0.5-none-u0.8",
+    "id": "d2-balanced-030",
     "score": "family",
     "cost": {
       "name": "ridge",
       "z": 1.28,
-      "z_light": -0.5
+      "z_light": -0.5,
+      "smearing": true
     },
     "gate": {
-      "name": "family_roi",
+      "name": "k1_cost_cap",
+      "percentile": 90.0,
       "min_roi": 1.0
     },
     "alloc": {
-      "util": 0.8
+      "headroom": {
+        "fast": 0.25,
+        "balanced": 0.3,
+        "premium": 0.65
+      },
+      "size_penalty": 2.0
     },
-    "note": "문항 단위 비용 회귀 + 비대칭 상방 편향"
+    "note": "d1에서 balanced만 0.35 -> 0.30으로 내렸다. d1은 N=2000에서 balanced가 2회(0.05%) 넘겼고 나머지 두 등급은 완전 통과했다."
   },
   "versions": {
     "score": "family.v1",
-    "cost": "ridgecost.v2(z=1.28,zl=-0.5,a=3)",
-    "gate": "familyroi.v1(min=1)"
+    "cost": "ridgecost.v3(z=1.28,zl=-0.5,a=3,sm=1)",
+    "gate": "k1cap.v1(p=90,roi=1)"
   },
   "cv": {
-    "final_score": "0.635823863636",
+    "final_score": "0.630866477273",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.597301136364",
-        "budget_ratio": "1",
-        "headroom": "0.25",
+        "score": "0.606107954545",
+        "budget_ratio": "1.016603049169",
+        "headroom": "0.233396950831",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1760,
-          "ax31": 0,
+          "ax31-light": 1601,
+          "ax31": 159,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.646164772727",
-        "budget_ratio": "1.225067244699",
-        "headroom": "0.774932755301",
+        "score": "0.625426136364",
+        "budget_ratio": "1.082955036655",
+        "headroom": "0.917044963345",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 736,
-          "ax31": 1023,
-          "axk1-think": 1
+          "ax31-light": 1209,
+          "ax31": 551,
+          "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.676846590909",
-        "budget_ratio": "1.762517732775",
-        "headroom": "2.237482267225",
+        "score": "0.669318181818",
+        "budget_ratio": "1.567443960949",
+        "headroom": "2.432556039051",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 299,
-          "ax31": 1412,
-          "axk1-think": 49
+          "ax31-light": 350,
+          "ax31": 1392,
+          "axk1-think": 18
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.655539772727",
+    "final_score": "0.648153409091",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.619318181818",
-        "budget_ratio": "1",
-        "headroom": "0.25",
+        "score": "0.622159090909",
+        "budget_ratio": "1.020289556053",
+        "headroom": "0.229710443947",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 880,
-          "ax31": 0,
+          "ax31-light": 785,
+          "ax31": 95,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.669318181818",
-        "budget_ratio": "1.312715986204",
-        "headroom": "0.687284013796",
+        "score": "0.645454545455",
+        "budget_ratio": "1.155337740572",
+        "headroom": "0.844662259428",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 359,
-          "ax31": 521,
+          "ax31-light": 577,
+          "ax31": 303,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.690056818182",
-        "budget_ratio": "1.779870364411",
-        "headroom": "2.220129635589",
+        "score": "0.685511363636",
+        "budget_ratio": "1.611735095042",
+        "headroom": "2.388264904958",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 123,
-          "ax31": 734,
-          "axk1-think": 23
+          "ax31-light": 151,
+          "ax31": 720,
+          "axk1-think": 9
         }
       }
     }
   },
   "gate": {
     "ran": true,
-    "trials": 150,
+    "trials": 2000,
     "passed": true,
     "scenarios": {
       "size-200": {
@@ -145,5 +152,5 @@
       }
     }
   },
-  "seconds": 19.29
+  "seconds": 124.86
 }

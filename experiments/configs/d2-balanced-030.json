@@ -1,0 +1,11 @@
+{
+  "id": "d2-balanced-030",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.30, "premium": 0.65},
+    "size_penalty": 2.0
+  },
+  "note": "d1에서 balanced만 0.35 -> 0.30으로 내렸다. d1은 N=2000에서 balanced가 2회(0.05%) 넘겼고 나머지 두 등급은 완전 통과했다."
+}

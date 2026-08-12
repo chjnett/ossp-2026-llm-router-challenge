@@ -32,6 +32,9 @@ ROOT = Path(__file__).resolve().parents[1]
 RESULTS = ROOT / "experiments" / "results.jsonl"
 CHAMPION = ROOT / "experiments" / "champion.json"
 
+# RULES C4. 0/150은 rule of three로 실제 파산확률 95% 상한이 2%다. 증명이 아니다.
+MIN_GATE_TRIALS = 2000
+
 
 def git_sha() -> str:
     try:
@@ -120,6 +123,10 @@ def maybe_promote(record: dict) -> bool:
     """CV 가중 초과 **그리고** 게이트 통과일 때만 승격한다."""
 
     if not record["gate"]["passed"]:
+        return False
+    if int(record["gate"].get("trials", 0)) < MIN_GATE_TRIALS:
+        # 시행이 모자란 통과는 통과가 아니다. 적은 N에서의 0회는
+        # 파산확률이 낮다는 증거가 되지 못한다.
         return False
     if not record["cv"]["all_passed"]:
         return False
