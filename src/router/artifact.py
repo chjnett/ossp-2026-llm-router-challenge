@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
-from .data import MODEL_IDS
+from .constants import MODEL_IDS
 from .features import FAMILIES, FEATURE_NAMES, FEATURE_VERSION
 
 ARTIFACT_SCHEMA_VERSION = 1

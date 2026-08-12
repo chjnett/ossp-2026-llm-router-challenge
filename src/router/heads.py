@@ -110,6 +110,118 @@ class FamilyScore:
         self._table = np.asarray(state["table"], dtype=float)
 
 
+def _useless_target(train: Dataset) -> np.ndarray:
+    """어떤 모델도 light를 넘지 못하는 문항 = 1.
+
+    Train 기준 64.5%가 여기 해당한다(전부 만점 46.7% + 전부 0점 9.0% + 나머지).
+    이 문항들에 쓰는 돈은 전부 순손실이다.
+    """
+
+    return ((train.score.max(axis=1) - train.score[:, 0]) <= 0).astype(float)
+
+
+class _UselessModel:
+    """계열별 회귀로 '승격이 무의미할 확률'을 예측한다."""
+
+    def fit(self, train: Dataset, alpha: float, min_family: int) -> None:
+        codes = family_codes(train.texts)
+        features = extract(train.texts)
+        target = _useless_target(train)
+        self.overall = float(target.mean())
+        self.global_fit = _ridge(features, target, alpha)
+        self.by_family: Dict[int, tuple] = {}
+        self.mean_by_family: Dict[int, float] = {}
+        for f in range(len(FAMILIES)):
+            m = codes == f
+            if not m.any():
+                continue
+            self.mean_by_family[f] = float(target[m].mean())
+            if m.sum() >= min_family:
+                self.by_family[f] = _ridge(features[m], target[m], alpha)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        features = extract(texts)
+        codes = family_codes(texts)
+        out = np.full(len(texts), self.overall)
+        for f in np.unique(codes):
+            m = codes == f
+            key = int(f)
+            if key in self.by_family:
+                out[m] = _ridge_apply(features[m], self.by_family[key])
+            elif key in self.mean_by_family:
+                out[m] = self.mean_by_family[key]
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        def pack(fit):
+            m, s_, w = fit
+            return [m.tolist(), s_.tolist(), w.tolist()]
+
+        return {
+            "overall": self.overall,
+            "global": pack(self.global_fit),
+            "by_family": {str(k): pack(v) for k, v in self.by_family.items()},
+            "mean_by_family": {str(k): v for k, v in self.mean_by_family.items()},
+        }
+
+    def load_state(self, state: dict) -> None:
+        def unpack(row):
+            return tuple(np.asarray(x, dtype=float) for x in row)
+
+        self.overall = float(state["overall"])
+        self.global_fit = unpack(state["global"])
+        self.by_family = {int(k): unpack(v) for k, v in state["by_family"].items()}
+        self.mean_by_family = {int(k): float(v) for k, v in state["mean_by_family"].items()}
+
+
+@register(SCORE_HEADS, "family_useful")
+class FamilyUsefulScore:
+    """계열 평균 이득을 **문항별 '유용할 확률'로 축소**한다.
+
+    계열 평균 점수 헤드는 같은 계열의 모든 문항에 같은 이득을 준다. 그래서
+    배분기가 계열 안에서 우선순위를 매길 수 없다. 문항의 64.5%는 어떤 모델도
+    light를 못 넘기는데, 그 구분을 전혀 못 하고 있었다.
+
+    ``ŝ_m = ŝ_light + P(유용) × (계열평균 이득)``
+
+    하드 차단보다 이쪽이 낫다. 배분기의 ROI 정렬이 그대로 살아 있어서
+    "유용할 확률이 낮지만 아주 싼" 문항은 여전히 뽑힐 수 있다.
+    """
+
+    def __init__(self, alpha: float = 5.0, min_family: int = 40,
+                 strength: float = 1.0) -> None:
+        self.alpha = float(alpha)
+        self.min_family = int(min_family)
+        self.strength = float(strength)
+        self.version = f"familyuseful.v1(a={self.alpha:g},s={self.strength:g})"
+
+    def fit(self, train: Dataset) -> None:
+        codes = family_codes(train.texts)
+        self._table = np.zeros((len(FAMILIES), N_MODELS))
+        overall = train.score.mean(axis=0)
+        for f in range(len(FAMILIES)):
+            m = codes == f
+            self._table[f] = train.score[m].mean(axis=0) if m.any() else overall
+        self._useless = _UselessModel()
+        self._useless.fit(train, self.alpha, self.min_family)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        base = self._table[family_codes(texts)]
+        useful = 1.0 - self.strength * self._useless.predict(texts)
+        gain = base[:, 1:] - base[:, [0]]
+        out = base.copy()
+        out[:, 1:] = base[:, [0]] + gain * useful[:, None]
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {"table": self._table.tolist(), "useless": self._useless.state()}
+
+    def load_state(self, state: dict) -> None:
+        self._table = np.asarray(state["table"], dtype=float)
+        self._useless = _UselessModel()
+        self._useless.load_state(state["useless"])
+
+
 # --------------------------------------------------------------------------
 # 비용 헤드
 # --------------------------------------------------------------------------
@@ -517,6 +629,47 @@ class RunawayGuardGate:
 
     def load_state(self, state: dict) -> None:
         self._threshold_percentile = float(state["percentile"])
+        self._inner.load_state(state["inner"])
+
+
+@register(GATES, "useless_block")
+class UselessBlockGate:
+    """승격이 무의미할 확률 상위 ``percentile``%의 승격을 하드 차단한다.
+
+    ``family_useful`` 점수 헤드의 하드 버전이다. 어느 쪽이 나은지는 실험으로
+    정한다 — 하드 차단은 싼 문항까지 같이 버리고, 축소는 그걸 살린다.
+    """
+
+    def __init__(self, percentile: float = 80.0, alpha: float = 5.0,
+                 min_family: int = 40, inner: str = "k1_cost_cap",
+                 **inner_kwargs) -> None:
+        self.percentile = float(percentile)
+        self.alpha = float(alpha)
+        self.min_family = int(min_family)
+        self._inner = GATES[inner](**inner_kwargs)
+        self.version = f"uselessblock.v1(p={self.percentile:g})+{self._inner.version}"
+
+    def fit(self, train: Dataset) -> None:
+        self._inner.fit(train)
+        self._useless = _UselessModel()
+        self._useless.fit(train, self.alpha, self.min_family)
+
+    def allow(self, texts, s_hat, c_hat) -> np.ndarray:
+        allow = self._inner.allow(texts, s_hat, c_hat)
+        risk = self._useless.predict(texts)
+        cut = float(np.percentile(risk, self.percentile))
+        allow[risk >= cut, 1:] = False
+        allow[:, 0] = True
+        return allow
+
+    def state(self) -> dict:
+        return {"percentile": self.percentile, "useless": self._useless.state(),
+                "inner": self._inner.state()}
+
+    def load_state(self, state: dict) -> None:
+        self.percentile = float(state["percentile"])
+        self._useless = _UselessModel()
+        self._useless.load_state(state["useless"])
         self._inner.load_state(state["inner"])
 
 

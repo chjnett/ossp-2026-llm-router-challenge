@@ -1,0 +1,11 @@
+{
+  "id": "e2-useful-bal025",
+  "score": {"name": "family_useful", "strength": 0.5},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.25, "premium": 0.65},
+    "size_penalty": 2.0
+  },
+  "note": "e1이 N=2000에서 balanced 2회 초과. L1 점수 헤드가 배분을 바꿔 balanced가 다시 공격적이 됐다. balanced 여윳돈을 0.30 -> 0.25로 내려 그 대가를 치른다."
+}

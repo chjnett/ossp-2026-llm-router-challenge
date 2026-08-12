@@ -1,0 +1,11 @@
+{
+  "id": "e1-useful-s05",
+  "score": {"name": "family_useful", "strength": 0.5},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.30, "premium": 0.65},
+    "size_penalty": 2.0
+  },
+  "note": "L1 동점·무망 탐지기. 계열 평균 이득을 문항별 '유용할 확률'로 축소한다(강도 0.5). 하드 차단보다 배분기의 ROI 정렬을 살리는 쪽이 나았다."
+}
