@@ -222,6 +222,99 @@ class FamilyUsefulScore:
         self._useless.load_state(state["useless"])
 
 
+@register(SCORE_HEADS, "ridge")
+class RidgeScore:
+    """계열별 회귀로 **문항 단위** 점수를 예측한다.
+
+    계열 평균은 같은 계열의 모든 문항에 같은 이득을 준다. 배분기의 ROI 정렬이
+    계열 안에서는 비용 차이로만 결정된다는 뜻이다. 측정상 점수 예측 완벽화의
+    값어치가 비용 예측의 4배(+0.087 vs +0.022)라 여기가 가장 큰 레버다.
+
+    다만 목표가 noisy하다. ``score``는 2~4회 생성의 평균이라 표본노이즈 sd가
+    0.12~0.15이고, 참 기대값에 대한 R²는 0.23~0.31에 그친다. 그래서
+    ``shrink``로 계열 평균 쪽으로 당겨 과적합을 막는다.
+
+    ``target='gain'``이면 light 점수와 이득을 따로 예측한다. 이득은 분산이
+    작아 목표로 더 안정적일 수 있다 - 어느 쪽이 나은지는 실험으로 정한다.
+    """
+
+    def __init__(self, alpha: float = 8.0, min_family: int = 40,
+                 shrink: float = 0.0, target: str = "score") -> None:
+        self.alpha = float(alpha)
+        self.min_family = int(min_family)
+        self.shrink = float(shrink)
+        if target not in {"score", "gain"}:
+            raise ValueError(f"target은 'score' 또는 'gain': {target!r}")
+        self.target = target
+        self.version = (
+            f"ridgescore.v1(a={self.alpha:g},sh={self.shrink:g},t={self.target})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        codes = family_codes(train.texts)
+        features = extract(train.texts)
+
+        if self.target == "gain":
+            target = np.column_stack(
+                [train.score[:, 0], train.score[:, 1:] - train.score[:, [0]]]
+            )
+        else:
+            target = train.score
+
+        self._table = np.zeros((len(FAMILIES), N_MODELS))
+        overall = target.mean(axis=0)
+        self._global = [
+            _ridge(features, target[:, j], self.alpha) for j in range(N_MODELS)
+        ]
+        self._by_family: Dict[int, list] = {}
+        for f in range(len(FAMILIES)):
+            m = codes == f
+            self._table[f] = target[m].mean(axis=0) if m.any() else overall
+            if m.sum() >= self.min_family:
+                self._by_family[f] = [
+                    _ridge(features[m], target[m, j], self.alpha)
+                    for j in range(N_MODELS)
+                ]
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        features = extract(texts)
+        codes = family_codes(texts)
+        out = self._table[codes].copy()
+        for f in np.unique(codes):
+            m = codes == f
+            fitted = self._by_family.get(int(f))
+            if fitted is None:
+                continue
+            for j in range(N_MODELS):
+                predicted = _ridge_apply(features[m], fitted[j])
+                # 계열 평균 쪽으로 당겨 노이즈에 과적합하는 것을 막는다.
+                out[m, j] = (
+                    self.shrink * self._table[f, j] + (1.0 - self.shrink) * predicted
+                )
+        if self.target == "gain":
+            light = np.clip(out[:, [0]], 0.0, 1.0)
+            out = np.hstack([light, light + out[:, 1:]])
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        def pack(fitted):
+            return [[m.tolist(), s.tolist(), w.tolist()] for (m, s, w) in fitted]
+
+        return {
+            "table": self._table.tolist(),
+            "global": pack(self._global),
+            "by_family": {str(k): pack(v) for k, v in self._by_family.items()},
+        }
+
+    def load_state(self, state: dict) -> None:
+        def unpack(rows):
+            return [tuple(np.asarray(x, dtype=float) for x in row) for row in rows]
+
+        self._table = np.asarray(state["table"], dtype=float)
+        self._global = unpack(state["global"])
+        self._by_family = {int(k): unpack(v) for k, v in state["by_family"].items()}
+
+
 # --------------------------------------------------------------------------
 # 비용 헤드
 # --------------------------------------------------------------------------

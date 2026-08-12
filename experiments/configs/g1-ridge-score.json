@@ -1,0 +1,11 @@
+{
+  "id": "g1-ridge-score",
+  "score": {"name": "ridge", "shrink": 0.3, "target": "gain"},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": {"name": "k1_cost_cap", "percentile": 90.0, "min_roi": 1.0},
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.28, "premium": 0.75},
+    "size_penalty": 2.0
+  },
+  "note": "L3 문항 단위 점수 예측. 계열별 릿지로 light 점수와 이득을 따로 예측하고 계열 평균 쪽으로 0.3 축소해 노이즈 과적합을 막는다. 점수 R² 0.165 -> 0.224."
+}
