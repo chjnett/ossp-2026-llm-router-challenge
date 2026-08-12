@@ -83,6 +83,16 @@ class Config:
         return merged
 
     @property
+    def epsilon(self) -> float | None:
+        """총합 초과확률의 상한. 지정하면 확률 제약 배분을 쓴다.
+
+        z·z_light·headroom·size_penalty 네 손잡이를 이것 하나로 대체한다.
+        """
+
+        raw = self.alloc.get("epsilon")
+        return None if raw is None else float(raw)
+
+    @property
     def size_penalty(self) -> float:
         """배치가 작을수록 여유를 더 준다.
 

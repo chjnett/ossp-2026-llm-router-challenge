@@ -22,7 +22,13 @@ from typing import Sequence
 
 import numpy as np
 
-from .envelope import Segments, build_segments, take_within_budget
+from .envelope import (
+    Segments,
+    build_segments,
+    take_chance_constrained,
+    take_monte_carlo,
+    take_within_budget,
+)
 
 NEG = -np.inf
 
@@ -132,6 +138,126 @@ def allocate(
         estimated_ratio=used / base,
         demoted=0,
         hit_floor=bool(len(segments.order)) and used < base * multiplier * util,
+    )
+
+
+def allocate_chance(
+    s_hat: np.ndarray,
+    c_hat: np.ndarray,
+    cost_sd: np.ndarray,
+    *,
+    multiplier: float,
+    epsilon: float = 0.01,
+    allow: np.ndarray | None = None,
+    keys: Sequence[str] | None = None,
+) -> AllocationPlan:
+    """총합 초과확률을 ε 이하로 묶는 배분.
+
+    ``c_hat``은 **불편추정**이어야 한다. 여기에 상방 편향을 또 얹으면
+    안전이 두 번 걸려 예산을 못 쓰게 된다.
+    """
+
+    n = len(s_hat)
+    if keys is None:
+        keys = [
+            hashlib.blake2b(
+                np.ascontiguousarray(np.concatenate([s_hat[i], c_hat[i]])).tobytes(),
+                digest_size=8,
+            ).hexdigest()
+            for i in range(n)
+        ]
+
+    variance = np.asarray(cost_sd, dtype=float) ** 2
+    segments = build_segments(
+        s_hat, c_hat, list(keys), allow=allow, variance=variance
+    )
+    mean_light = order_invariant_sum(c_hat[:, 0])
+    var_light = order_invariant_sum(variance[:, 0])
+    picks = take_chance_constrained(
+        segments,
+        n,
+        multiplier=multiplier,
+        mean_light=mean_light,
+        var_light=var_light,
+        z_epsilon=_z_from_epsilon(epsilon),
+    )
+    used = order_invariant_sum(_row_cost(c_hat, picks))
+    return AllocationPlan(
+        picks=picks,
+        lam=_implied_lambda(segments, picks),
+        estimated_ratio=used / mean_light,
+        demoted=0,
+        hit_floor=False,
+    )
+
+
+def allocate_monte_carlo(
+    s_hat: np.ndarray,
+    c_hat: np.ndarray,
+    multipliers_draw: np.ndarray,
+    *,
+    multiplier: float,
+    epsilon: float = 0.01,
+    allow: np.ndarray | None = None,
+    keys: Sequence[str] | None = None,
+) -> AllocationPlan:
+    """경험 잔차 재표집으로 초과확률을 직접 제어한다.
+
+    ``multipliers_draw``는 [n, 3, D] 곱셈 잔차다. 난수가 아니라 콘텐츠 해시로
+    결정되므로 같은 프롬프트는 항상 같은 표본을 받고 입력 순서와 무관하다.
+    """
+
+    n = len(s_hat)
+    if keys is None:
+        keys = [
+            hashlib.blake2b(
+                np.ascontiguousarray(np.concatenate([s_hat[i], c_hat[i]])).tobytes(),
+                digest_size=8,
+            ).hexdigest()
+            for i in range(n)
+        ]
+
+    segments = build_segments(s_hat, c_hat, list(keys), allow=allow)
+    draws = multipliers_draw.shape[2]
+
+    # 표본별 실현 비용. 배분기가 쓰는 평균 예측에 잔차 배율을 곱한다.
+    realized = c_hat[:, :, None] * multipliers_draw          # [n, 3, D]
+    light_totals = realized[:, 0, :].sum(axis=0)             # [D]
+
+    if len(segments.episode):
+        ep, to, fr = segments.episode, segments.to_model, segments.from_model
+        seg_draws = realized[ep, to, :] - realized[ep, fr, :]
+        seg_draws = np.maximum(seg_draws, 0.0)
+    else:
+        seg_draws = np.zeros((0, draws))
+
+    picks = take_monte_carlo(
+        segments,
+        n,
+        multiplier=multiplier,
+        light_totals=light_totals,
+        seg_draws=seg_draws,
+        epsilon=epsilon,
+    )
+    base = order_invariant_sum(c_hat[:, 0])
+    used = order_invariant_sum(_row_cost(c_hat, picks))
+    return AllocationPlan(
+        picks=picks,
+        lam=_implied_lambda(segments, picks),
+        estimated_ratio=used / base,
+        demoted=0,
+        hit_floor=False,
+    )
+
+
+def _z_from_epsilon(epsilon: float) -> float:
+    """표준정규 상위 ε 분위. 표를 쓰지 않고 유리근사로 구한다."""
+
+    epsilon = min(max(float(epsilon), 1e-6), 0.5)
+    # Acklam 근사의 꼬리 구간 형태. ε<=0.5 이므로 상위 분위만 다룬다.
+    t = math.sqrt(-2.0 * math.log(epsilon))
+    return t - (2.515517 + 0.802853 * t + 0.010328 * t * t) / (
+        1.0 + 1.432788 * t + 0.189269 * t * t + 0.001308 * t * t * t
     )
 
 

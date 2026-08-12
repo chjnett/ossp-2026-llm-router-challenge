@@ -339,7 +339,9 @@ class RidgeCost:
         alpha: float = 3.0,
         min_family: int = 40,
         smearing: bool = True,
+        pool_size: int = 128,
     ) -> None:
+        self.pool_size = int(pool_size)
         self.z = float(z)
         self.z_light = float(z_light)
         self.alpha = float(alpha)
@@ -366,6 +368,9 @@ class RidgeCost:
             axis=1,
         )
         self._global_smear = np.exp(global_residual).mean(axis=0)
+        take = np.linspace(0, len(global_residual) - 1,
+                           min(len(global_residual), self.pool_size))
+        self._global_pool = np.sort(global_residual, axis=0)[np.round(take).astype(int)]
 
         # 외삽 방지. 선형 모델은 학습 범위 밖 특징에서 로그 예측을 20~30까지
         # 밀어올릴 수 있고, expm1을 지나면 토큰 수가 조 단위가 된다. 실제로
@@ -380,6 +385,7 @@ class RidgeCost:
         self._by_family: Dict[int, list] = {}
         self._sd_by_family: Dict[int, np.ndarray] = {}
         self._smear_by_family: Dict[int, np.ndarray] = {}
+        self._pool_by_family: Dict[int, np.ndarray] = {}
         for f in range(len(FAMILIES)):
             m = codes == f
             if m.sum() < self.min_family:
@@ -392,6 +398,10 @@ class RidgeCost:
             self._by_family[f] = fitted
             self._sd_by_family[f] = residual.std(axis=0)
             self._smear_by_family[f] = np.exp(residual).mean(axis=0)
+            # 경험 잔차 풀. CLT가 heavy tail을 못 담으므로 실제 분포를
+            # 그대로 재표집한다. 크기를 제한해 산출물이 커지지 않게 한다.
+            take = np.linspace(0, len(residual) - 1, min(len(residual), self.pool_size))
+            self._pool_by_family[f] = np.sort(residual, axis=0)[np.round(take).astype(int)]
         self._policy = train.policy
 
     def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
@@ -433,6 +443,28 @@ class RidgeCost:
         sd = cost_from_tokens(np.zeros_like(tok_in), spread_tokens, self._policy)
         return cost, sd
 
+    def residual_multipliers(
+        self, texts: Sequence[str], keys: Sequence[str], draws: int
+    ) -> np.ndarray:
+        """[n, 3, draws] 곱셈 잔차. 난수를 쓰지 않는다.
+
+        문항마다 콘텐츠 해시로 잔차 풀의 시작 위치를 정해 회전시킨다.
+        같은 프롬프트는 항상 같은 표본을 받고, 입력 순서와 무관하다 (RULES B).
+        """
+
+        codes = family_codes(texts)
+        out = np.empty((len(texts), N_MODELS, draws), dtype=float)
+        offsets = np.array([int(k[:8], 16) for k in keys], dtype=np.int64)
+        for f in np.unique(codes):
+            m = codes == f
+            pool = self._pool_by_family.get(int(f), self._global_pool)
+            size = len(pool)
+            take = (offsets[m][:, None] + np.arange(draws)[None, :]) % size
+            for j in range(N_MODELS):
+                out[m, j, :] = np.exp(pool[:, j][take])
+        # smearing이 평균을 이미 보정했으므로 배율의 평균을 1로 맞춘다.
+        return out / np.maximum(out.mean(axis=2, keepdims=True), 1e-12)
+
     def state(self) -> dict:
         def pack(fitted):
             return [[m.tolist(), s.tolist(), w.tolist()] for (m, s, w) in fitted]
@@ -451,6 +483,8 @@ class RidgeCost:
             "smear_by_family": {
                 str(f): v.tolist() for f, v in self._smear_by_family.items()
             },
+            "global_pool": self._global_pool.tolist(),
+            "pool_by_family": {str(f): v.tolist() for f, v in self._pool_by_family.items()},
             "log_lo": self._log_lo.tolist(),
             "log_hi": self._log_hi.tolist(),
             "token_hi": self._token_hi.tolist(),
@@ -477,6 +511,10 @@ class RidgeCost:
         self._smear_by_family = {
             int(k): np.asarray(v, dtype=float)
             for k, v in state["smear_by_family"].items()
+        }
+        self._global_pool = np.asarray(state["global_pool"], dtype=float)
+        self._pool_by_family = {
+            int(k): np.asarray(v, dtype=float) for k, v in state["pool_by_family"].items()
         }
         self._log_lo = np.asarray(state["log_lo"], dtype=float)
         self._log_hi = np.asarray(state["log_hi"], dtype=float)

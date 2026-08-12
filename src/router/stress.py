@@ -20,7 +20,7 @@ from typing import Callable, Dict, Sequence
 
 import numpy as np
 
-from .allocate import allocate
+from .allocate import allocate, allocate_chance
 from .data import TIERS, Dataset
 
 Sampler = Callable[[np.random.Generator], np.ndarray]
@@ -137,6 +137,7 @@ def run_scenario(
     seed: int = 0,
     size_penalty: float = 0.0,
     headroom: Dict[str, float] | None = None,
+    epsilon: float | None = None,
 ) -> GateResult:
     """한 시나리오를 ``trials``회 돌려 등급별 파산 횟수를 센다.
 
@@ -172,16 +173,28 @@ def run_scenario(
             }
 
         for tier in TIERS:
-            picks = allocate(
-                s_i,
-                c_i,
-                multiplier=multipliers[tier],
-                util=utils[tier],
-                allow=allow_i,
-                sd=sd_i,
-                mu=mu,
-                keys=keys_i,
-            ).picks
+            if epsilon is not None:
+                # 라우터가 실행 시점에 쓰는 것과 **같은** 배분 규칙이어야 한다.
+                picks = allocate_chance(
+                    s_i,
+                    c_i,
+                    sd_i if sd_i is not None else np.zeros_like(c_i),
+                    multiplier=multipliers[tier],
+                    epsilon=epsilon,
+                    allow=allow_i,
+                    keys=keys_i,
+                ).picks
+            else:
+                picks = allocate(
+                    s_i,
+                    c_i,
+                    multiplier=multipliers[tier],
+                    util=utils[tier],
+                    allow=allow_i,
+                    sd=sd_i,
+                    mu=mu,
+                    keys=keys_i,
+                ).picks
             used = float(true_cost[np.arange(len(idx)), picks].sum())
             over = (used / light) / multipliers[tier]
             ratios[tier][trial] = over
@@ -226,6 +239,7 @@ def run_gate(
     scenarios: Dict[str, Sampler] | None = None,
     size_penalty: float = 0.0,
     headroom: Dict[str, float] | None = None,
+    epsilon: float | None = None,
 ) -> list[GateResult]:
     """모든 시나리오를 돌린다. 하나라도 파산이 있으면 게이트 불통과다."""
 
@@ -248,6 +262,7 @@ def run_gate(
                 seed=seed + offset * 1009,
                 size_penalty=size_penalty,
                 headroom=headroom,
+                epsilon=epsilon,
             )
         )
     return results

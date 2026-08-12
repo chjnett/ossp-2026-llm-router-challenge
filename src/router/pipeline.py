@@ -22,7 +22,7 @@ from typing import Any, Dict, Mapping, Sequence
 
 import numpy as np
 
-from .allocate import allocate
+from .allocate import allocate, allocate_chance
 from .config import DEFAULT_UTIL, Config, effective_util
 from .data import TIERS, Dataset, budget_multipliers
 from .harness import Evaluation, evaluate
@@ -80,6 +80,20 @@ def pick_all_tiers(
     keys: Sequence[str],
     multipliers: Mapping[str, float],
 ) -> Dict[str, np.ndarray]:
+    if config.epsilon is not None:
+        return {
+            tier: allocate_chance(
+                prediction.s_hat,
+                prediction.c_hat,
+                prediction.sd,
+                multiplier=multipliers[tier],
+                epsilon=config.epsilon,
+                allow=prediction.allow,
+                keys=list(keys),
+            ).picks
+            for tier in TIERS
+        }
+
     util = effective_util(config, len(keys), multipliers)
     return {
         tier: allocate(

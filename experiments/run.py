@@ -74,6 +74,7 @@ def do_run(args) -> int:
             trials=args.trials,
             size_penalty=config.size_penalty,
             headroom=config.headroom,
+            epsilon=config.epsilon,
         )
     gate_ok = bool(gate_results) and gate_passed(gate_results)
 

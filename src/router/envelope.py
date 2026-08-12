@@ -37,6 +37,7 @@ class Segments:
     order: np.ndarray       # [k] ROI 내림차순 정렬 인덱스 (동률은 콘텐츠 해시)
     base_model: np.ndarray  # [n] 아무것도 승격하지 않았을 때의 출발 모델
     group: np.ndarray       # [k] order 상의 그룹 번호. 같은 번호는 통째로 처리한다
+    delta_var: np.ndarray   # [k] 추가 비용의 분산. 확률 제약 배분에만 쓴다
 
 
 def build_segments(
@@ -45,6 +46,7 @@ def build_segments(
     keys: list[str] | tuple[str, ...],
     *,
     allow: np.ndarray | None = None,
+    variance: np.ndarray | None = None,
 ) -> Segments:
     """문항별 오목 포락선을 구간 목록으로 편다.
 
@@ -105,6 +107,16 @@ def build_segments(
         delta_gain, delta_cost, out=np.zeros_like(delta_gain), where=delta_cost > 0
     )
 
+    if variance is None:
+        delta_var = np.zeros_like(delta_cost)
+    else:
+        # 보수적 근사. Var[c_m - c_light] = Var[c_m] + Var[c_light] - 2Cov 인데
+        # 두 비용은 강하게 양의 상관이라 Cov를 무시하면 오히려 위험하다.
+        # 그래서 더 큰 쪽인 Var[c_m]을 그대로 쓴다.
+        delta_var = (
+            variance[episode, to_model] if len(episode) else np.zeros(0)
+        )
+
     if len(episode):
         # 동률은 콘텐츠 해시로만 깬다. 입력 순서로 깨면 감사에서 선택이 갈린다.
         tie = np.array([keys[i] for i in episode])
@@ -124,6 +136,7 @@ def build_segments(
         order,
         base_model,
         group,
+        delta_var,
     )
 
 
@@ -145,6 +158,113 @@ def _group_boundaries(
         & (to_sorted[1:] == to_sorted[:-1])
     )
     return np.concatenate([[0], np.cumsum(~same)])
+
+
+def take_chance_constrained(
+    segments: Segments,
+    n_episodes: int,
+    *,
+    multiplier: float,
+    mean_light: float,
+    var_light: float,
+    z_epsilon: float,
+) -> np.ndarray:
+    """총합의 초과확률이 ε 이하가 되도록 승격을 고른다.
+
+    지금까지는 비용 예측을 통째로 부풀리고(z) 목표 사용률을 낮춰(headroom)
+    안전을 샀다. 그러면 손잡이 하나가 안전과 활용을 반대로 잡아당긴다 —
+    실측에서 z=1.28이 승격 비용을 ax31 1.85배·K1 2.72배 부풀려, 배분기는
+    예산을 다 썼다고 믿는데 Premium은 한도의 40%만 쓰고 있었다.
+
+    여기서는 비용을 **불편추정**으로 두고 제약만 확률로 건다.
+
+        Σμ + z·√(Σσ² + (배율−1)²·σ²_light)  ≤  (배율−1)·μ_light
+
+    좌변은 승격을 추가할수록 단조 증가하므로 정렬된 앞부분을 취하면 된다.
+    배치가 작을수록 분산항의 비중이 커져 자동으로 보수적이 되므로, 크기별
+    마진(size_penalty)을 따로 둘 필요가 없다.
+    """
+
+    picks = segments.base_model.copy()
+    if len(segments.order) == 0:
+        return picks
+
+    limit = (multiplier - 1.0) * mean_light
+    tail = (multiplier - 1.0) ** 2 * var_light
+
+    idx = segments.order
+    grp = segments.group
+    episode, from_model = segments.episode, segments.from_model
+    to_model, delta_cost = segments.to_model, segments.delta_cost
+    delta_var = segments.delta_var
+
+    total_mean = 0.0
+    total_var = 0.0
+    start, n_seg = 0, len(idx)
+    while start < n_seg:
+        end = start + 1
+        while end < n_seg and grp[end] == grp[start]:
+            end += 1
+        members = [k for k in idx[start:end] if picks[episode[k]] == from_model[k]]
+        if members:
+            add_mean = math.fsum(float(delta_cost[k]) for k in members)
+            add_var = math.fsum(float(delta_var[k]) for k in members)
+            new_mean = total_mean + add_mean
+            new_var = total_var + add_var
+            if new_mean + z_epsilon * math.sqrt(max(new_var + tail, 0.0)) <= limit:
+                for k in members:
+                    picks[episode[k]] = to_model[k]
+                total_mean, total_var = new_mean, new_var
+        start = end
+    return picks
+
+
+def take_monte_carlo(
+    segments: Segments,
+    n_episodes: int,
+    *,
+    multiplier: float,
+    light_totals: np.ndarray,
+    seg_draws: np.ndarray,
+    epsilon: float,
+) -> np.ndarray:
+    """초과확률을 **경험 분포 재표집**으로 직접 추정해 승격을 고른다.
+
+    CLT는 이 분포에서 통하지 않는다. 비용 배율이 5~566배로 벌어져 정규
+    근사가 꼬리를 통째로 놓친다. 실측: ε=0.001로 잡아도 실제 초과율이 200%가
+    넘었다. 그래서 정규 가정을 버리고 학습 잔차를 그대로 다시 뽑는다.
+
+    ``light_totals[d]``는 표본 d에서의 light 총비용, ``seg_draws[k, d]``는
+    구간 k의 추가비용 실현값이다. 승격을 하나 더 집었을 때 D개 표본 중
+    한도를 넘는 비율이 ``epsilon``을 넘으면 멈춘다.
+    """
+
+    picks = segments.base_model.copy()
+    if len(segments.order) == 0:
+        return picks
+
+    limits = (multiplier - 1.0) * light_totals
+    running = np.zeros_like(limits)
+
+    idx = segments.order
+    grp = segments.group
+    episode, from_model = segments.episode, segments.from_model
+    to_model = segments.to_model
+
+    start, n_seg = 0, len(idx)
+    while start < n_seg:
+        end = start + 1
+        while end < n_seg and grp[end] == grp[start]:
+            end += 1
+        members = [k for k in idx[start:end] if picks[episode[k]] == from_model[k]]
+        if members:
+            candidate = running + seg_draws[members].sum(axis=0)
+            if float((candidate > limits).mean()) <= epsilon:
+                for k in members:
+                    picks[episode[k]] = to_model[k]
+                running = candidate
+        start = end
+    return picks
 
 
 def take_within_budget(
