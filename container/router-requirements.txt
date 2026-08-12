@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: Copyright 2026 chjnett
+# SPDX-License-Identifier: Apache-2.0
+#
+# 런타임 의존성. numpy는 BSD-3-Clause이며 과제 규칙의 허용 라이선스다.
+# 출처 https://pypi.org/project/numpy/2.2.6/
+# 파일 numpy-2.2.6-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
+numpy==2.2.6 --hash=sha256:b64d8d4d17135e00c8e346e0a738deb17e754230d7e0810ac5012750bbd85a5a

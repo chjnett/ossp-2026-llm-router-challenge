@@ -663,7 +663,37 @@ class RepositoryPolicyTest(unittest.TestCase):
             "!container/measurement.Dockerfile",
             "!container/entrypoint.py",
         ]
-        self.assertEqual(expected_dockerignore, dockerignore)
+        # 참가자가 추가한 항목. 제출 라우터(src/router)와 그 컨테이너 정의를
+        # 빌드 컨텍스트에 넣어야 이미지에 실린다. 상류 목록은 그대로 두고
+        # 뒤에 덧붙이는 형태만 허용해, 원본 항목이 지워지면 여전히 실패한다.
+        participant_dockerignore = [
+            "!src/router/",
+            "src/router/**",
+            "!src/router/__init__.py",
+            "!src/router/allocate.py",
+            "!src/router/artifact.py",
+            "!src/router/cli.py",
+            "!src/router/config.py",
+            "!src/router/constants.py",
+            "!src/router/data.py",
+            "!src/router/envelope.py",
+            "!src/router/features.py",
+            "!src/router/heads.py",
+            "!src/router/pipeline.py",
+            "!src/router/resources/",
+            "src/router/resources/**",
+            "!src/router/resources/__init__.py",
+            "!src/router/resources/artifact.v1.json",
+            "!container/router.Dockerfile",
+            "!container/router_entrypoint.py",
+            "!container/router-requirements.txt",
+        ]
+        self.assertEqual(
+            expected_dockerignore,
+            [line for line in dockerignore if line not in participant_dockerignore],
+        )
+        for line in participant_dockerignore:
+            self.assertIn(line, dockerignore)
 
     def test_public_tree_has_no_internal_paths_secrets_or_model_artifacts(
         self,

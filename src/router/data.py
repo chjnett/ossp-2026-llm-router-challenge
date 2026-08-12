@@ -27,31 +27,11 @@ from ossp_router.protocol import (
     load_outcomes,
 )
 
-# 싼 것부터. argmax 동률을 이 순서로 결정적으로 깬다 (RULES B3).
-MODEL_IDS: Tuple[str, ...] = ("ax31-light", "ax31", "axk1-think")
-LIGHT = MODEL_IDS[0]
-TIERS: Tuple[str, ...] = ("fast", "balanced", "premium")
+from .constants import LIGHT, MODEL_IDS, TIERS, content_key, episode_text  # noqa: F401
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def episode_text(episode: Episode) -> str:
-    """라우팅 시점에 볼 수 있는 텍스트만 반환한다."""
-
-    if episode.prompt is not None:
-        return episode.prompt
-    assert episode.messages is not None
-    return "\n".join(message.content for message in episode.messages)
-
-
-def content_key(text: str) -> str:
-    """프롬프트 내용에서만 유도한 고정 키.
-
-    내장 ``hash()``는 PYTHONHASHSEED에 따라 프로세스마다 달라지므로 쓰지 않는다
-    (RULES B4). 정렬·fold 배정에 쓰는 유일한 키다.
-    """
-
-    return hashlib.blake2b(text.encode("utf-8"), digest_size=16).hexdigest()
 
 
 @dataclass(frozen=True)

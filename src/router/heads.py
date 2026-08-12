@@ -103,6 +103,12 @@ class FamilyScore:
     def predict(self, texts: Sequence[str]) -> np.ndarray:
         return self._table[family_codes(texts)]
 
+    def state(self) -> dict:
+        return {"table": self._table.tolist()}
+
+    def load_state(self, state: dict) -> None:
+        self._table = np.asarray(state["table"], dtype=float)
+
 
 # --------------------------------------------------------------------------
 # 비용 헤드
@@ -154,6 +160,19 @@ class FamilyCost:
         sd = cost_from_tokens(np.zeros_like(tok_in), self._out_sd[codes], self._policy)
         return cost, sd
 
+    def state(self) -> dict:
+        return {
+            "in_coef": self._in_coef.tolist(),
+            "out": self._out.tolist(),
+            "out_sd": self._out_sd.tolist(),
+        }
+
+    def load_state(self, state: dict, policy) -> None:
+        self._in_coef = np.asarray(state["in_coef"], dtype=float)
+        self._out = np.asarray(state["out"], dtype=float)
+        self._out_sd = np.asarray(state["out_sd"], dtype=float)
+        self._policy = policy
+
 
 def _ridge(design: np.ndarray, target: np.ndarray, alpha: float) -> tuple:
     """표준화 → 절편 추가 → 절편만 규제 제외.
@@ -192,6 +211,13 @@ class RidgeCost:
       한도가 줄고 승격의 상대 가격도 올라가 양쪽으로 보수적이 된다.
 
     0.67이면 대략 75분위, 1.28이면 90분위에 해당한다 (RULES C2).
+
+    ``smearing``은 로그 공간 회귀가 **합계를 과소추정**하는 것을 바로잡는다.
+    예산은 총액으로 걸리는데 비용은 꼬리가 두꺼워 총액을 소수의 큰 문항이
+    지배한다. 로그 평균을 지수로 되돌리면 그 합이 체계적으로 낮게 나온다
+    (Jensen). 실측: 개별 문항은 중앙 2.18배로 과대추정하는데 선택된 문항의
+    합계는 1.24배로 과소추정했다. Duan의 smearing 추정량
+    ``exp(μ̂) · mean(exp(잔차))``로 보정한다.
     """
 
     def __init__(
@@ -200,13 +226,16 @@ class RidgeCost:
         z_light: float = 0.0,
         alpha: float = 3.0,
         min_family: int = 40,
+        smearing: bool = True,
     ) -> None:
         self.z = float(z)
         self.z_light = float(z_light)
         self.alpha = float(alpha)
         self.min_family = int(min_family)
+        self.smearing = bool(smearing)
         self.version = (
-            f"ridgecost.v2(z={self.z:g},zl={self.z_light:g},a={self.alpha:g})"
+            f"ridgecost.v3(z={self.z:g},zl={self.z_light:g},"
+            f"a={self.alpha:g},sm={int(self.smearing)})"
         )
 
     def fit(self, train: Dataset) -> None:
@@ -220,6 +249,11 @@ class RidgeCost:
         log_out = np.log1p(train.output_tokens)
         self._global = [_ridge(features, log_out[:, j], self.alpha) for j in range(N_MODELS)]
         self._global_sd = log_out.std(axis=0)
+        global_residual = np.stack(
+            [log_out[:, j] - _ridge_apply(features, self._global[j]) for j in range(N_MODELS)],
+            axis=1,
+        )
+        self._global_smear = np.exp(global_residual).mean(axis=0)
 
         # 외삽 방지. 선형 모델은 학습 범위 밖 특징에서 로그 예측을 20~30까지
         # 밀어올릴 수 있고, expm1을 지나면 토큰 수가 조 단위가 된다. 실제로
@@ -233,6 +267,7 @@ class RidgeCost:
 
         self._by_family: Dict[int, list] = {}
         self._sd_by_family: Dict[int, np.ndarray] = {}
+        self._smear_by_family: Dict[int, np.ndarray] = {}
         for f in range(len(FAMILIES)):
             m = codes == f
             if m.sum() < self.min_family:
@@ -244,6 +279,7 @@ class RidgeCost:
             )
             self._by_family[f] = fitted
             self._sd_by_family[f] = residual.std(axis=0)
+            self._smear_by_family[f] = np.exp(residual).mean(axis=0)
         self._policy = train.policy
 
     def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
@@ -258,6 +294,7 @@ class RidgeCost:
 
         log_out = np.zeros((len(texts), N_MODELS))
         sd_log = np.zeros((len(texts), N_MODELS))
+        smear = np.ones((len(texts), N_MODELS))
         for f in np.unique(codes):
             m = codes == f
             fitted = self._by_family.get(int(f), self._global)
@@ -265,12 +302,17 @@ class RidgeCost:
             for j in range(N_MODELS):
                 log_out[m, j] = _ridge_apply(features[m], fitted[j])
             sd_log[m] = spread
+            if self.smearing:
+                smear[m] = self._smear_by_family.get(int(f), self._global_smear)
 
         # 회귀 출력을 학습에서 본 범위로 먼저 묶은 뒤 편향을 얹는다.
         log_out = np.clip(log_out, self._log_lo, self._log_hi)
         bias = np.full(N_MODELS, self.z)
         bias[0] = self.z_light
-        tok_out = np.clip(np.expm1(log_out + bias * sd_log), 0.0, self._token_hi)
+        # smearing은 exp(잔차)의 평균이므로 log1p 되돌리기 전에 곱한다.
+        tok_out = np.clip(
+            np.exp(log_out + bias * sd_log) * smear - 1.0, 0.0, self._token_hi
+        )
         cost = cost_from_tokens(tok_in, tok_out, self._policy)
         # 산포는 로그 공간 잔차를 비용 단위로 옮겨 근사한다.
         spread_tokens = np.clip(
@@ -278,6 +320,58 @@ class RidgeCost:
         )
         sd = cost_from_tokens(np.zeros_like(tok_in), spread_tokens, self._policy)
         return cost, sd
+
+    def state(self) -> dict:
+        def pack(fitted):
+            return [[m.tolist(), s.tolist(), w.tolist()] for (m, s, w) in fitted]
+
+        return {
+            "in_coef": self._in_coef.tolist(),
+            "global": pack(self._global),
+            "global_sd": self._global_sd.tolist(),
+            "global_smear": self._global_smear.tolist(),
+            "by_family": {
+                str(f): pack(v) for f, v in self._by_family.items()
+            },
+            "sd_by_family": {
+                str(f): v.tolist() for f, v in self._sd_by_family.items()
+            },
+            "smear_by_family": {
+                str(f): v.tolist() for f, v in self._smear_by_family.items()
+            },
+            "log_lo": self._log_lo.tolist(),
+            "log_hi": self._log_hi.tolist(),
+            "token_hi": self._token_hi.tolist(),
+            "in_lo": self._in_lo,
+            "in_hi": self._in_hi,
+        }
+
+    def load_state(self, state: dict, policy) -> None:
+        def unpack(rows):
+            return [
+                (np.asarray(m, dtype=float), np.asarray(s, dtype=float),
+                 np.asarray(w, dtype=float))
+                for (m, s, w) in rows
+            ]
+
+        self._in_coef = np.asarray(state["in_coef"], dtype=float)
+        self._global = unpack(state["global"])
+        self._global_sd = np.asarray(state["global_sd"], dtype=float)
+        self._global_smear = np.asarray(state["global_smear"], dtype=float)
+        self._by_family = {int(k): unpack(v) for k, v in state["by_family"].items()}
+        self._sd_by_family = {
+            int(k): np.asarray(v, dtype=float) for k, v in state["sd_by_family"].items()
+        }
+        self._smear_by_family = {
+            int(k): np.asarray(v, dtype=float)
+            for k, v in state["smear_by_family"].items()
+        }
+        self._log_lo = np.asarray(state["log_lo"], dtype=float)
+        self._log_hi = np.asarray(state["log_hi"], dtype=float)
+        self._token_hi = np.asarray(state["token_hi"], dtype=float)
+        self._in_lo = float(state["in_lo"])
+        self._in_hi = float(state["in_hi"])
+        self._policy = policy
 
 
 # --------------------------------------------------------------------------
@@ -290,6 +384,12 @@ class NoGate:
     version = "none.v1"
 
     def fit(self, train: Dataset) -> None:
+        return None
+
+    def state(self) -> dict:
+        return {}
+
+    def load_state(self, state: dict) -> None:
         return None
 
     def allow(self, texts, s_hat, c_hat) -> np.ndarray:
@@ -329,6 +429,12 @@ class FamilyRoiGate:
         allow[:, 0] = True
         return allow
 
+    def state(self) -> dict:
+        return {"roi": self._roi.tolist()}
+
+    def load_state(self, state: dict) -> None:
+        self._roi = np.asarray(state["roi"], dtype=float)
+
 
 @register(GATES, "k1_cost_cap")
 class K1CostCapGate:
@@ -355,6 +461,13 @@ class K1CostCapGate:
         allow[:, 2] &= ratio <= self._cap
         allow[:, 0] = True
         return allow
+
+    def state(self) -> dict:
+        return {"cap": self._cap, "roi": self._roi_gate.state()}
+
+    def load_state(self, state: dict) -> None:
+        self._cap = float(state["cap"])
+        self._roi_gate.load_state(state["roi"])
 
 
 def build_score_head(spec) -> ScoreHead:
