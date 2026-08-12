@@ -1,9 +1,9 @@
 {
-  "id": "h1-no-roi-gate",
-  "at": "2026-08-12T15:48:55+00:00",
-  "commit": "78deb2bc9dedda61cdca0a30fc9f4a6df04c04a5",
+  "id": "h2-no-gate-mu1",
+  "at": "2026-08-12T16:13:32+00:00",
+  "commit": "3c00b765a38f39963c25c895840289e8e3813ab0",
   "config": {
-    "id": "h1-no-roi-gate",
+    "id": "h2-no-gate-mu1",
     "score": "family",
     "cost": {
       "name": "ridge",
@@ -11,46 +11,43 @@
       "z_light": -0.5,
       "smearing": true
     },
-    "gate": {
-      "name": "k1_cost_cap",
-      "percentile": 90.0,
-      "min_roi": 0.0
-    },
+    "gate": "none",
     "alloc": {
       "headroom": {
         "fast": 0.25,
         "balanced": 0.28,
         "premium": 0.75
       },
-      "size_penalty": 2.0
+      "size_penalty": 2.0,
+      "mu": 1.0
     },
-    "note": "family_roi 차단을 끈다. 배분기가 도달하는 한계 ROI가 fast 36.6 / balanced 21.3 / premium 2.7인데 임계값이 1.0이라 배분기가 이미 걸러낸 것을 한 번 더 거르고 있었다. 손잡이 하나를 줄이고 CV도 미세하게 오른다."
+    "note": "게이트를 통째로 끄고 분산 페널티를 처음 켠다. k1_cost_cap은 분위 90~100과 '게이트 없음'이 완전히 같은 결과를 내 죽어 있었다. 배분기의 ROI 정렬이 이미 같은 일을 하기 때문이다. mu는 만들어 놓고 한 번도 안 썼는데 0.3~1.0에서 미세하게 낫다."
   },
   "versions": {
     "score": "family.v1",
     "cost": "ridgecost.v4(z=1.28,zl=-0.5,a=3,sm=1)",
-    "gate": "k1cap.v2(p=90,roi=0)"
+    "gate": "none.v1"
   },
   "cv": {
-    "final_score": "0.634659090909",
+    "final_score": "0.634914772727",
     "all_passed": true,
     "tiers": {
       "fast": {
         "score": "0.608664772727",
-        "budget_ratio": "1.01929020666",
-        "headroom": "0.23070979334",
+        "budget_ratio": "1.01958865876",
+        "headroom": "0.23041134124",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1572,
-          "ax31": 188,
+          "ax31-light": 1573,
+          "ax31": 187,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.629971590909",
-        "budget_ratio": "1.091858296104",
-        "headroom": "0.908141703896",
+        "score": "0.630539772727",
+        "budget_ratio": "1.0921222549",
+        "headroom": "0.9078777451",
         "passed": true,
         "near_budget": false,
         "counts": {
@@ -60,21 +57,21 @@
         }
       },
       "premium": {
-        "score": "0.674005681818",
-        "budget_ratio": "1.653954353467",
-        "headroom": "2.346045646533",
+        "score": "0.674289772727",
+        "budget_ratio": "1.644068248559",
+        "headroom": "2.355931751441",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 314,
-          "ax31": 1413,
-          "axk1-think": 33
+          "ax31-light": 299,
+          "ax31": 1434,
+          "axk1-think": 27
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.649005681818",
+    "final_score": "0.649176136364",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -90,27 +87,27 @@
         }
       },
       "balanced": {
-        "score": "0.644886363636",
-        "budget_ratio": "1.142442456432",
-        "headroom": "0.857557543568",
+        "score": "0.646022727273",
+        "budget_ratio": "1.140946395102",
+        "headroom": "0.859053604898",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 614,
-          "ax31": 266,
+          "ax31-light": 615,
+          "ax31": 265,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.686647727273",
-        "budget_ratio": "1.672973519364",
-        "headroom": "2.327026480636",
+        "score": "0.686079545455",
+        "budget_ratio": "1.665477117962",
+        "headroom": "2.334522882038",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 145,
-          "ax31": 721,
-          "axk1-think": 14
+          "ax31-light": 138,
+          "ax31": 731,
+          "axk1-think": 11
         }
       }
     }
@@ -152,5 +149,5 @@
       }
     }
   },
-  "seconds": 164.41
+  "seconds": 163.79
 }

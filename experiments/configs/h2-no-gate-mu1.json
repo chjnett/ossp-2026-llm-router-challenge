@@ -1,0 +1,12 @@
+{
+  "id": "h2-no-gate-mu1",
+  "score": "family",
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.25, "balanced": 0.28, "premium": 0.75},
+    "size_penalty": 2.0,
+    "mu": 1.0
+  },
+  "note": "게이트를 통째로 끄고 분산 페널티를 처음 켠다. k1_cost_cap은 분위 90~100과 '게이트 없음'이 완전히 같은 결과를 내 죽어 있었다. 배분기의 ROI 정렬이 이미 같은 일을 하기 때문이다. mu는 만들어 놓고 한 번도 안 썼는데 0.3~1.0에서 미세하게 낫다."
+}
