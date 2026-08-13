@@ -194,6 +194,94 @@ class HeadContractTest(unittest.TestCase):
         self.assertTrue(prediction.allow[:, 0].all(), "light가 막힌 문항이 있다")
 
 
+class FamilyMixtureTest(unittest.TestCase):
+    """T6 — 확률 이중계산을 고친 혼합 헤드.
+
+    ``family_useful``은 문항별 이득을 ``계열평균이득 × P(유용)``으로 봤는데
+    계열평균이득에 이미 계열의 평균 유용확률이 들어 있어 확률이 두 번
+    곱해졌다. 예측 이득 평균이 0.146에서 0.061로 찌그러졌다.
+    """
+
+    def test_strength_zero_is_exactly_the_family_head(self) -> None:
+        """혼합은 계열 평균의 **엄밀한 일반화**여야 한다.
+
+        전체 기댓값의 법칙에 의해 ``P·E[·|유용] + (1−P)·E[·|무용]``은 계열
+        평균과 정확히 같다. 여기가 어긋나면 혼합 자체가 틀린 것이다.
+        """
+
+        train, dev = datasets()
+        family = build_score_head("family")
+        family.fit(train)
+        mixture = build_score_head({"name": "family_mixture", "strength": 0.0})
+        mixture.fit(train)
+        np.testing.assert_allclose(
+            family.predict(dev.texts), mixture.predict(dev.texts), atol=1e-9
+        )
+
+    def test_keeps_the_gain_level_unlike_family_useful(self) -> None:
+        train, dev = datasets()
+        gains = {}
+        for name in ("family", "family_useful", "family_mixture"):
+            head = build_score_head(name)
+            head.fit(train)
+            p = head.predict(dev.texts)
+            gains[name] = float((p[:, 1:] - p[:, [0]]).mean())
+
+        self.assertLess(
+            gains["family_useful"], gains["family"] * 0.7,
+            "family_useful이 이득을 찌그러뜨리지 않는다면 이 테스트의 전제가 낡았다",
+        )
+        self.assertGreater(
+            gains["family_mixture"], gains["family"] * 0.9,
+            "혼합이 이득 수준을 지키지 못한다",
+        )
+
+    def test_adds_per_episode_spread(self) -> None:
+        """계열 평균은 같은 계열 안에서 모든 문항에 같은 이득을 준다.
+
+        혼합의 존재 이유는 그 안에서 순서를 매기는 것이다.
+        """
+
+        train, dev = datasets()
+        from router.features import family_codes
+
+        codes = family_codes(dev.texts)
+        head = build_score_head("family_mixture")
+        head.fit(train)
+        p = head.predict(dev.texts)
+        gain = p[:, 2] - p[:, 0]
+
+        spread = [
+            float(gain[codes == f].std())
+            for f in np.unique(codes)
+            if (codes == f).sum() >= 20
+        ]
+        self.assertTrue(spread, "표본이 충분한 계열이 없다")
+        self.assertGreater(
+            min(spread), 0.0, "어떤 계열 안에서도 문항별 차이가 없다"
+        )
+
+    def test_predictions_stay_in_range(self) -> None:
+        train, dev = datasets()
+        head = build_score_head("family_mixture")
+        head.fit(train)
+        p = head.predict(dev.texts)
+        self.assertTrue(((p >= 0.0) & (p <= 1.0)).all(), "점수가 [0,1] 밖이다")
+
+    def test_state_round_trip(self) -> None:
+        """산출물로 굳혔다 되살려도 같은 답이어야 한다. 어긋나면 런타임이
+        조용히 폴백으로 떨어진다."""
+
+        train, dev = datasets()
+        head = build_score_head("family_mixture")
+        head.fit(train)
+        before = head.predict(dev.texts)
+
+        revived = build_score_head("family_mixture")
+        revived.load_state(json.loads(json.dumps(head.state())))
+        np.testing.assert_allclose(before, revived.predict(dev.texts), atol=1e-12)
+
+
 class PipelineTest(unittest.TestCase):
     def test_reproduces_the_documented_a1_row(self) -> None:
         """GOAL.md에 적힌 A1 수치를 그대로 재현해야 한다.

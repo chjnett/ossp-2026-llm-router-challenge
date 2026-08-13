@@ -174,9 +174,111 @@ class _UselessModel:
         self.mean_by_family = {int(k): float(v) for k, v in state["mean_by_family"].items()}
 
 
+@register(SCORE_HEADS, "family_mixture")
+class FamilyMixtureScore:
+    """``family_useful``의 확률 이중계산을 고친다 (T6).
+
+    ``family_useful``은 문항별 이득을 ``계열평균이득 × P(유용)``으로 본다.
+    그런데 계열평균이득에는 **이미 그 계열의 평균 유용확률이 들어 있다.**
+
+        계열평균이득 = P_계열·E[이득|유용] + (1−P_계열)·E[이득|무용]
+
+    거기에 P_문항을 다시 곱하면 확률이 두 번 들어간다. 계열 안에서는
+    P_계열이 상수라 순서가 살지만, **배분기는 전 문항을 한 줄로 세우므로
+    계열 사이 순서가 왜곡된다.** 유용확률이 낮은 계열이 제곱으로 눌린다.
+
+    올바른 형태는 곱셈이 아니라 조건부 기댓값의 혼합이다.
+
+        ŝ_m = ŝ_light + P_문항·E[이득_m|유용, 계열]
+                      + (1−P_문항)·E[이득_m|무용, 계열]
+
+    무용 항을 버리지 않는 이유는 그 값이 0이 아니라 **음수**이기 때문이다.
+    어떤 모델도 light를 못 넘는 문항에서 특정 모델은 더 나쁠 수 있다.
+
+    측정 근거: 이득은 거의 이진이다(35.5%만 양성, 양성일 때 0.793±0.251).
+    계열은 이득 분산의 11.3%만 설명하고, ``gain>0``의 표본 외 AUC는 0.68이다.
+    """
+
+    def __init__(self, alpha: float = 20.0, min_family: int = 40,
+                 strength: float = 1.0) -> None:
+        self.alpha = float(alpha)
+        self.min_family = int(min_family)
+        # 0이면 계열 평균으로 되돌아간다. 1이면 문항별 확률을 그대로 쓴다.
+        self.strength = float(strength)
+        self.version = f"familymix.v1(a={self.alpha:g},s={self.strength:g})"
+
+    def fit(self, train: Dataset) -> None:
+        codes = family_codes(train.texts)
+        score = np.asarray(train.score, dtype=float)
+        useful = (score.max(axis=1) - score[:, 0]) > 0
+        gain = score - score[:, [0]]
+
+        n_fam = len(FAMILIES)
+        self._light = np.zeros(n_fam)
+        self._hit = np.zeros((n_fam, N_MODELS))   # E[이득 | 유용]
+        self._miss = np.zeros((n_fam, N_MODELS))  # E[이득 | 무용]
+        self._share = np.zeros(n_fam)             # 계열 평균 유용확률
+
+        light_all = float(score[:, 0].mean())
+        hit_all = gain[useful].mean(axis=0) if useful.any() else np.zeros(N_MODELS)
+        miss_all = gain[~useful].mean(axis=0) if (~useful).any() else np.zeros(N_MODELS)
+        for f in range(n_fam):
+            m = codes == f
+            if not m.any():
+                self._light[f] = light_all
+                self._hit[f], self._miss[f] = hit_all, miss_all
+                self._share[f] = float(useful.mean())
+                continue
+            self._light[f] = float(score[m, 0].mean())
+            self._share[f] = float(useful[m].mean())
+            hit, miss = m & useful, m & ~useful
+            # 표본이 너무 적은 칸은 전체 평균으로 되돌린다.
+            self._hit[f] = gain[hit].mean(axis=0) if hit.sum() >= 5 else hit_all
+            self._miss[f] = gain[miss].mean(axis=0) if miss.sum() >= 5 else miss_all
+
+        self._useless = _UselessModel()
+        self._useless.fit(train, self.alpha, self.min_family)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        codes = family_codes(texts)
+        p_useful = 1.0 - self._useless.predict(texts)
+        # strength=0이면 계열 평균 유용확률로 되돌아가 family 헤드와 같아진다.
+        p = self._share[codes] + self.strength * (p_useful - self._share[codes])
+        p = np.clip(p, 0.0, 1.0)[:, None]
+
+        gain = p * self._hit[codes] + (1.0 - p) * self._miss[codes]
+        out = self._light[codes][:, None] + gain
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "light": self._light.tolist(),
+            "hit": self._hit.tolist(),
+            "miss": self._miss.tolist(),
+            "share": self._share.tolist(),
+            "useless": self._useless.state(),
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._light = np.asarray(state["light"], dtype=float)
+        self._hit = np.asarray(state["hit"], dtype=float)
+        self._miss = np.asarray(state["miss"], dtype=float)
+        self._share = np.asarray(state["share"], dtype=float)
+        self._useless = _UselessModel()
+        self._useless.load_state(state["useless"])
+
+
 @register(SCORE_HEADS, "family_useful")
 class FamilyUsefulScore:
     """계열 평균 이득을 **문항별 '유용할 확률'로 축소**한다.
+
+    .. warning::
+
+       **확률을 두 번 센다.** ``계열평균이득``에는 이미 그 계열의 평균
+       유용확률이 들어 있는데 거기에 문항별 확률을 다시 곱한다. 그 결과
+       예측 이득 평균이 0.146에서 0.061로 찌그러지고, 계열 사이 순서가
+       왜곡된다. 새로 쓰려면 :class:`FamilyMixtureScore`를 쓴다.
+       측정: CV 0.6313 대 ``family`` 0.6349 (2026-08-13).
 
     계열 평균 점수 헤드는 같은 계열의 모든 문항에 같은 이득을 준다. 그래서
     배분기가 계열 안에서 우선순위를 매길 수 없다. 문항의 64.5%는 어떤 모델도
