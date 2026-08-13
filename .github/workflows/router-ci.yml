@@ -83,3 +83,68 @@ jobs:
           print(f"파산 {failures}회 (400회 판)")
           sys.exit(0 if gate_passed(results) else 1)
           PY
+
+  # 제출은 커밋 SHA와 이미지 다이제스트를 나란히 적을 뿐, 둘이 실제로 맞물리는지는
+  # 공식 검증기도 확인하지 않는다. 형식만 본다. 산출물이 낡아 런타임이 조용히
+  # all-light로 떨어진 사고를 세 번 겪었고, 같은 부류다. 매 push마다 확인한다.
+  #
+  # 공식 플랫폼은 linux/arm64지만 러너는 amd64다. 여기서 보는 것(산출물-코드 정합,
+  # 폴백 없음, 호스트-컨테이너 일치, ID·순서 감사, 커밋-이미지 결속)은 플랫폼과
+  # 무관하므로 네이티브로 굽는다. arm64 빌드와 공식 크기 측정은 제출 리허설에서
+  # 따로 확인한다 (plan/RELEASE.md).
+  image-binding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # verify_release가 커밋을 git archive로 펼친다
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 의존성 설치
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy
+          python -m pip install -r data/sources/requirements-materialize-public-data.txt
+          python tools/materialize_public_data.py
+
+      # --rebuild는 쓰지 않는다. 산출물을 다시 구우면 provenance의 커밋과
+      # 시각이 바뀌어 작업 트리가 더러워지고, 그 상태로 구운 이미지는 커밋과
+      # 어긋난다. 여기서는 **체크아웃한 그대로**를 굽는다. 그것이 제출될
+      # 물건이다. 산출물이 낡았는지는 아래 두 검사가 잡는다.
+      - name: 커밋 그대로 이미지 빌드
+        run: |
+          MANIFEST="$(PYTHONPATH=src python tools/benchmark_runtime.py \
+            --print-source-manifest-sha256)"
+          docker build --provenance=false --sbom=false \
+            --build-arg "SOURCE_MANIFEST_SHA256=$MANIFEST" \
+            --file container/router.Dockerfile --tag ossp-router:verify .
+
+      - name: 전 스택 검증 (호스트-컨테이너 일치, ID·순서 감사, 공식 채점기)
+        run: PYTHONPATH=src python tools/verify_submission_stack.py
+
+      - name: 이미지가 이 커밋의 코드를 담고 있는가
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          import sys
+          sys.path.insert(0, "tools")
+          import verify_release as release
+
+          # 레지스트리가 없으므로 다이제스트에 기대는 검사는 건너뛰고,
+          # 이 워크플로가 실제로 지키려는 것만 본다.
+          submission = {"commit_sha": release._run(
+              ["git", "rev-parse", "HEAD"], cwd=release.ROOT).strip(),
+              "image_digest": "ossp-router:verify"}
+          for name, check in (
+              ("이미지가 그 커밋의 코드를 담고 있다", release.check_image_carries_the_commit),
+              ("이미지 안 산출물이 낡지 않았다", release.check_artifact_is_not_stale),
+              ("이미지에 VOLUME 선언이 없다", release.check_no_declared_volume),
+          ):
+              try:
+                  print(f"✓ {name} — {check(submission)}")
+              except release.Failed as exc:
+                  print(f"✗ {name}\n  {exc}")
+                  raise SystemExit(1)
+          PY
