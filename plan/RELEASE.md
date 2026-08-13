@@ -37,6 +37,29 @@ docker version && git status --porcelain
 작업 트리가 **비어 있어야** 한다. `linux/arm64` 빌드가 가능해야 한다
 (Apple Silicon이면 그대로 된다).
 
+공개 레지스트리 계정이 있어야 한다. Docker Hub, GHCR 어느 쪽이든 되지만
+**로그아웃 상태에서 pull이 되어야** 한다.
+
+### 브랜치
+
+개발은 `router-dev`에서 했다. 규칙상 브랜치 이름은 자유이고 제출 대상을
+고정하는 것은 커밋 SHA다. 다만 **제출 커밋은 `main`에 올려 둔다.** 작업
+브랜치는 지워질 수 있고, 그러면 심사 기간 중에 스냅샷 URL이 죽는다.
+
+```bash
+git checkout main && git merge --ff-only router-dev && git push origin main
+```
+
+### fork 공개 확인 (2026-08-13 확인)
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  https://api.github.com/repos/chjnett/ossp-2026-llm-router-challenge
+```
+
+인증 없이 `200`이어야 한다. `private=False`를 확인했다. 제출 시점에 다시
+확인한다 — 심사 기간 내내 열려 있어야 한다 (RULES F4).
+
 ## 1. 챔피언 확정과 산출물 굽기 — 코드 커밋 **전에**
 
 ```bash
