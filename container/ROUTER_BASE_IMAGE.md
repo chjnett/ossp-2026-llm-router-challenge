@@ -46,6 +46,18 @@ Debian 패키지 메타데이터의 고지 조건을 그대로 보존한다.
 
 빌드가 끝난 뒤 `pip`, `setuptools`, `wheel`을 제거해 최종 이미지에서 뺀다.
 
+우리가 설치하는 것은 numpy뿐이지만 최종 이미지의 site-packages에는
+`packaging` 26.3이 하나 더 남는다. 기반 이미지가 넣은 것이고 위 제거 대상
+이름에 없어 살아남는다. SBOM을 만들면서 확인했다.
+
+| 이름 | 버전 | 라이선스 | 출처 | 라우터가 적재하는가 |
+| --- | --- | --- | --- | --- |
+| packaging | 26.3 | Apache-2.0 OR BSD-2-Clause | 기반 이미지 | **아니오** |
+
+두 라이선스 모두 과제 규칙의 허용 목록에 있다. 라우터 모듈을 전부 import한
+뒤 `sys.modules`를 확인해 `packaging`이 적재되지 않음을 확인했으므로
+"라우터 애플리케이션에 직접 결합하는" 구성요소가 아니다.
+
 ## 이미지에 싣는 참가자 파일
 
 | 경로 | 내용 | 라이선스 |
@@ -65,17 +77,47 @@ Debian 패키지 메타데이터의 고지 조건을 그대로 보존한다.
 ## 이미지 크기
 
 공식 한도는 압축 계층 합계 1 GiB, 풀린 rootfs 겉보기 크기 2 GiB다.
-로컬 측정값은 다음과 같다.
 
-| 지표 | 측정값 | 한도 | 여유 |
+`router-measure-image`는 레지스트리 다이제스트를 요구한다. 2026-08-13에
+로컬 레지스트리로 push해 **공식 도구로 직접 측정**했다. 아래는 근사가 아니라
+`operator-image-size-evidence` 산출물의 값이다.
+
+| 지표 | 측정값 | 한도 | 사용률 |
 | --- | ---: | ---: | ---: |
-| rootfs 겉보기 크기 (`docker export` tar) | 201.1 MiB | 2048 MiB | 90% |
-| 이미지 아카이브 (`docker save` tar) | 63.4 MiB | — | — |
-| 압축 계층 합계 | ≤ 63.4 MiB | 1024 MiB | 94% |
+| 압축 계층 합계 (`oci-manifest-layer-descriptors-v1`) | 63.4 MiB | 1024 MiB | 6.2% |
+| rootfs 겉보기 크기 (`docker-export-tar-apparent-size-v1`) | 195.8 MiB | 2048 MiB | 9.6% |
 
-공식 측정은 `router-measure-image`가 레지스트리 다이제스트를 요구하므로
-이미지를 push한 뒤에 수행한다. 위 값은 로컬 근사이며 두 한도 모두 큰 폭으로
-아래에 있다.
+같은 이미지를 `tools/check_runtime.py`로 공식 자원 한도(2코어, 2 GiB, 네트워크
+없음, 읽기 전용 루트)에서 돌려 Train+Dev 2,640문항이 등급당 2.1초에 끝나는
+것을 확인했다. 한도는 등급당 90초다.
+
+측정 절차는 [`plan/RELEASE.md`](../plan/RELEASE.md)에 있다. push한 이미지와
+OCI 레이아웃을 **같은 미디어타입·압축으로** 내보내지 않으면 매니페스트
+다이제스트가 갈려 측정이 거부된다.
+
+## SBOM
+
+[`container/sbom.cdx.json`](sbom.cdx.json) — CycloneDX 1.5. 구성요소 108개
+(Debian 105, Python 2, 참가자 1).
+
+```console
+PYTHONPATH=src python3 tools/generate_sbom.py \
+  --image <REGISTRY>/ossp-router@sha256:<64자리>
+```
+
+`syft`나 `trivy`를 쓰지 않고 **이미지 안의** dpkg 데이터베이스와 Python
+dist-info를 직접 읽는다. 출처가 이미지 자신이라 "이 다이제스트에 실제로 든
+것"과 어긋날 수 없다. 바깥에서 만든 목록은 이미지와 갈릴 수 있다.
+
+기반 OS 패키지의 라이선스 근거는 이미지 안 `/usr/share/doc/<패키지>/copyright`에
+있다. slim 이미지가 이 파일들을 지우는 경우가 있어 확인했고, 105개 패키지
+전부 보존되어 있다. SBOM은 각 구성요소에 그 경로를 `ossp:license-file`로
+기록하고, DEP-5 형식인 88개는 라이선스 식별자까지 읽어 넣는다.
+
+Debian 기반 이미지에는 GPL 계열 시스템 패키지가 들어간다. 과제 규칙은 기반
+운영체제와 언어 런타임의 표준 구성요소를 허용하며, 금지 대상은 **라우터
+애플리케이션에 직접 결합하는** 목록 밖 copyleft다. 라우터가 결합하는 것은
+numpy(BSD-3-Clause) 하나뿐이다.
 
 ## 재현
 

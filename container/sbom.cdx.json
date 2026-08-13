@@ -1,0 +1,5229 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "container",
+      "name": "localhost:5001/ossp-router",
+      "version": "sha256:810f35456be147416ef1e9319b2bb7cbd96955f9bb7b05c9a69c8057a9adb175",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "ossp:base-image",
+        "value": "python:3.11.15-slim-bookworm@sha256:d29f48a31a8b408ed19272ca1e7b10ebae13b240a27e862d3d4217c528e2e0c3"
+      },
+      {
+        "name": "ossp:python",
+        "value": "3.11.15"
+      },
+      {
+        "name": "ossp:platform",
+        "value": "linux/arm64"
+      },
+      {
+        "name": "ossp:method",
+        "value": "이미지 안 dpkg status와 Python dist-info를 직접 읽었다"
+      },
+      {
+        "name": "ossp:ai-models",
+        "value": "해당 없음 — 실행 이미지에 AI 모델을 탑재하지 않음"
+      },
+      {
+        "name": "ossp:network-at-runtime",
+        "value": "none"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "adduser",
+      "version": "3.134",
+      "purl": "pkg:deb/debian/adduser@3.134?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "adduser"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/adduser/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "apt",
+      "version": "2.6.1",
+      "purl": "pkg:deb/debian/apt@2.6.1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "apt"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/apt/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base-files",
+      "version": "12.4+deb12u15",
+      "purl": "pkg:deb/debian/base-files@12.4%2Bdeb12u15?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "base-files"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/base-files/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "base-passwd",
+      "version": "3.6.1",
+      "purl": "pkg:deb/debian/base-passwd@3.6.1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "base-passwd"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/base-passwd/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "bash",
+      "version": "5.2.15-2+b13",
+      "purl": "pkg:deb/debian/bash@5.2.15-2%2Bb13?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "bash"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/bash/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3"
+          }
+        },
+        {
+          "license": {
+            "name": "Latex2e"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause-UC and MIT-like"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause-UC"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT-like"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "bsdutils",
+      "version": "1:2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/bsdutils@1%3A2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/bsdutils/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "ca-certificates",
+      "version": "20230311+deb12u1",
+      "purl": "pkg:deb/debian/ca-certificates@20230311%2Bdeb12u1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "ca-certificates"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/ca-certificates/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "MPL-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "coreutils",
+      "version": "9.1-1",
+      "purl": "pkg:deb/debian/coreutils@9.1-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "coreutils"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/coreutils/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ and BSD-4-clause-UC"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause-UC"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ and ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "FSFULLR"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "dash",
+      "version": "0.5.12-2",
+      "purl": "pkg:deb/debian/dash@0.5.12-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "dash"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/dash/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "debconf",
+      "version": "1.5.82",
+      "purl": "pkg:deb/debian/debconf@1.5.82?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "debconf"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/debconf/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "debian-archive-keyring",
+      "version": "2023.3+deb12u2",
+      "purl": "pkg:deb/debian/debian-archive-keyring@2023.3%2Bdeb12u2?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "debian-archive-keyring"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/debian-archive-keyring/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "debianutils",
+      "version": "5.7-0.5~deb12u1",
+      "purl": "pkg:deb/debian/debianutils@5.7-0.5~deb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "debianutils"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/debianutils/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "SMAIL-GPL"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "diffutils",
+      "version": "1:3.8-4",
+      "purl": "pkg:deb/debian/diffutils@1%3A3.8-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "diffutils"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/diffutils/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "FSFULLR"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ and FSFULLR"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with autoconf exception"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with texinfo exception"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.0+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "FSFAP"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3.0+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3.0+ or GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "dpkg",
+      "version": "1.21.23",
+      "purl": "pkg:deb/debian/dpkg@1.21.23?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "dpkg"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/dpkg/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain-s-s-d"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "e2fsprogs",
+      "version": "1.47.0-2+b2",
+      "purl": "pkg:deb/debian/e2fsprogs@1.47.0-2%2Bb2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "e2fsprogs"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/e2fsprogs/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL or MIT-US-export"
+          }
+        },
+        {
+          "license": {
+            "name": "Kazlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Latex2e"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with Texinfo exception"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "findutils",
+      "version": "4.9.0-4",
+      "purl": "pkg:deb/debian/findutils@4.9.0-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "findutils"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/findutils/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "FSFAP"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Autoconf-data exception"
+          }
+        },
+        {
+          "license": {
+            "name": "FSFULLR"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with Autoconf-data exception"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL with automake exception"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause and/or GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison-2.2 exception"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC and/or LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gcc-12-base",
+      "version": "12.2.0-14+deb12u1",
+      "purl": "pkg:deb/debian/gcc-12-base@12.2.0-14%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gcc-12"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/gcc-12-base/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gpgv",
+      "version": "2.2.40-1.1+deb12u2",
+      "purl": "pkg:deb/debian/gpgv@2.2.40-1.1%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gnupg2"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/gpgv/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ or BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "RFC-Reference"
+          }
+        },
+        {
+          "license": {
+            "name": "TinySCHEME"
+          }
+        },
+        {
+          "license": {
+            "name": "CC0-1.0"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "grep",
+      "version": "3.8-5",
+      "purl": "pkg:deb/debian/grep@3.8-5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "grep"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/grep/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "gzip",
+      "version": "1.12-1",
+      "purl": "pkg:deb/debian/gzip@1.12-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gzip"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/gzip/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-1.3+-no-invariant"
+          }
+        },
+        {
+          "license": {
+            "name": "FSF-manpages"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "hostname",
+      "version": "3.23+nmu1",
+      "purl": "pkg:deb/debian/hostname@3.23%2Bnmu1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "hostname"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/hostname/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "init-system-helpers",
+      "version": "1.65.2+deb12u1",
+      "purl": "pkg:deb/debian/init-system-helpers@1.65.2%2Bdeb12u1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "init-system-helpers"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/init-system-helpers/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libacl1",
+      "version": "2.3.1-3",
+      "purl": "pkg:deb/debian/libacl1@2.3.1-3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "acl"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libacl1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libapt-pkg6.0",
+      "version": "2.6.1",
+      "purl": "pkg:deb/debian/libapt-pkg6.0@2.6.1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "apt"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libapt-pkg6.0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libattr1",
+      "version": "1:2.5.1-4",
+      "purl": "pkg:deb/debian/libattr1@1%3A2.5.1-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "attr"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libattr1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libaudit-common",
+      "version": "1:3.0.9-1",
+      "purl": "pkg:deb/debian/libaudit-common@1%3A3.0.9-1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "audit"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libaudit-common/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libaudit1",
+      "version": "1:3.0.9-1",
+      "purl": "pkg:deb/debian/libaudit1@1%3A3.0.9-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "audit"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libaudit1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libblkid1",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/libblkid1@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libblkid1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libbz2-1.0",
+      "version": "1.0.8-5+b1",
+      "purl": "pkg:deb/debian/libbz2-1.0@1.0.8-5%2Bb1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "bzip2"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libbz2-1.0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-variant"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libc-bin",
+      "version": "2.36-9+deb12u14",
+      "purl": "pkg:deb/debian/libc-bin@2.36-9%2Bdeb12u14?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "glibc"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libc-bin/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libc6",
+      "version": "2.36-9+deb12u14",
+      "purl": "pkg:deb/debian/libc6@2.36-9%2Bdeb12u14?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "glibc"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libc6/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcap-ng0",
+      "version": "0.8.3-1+b3",
+      "purl": "pkg:deb/debian/libcap-ng0@0.8.3-1%2Bb3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libcap-ng"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libcap-ng0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcap2",
+      "version": "1:2.66-4+deb12u3+b1",
+      "purl": "pkg:deb/debian/libcap2@1%3A2.66-4%2Bdeb12u3%2Bb1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libcap2"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libcap2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcom-err2",
+      "version": "1.47.0-2+b2",
+      "purl": "pkg:deb/debian/libcom-err2@1.47.0-2%2Bb2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "e2fsprogs"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libcom-err2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL or MIT-US-export"
+          }
+        },
+        {
+          "license": {
+            "name": "Kazlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Latex2e"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with Texinfo exception"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libcrypt1",
+      "version": "1:4.4.33-2",
+      "purl": "pkg:deb/debian/libcrypt1@1%3A4.4.33-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libxcrypt"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libcrypt1/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libdb5.3",
+      "version": "5.3.28+dfsg2-1",
+      "purl": "pkg:deb/debian/libdb5.3@5.3.28%2Bdfsg2-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "db5.3"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libdb5.3/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Sleepycat and BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Sleepycat"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Ms-PL"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL or Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT-old"
+          }
+        },
+        {
+          "license": {
+            "name": "TCL-like"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause-fjord"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        },
+        {
+          "license": {
+            "name": "zlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic or BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libdebconfclient0",
+      "version": "0.270",
+      "purl": "pkg:deb/debian/libdebconfclient0@0.270?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "cdebconf"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libdebconfclient0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libext2fs2",
+      "version": "1.47.0-2+b2",
+      "purl": "pkg:deb/debian/libext2fs2@1.47.0-2%2Bb2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "e2fsprogs"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libext2fs2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL or MIT-US-export"
+          }
+        },
+        {
+          "license": {
+            "name": "Kazlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Latex2e"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with Texinfo exception"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libffi8",
+      "version": "3.4.4-1",
+      "purl": "pkg:deb/debian/libffi8@3.4.4-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libffi"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libffi8/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "MPL-1.1 or GPL-2+ or LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgcc-s1",
+      "version": "12.2.0-14+deb12u1",
+      "purl": "pkg:deb/debian/libgcc-s1@12.2.0-14%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gcc-12"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgcc-s1/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgcrypt20",
+      "version": "1.10.1-3+deb12u1",
+      "purl": "pkg:deb/debian/libgcrypt20@1.10.1-3%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libgcrypt20"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgcrypt20/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgdbm6",
+      "version": "1.23-3",
+      "purl": "pkg:deb/debian/libgdbm6@1.23-3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gdbm"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgdbm6/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgmp10",
+      "version": "2:6.2.1+dfsg1-1.1",
+      "purl": "pkg:deb/debian/libgmp10@2%3A6.2.1%2Bdfsg1-1.1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gmp"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgmp10/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+ or LGPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgnutls30",
+      "version": "3.7.9-2+deb12u7",
+      "purl": "pkg:deb/debian/libgnutls30@3.7.9-2%2Bdeb12u7?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gnutls28"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgnutls30/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "The main library is licensed under GNU Lesser"
+          }
+        },
+        {
+          "license": {
+            "name": "CC0 license"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPLv3+_or_GPLv2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPLv2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPLv3+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgpg-error0",
+      "version": "1.46-1",
+      "purl": "pkg:deb/debian/libgpg-error0@1.46-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libgpg-error"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgpg-error0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+ or BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "g10-permissive"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libgssapi-krb5-2",
+      "version": "1.20.1-2+deb12u5",
+      "purl": "pkg:deb/debian/libgssapi-krb5-2@1.20.1-2%2Bdeb12u5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "krb5"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libgssapi-krb5-2/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libhogweed6",
+      "version": "3.8.1-2",
+      "purl": "pkg:deb/debian/libhogweed6@3.8.1-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "nettle"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libhogweed6/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-3+ or GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Autoconf exception"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GAP"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libidn2-0",
+      "version": "2.3.3-1+b1",
+      "purl": "pkg:deb/debian/libidn2-0@2.3.3-1%2Bb1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libidn2"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libidn2-0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+ or GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "Unicode"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libk5crypto3",
+      "version": "1.20.1-2+deb12u5",
+      "purl": "pkg:deb/debian/libk5crypto3@1.20.1-2%2Bdeb12u5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "krb5"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libk5crypto3/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libkeyutils1",
+      "version": "1.6.3-2",
+      "purl": "pkg:deb/debian/libkeyutils1@1.6.3-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "keyutils"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libkeyutils1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libkrb5-3",
+      "version": "1.20.1-2+deb12u5",
+      "purl": "pkg:deb/debian/libkrb5-3@1.20.1-2%2Bdeb12u5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "krb5"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libkrb5-3/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libkrb5support0",
+      "version": "1.20.1-2+deb12u5",
+      "purl": "pkg:deb/debian/libkrb5support0@1.20.1-2%2Bdeb12u5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "krb5"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libkrb5support0/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "liblz4-1",
+      "version": "1.9.4-1",
+      "purl": "pkg:deb/debian/liblz4-1@1.9.4-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "lz4"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/liblz4-1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ or BSD-2-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "liblzma5",
+      "version": "5.4.1-1+deb12u1",
+      "purl": "pkg:deb/debian/liblzma5@5.4.1-1%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "xz-utils"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/liblzma5/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "PD"
+          }
+        },
+        {
+          "license": {
+            "name": "probably-PD"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-fsf"
+          }
+        },
+        {
+          "license": {
+            "name": "Autoconf"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-nowarranty"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "none"
+          }
+        },
+        {
+          "license": {
+            "name": "config-h"
+          }
+        },
+        {
+          "license": {
+            "name": "noderivs"
+          }
+        },
+        {
+          "license": {
+            "name": "PD-debian"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libmd0",
+      "version": "1.0.4-2",
+      "purl": "pkg:deb/debian/libmd0@1.0.4-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libmd"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libmd0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause-Aaron-D-Gifford"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-clause-NetBSD"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "Beerware"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain-md4"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain-md5"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain-sha1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libmount1",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/libmount1@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libmount1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libncursesw6",
+      "version": "6.4-4",
+      "purl": "pkg:deb/debian/libncursesw6@6.4-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "ncurses"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libncursesw6/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT/X11"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libnettle8",
+      "version": "3.8.1-2",
+      "purl": "pkg:deb/debian/libnettle8@3.8.1-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "nettle"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libnettle8/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-3+ or GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Autoconf exception"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GAP"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libnsl2",
+      "version": "1.3.0-2",
+      "purl": "pkg:deb/debian/libnsl2@1.3.0-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libnsl"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libnsl2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-fsf"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-makefile-in"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-autoconf-m4-no-warranty"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+-autoconf-exception"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-configure"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+-autoconf-exception"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+-libtool-exception"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-autoconf-m4"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libp11-kit0",
+      "version": "0.24.1-2",
+      "purl": "pkg:deb/debian/libp11-kit0@0.24.1-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "p11-kit"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libp11-kit0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "permissive-like-automake-output"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC+IBM"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "name": "same-as-rest-of-p11kit"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libpam-modules",
+      "version": "1.5.2-6+deb12u2",
+      "purl": "pkg:deb/debian/libpam-modules@1.5.2-6%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "pam"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libpam-modules/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-tcp_wrappers"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "Beerware"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libpam-modules-bin",
+      "version": "1.5.2-6+deb12u2",
+      "purl": "pkg:deb/debian/libpam-modules-bin@1.5.2-6%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "pam"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libpam-modules-bin/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-tcp_wrappers"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "Beerware"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libpam-runtime",
+      "version": "1.5.2-6+deb12u2",
+      "purl": "pkg:deb/debian/libpam-runtime@1.5.2-6%2Bdeb12u2?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "pam"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libpam-runtime/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-tcp_wrappers"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "Beerware"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libpam0g",
+      "version": "1.5.2-6+deb12u2",
+      "purl": "pkg:deb/debian/libpam0g@1.5.2-6%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "pam"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libpam0g/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-tcp_wrappers"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "Beerware"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libpcre2-8-0",
+      "version": "10.42-1",
+      "purl": "pkg:deb/debian/libpcre2-8-0@10.42-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "pcre2"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libpcre2-8-0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libreadline8",
+      "version": "8.2-1.3",
+      "purl": "pkg:deb/debian/libreadline8@8.2-1.3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "readline"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libreadline8/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3+"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC-no-attribution"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libseccomp2",
+      "version": "2.5.4-1+deb12u1",
+      "purl": "pkg:deb/debian/libseccomp2@2.5.4-1%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libseccomp"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libseccomp2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libselinux1",
+      "version": "3.4-1+b6",
+      "purl": "pkg:deb/debian/libselinux1@3.4-1%2Bb6?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libselinux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libselinux1/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libsemanage-common",
+      "version": "3.4-1",
+      "purl": "pkg:deb/debian/libsemanage-common@3.4-1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libsemanage"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libsemanage-common/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libsemanage2",
+      "version": "3.4-1+b5",
+      "purl": "pkg:deb/debian/libsemanage2@3.4-1%2Bb5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libsemanage"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libsemanage2/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libsepol2",
+      "version": "3.4-2.1",
+      "purl": "pkg:deb/debian/libsepol2@3.4-2.1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libsepol"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libsepol2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "Zlib"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libsmartcols1",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/libsmartcols1@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libsmartcols1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libsqlite3-0",
+      "version": "3.40.1-2+deb12u2",
+      "purl": "pkg:deb/debian/libsqlite3-0@3.40.1-2%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "sqlite3"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libsqlite3-0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libss2",
+      "version": "1.47.0-2+b2",
+      "purl": "pkg:deb/debian/libss2@1.47.0-2%2Bb2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "e2fsprogs"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libss2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL or MIT-US-export"
+          }
+        },
+        {
+          "license": {
+            "name": "Kazlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Latex2e"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with Texinfo exception"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libssl3",
+      "version": "3.0.20-1~deb12u2",
+      "purl": "pkg:deb/debian/libssl3@3.0.20-1~deb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "openssl"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libssl3/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic or GPL-1+"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libstdc++6",
+      "version": "12.2.0-14+deb12u1",
+      "purl": "pkg:deb/debian/libstdc%2B%2B6@12.2.0-14%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "gcc-12"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libstdc++6/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libsystemd0",
+      "version": "252.39-1~deb12u2",
+      "purl": "pkg:deb/debian/libsystemd0@252.39-1~deb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "systemd"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libsystemd0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "CC0-1.0"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2 with Linux-syscall-note exception"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libtasn1-6",
+      "version": "4.19.0-2+deb12u1",
+      "purl": "pkg:deb/debian/libtasn1-6@4.19.0-2%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libtasn1-6"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libtasn1-6/copyright"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libtinfo6",
+      "version": "6.4-4",
+      "purl": "pkg:deb/debian/libtinfo6@6.4-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "ncurses"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libtinfo6/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT/X11"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libtirpc-common",
+      "version": "1.3.3+ds-1",
+      "purl": "pkg:deb/debian/libtirpc-common@1.3.3%2Bds-1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libtirpc"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libtirpc-common/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "__AUTO_PERMISSIVE__"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "PERMISSIVE"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libtirpc3",
+      "version": "1.3.3+ds-1",
+      "purl": "pkg:deb/debian/libtirpc3@1.3.3%2Bds-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libtirpc"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libtirpc3/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "__AUTO_PERMISSIVE__"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-2-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "PERMISSIVE"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libudev1",
+      "version": "252.39-1~deb12u2",
+      "purl": "pkg:deb/debian/libudev1@252.39-1~deb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "systemd"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libudev1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "CC0-1.0"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2 with Linux-syscall-note exception"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libunistring2",
+      "version": "1.0-2",
+      "purl": "pkg:deb/debian/libunistring2@1.0-2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libunistring"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libunistring2/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "LGPL-3+ or GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "FreeSoftware"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ or GFDL-1.2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with distribution exception"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-1.2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libuuid1",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/libuuid1@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libuuid1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libxxhash0",
+      "version": "0.8.1-1",
+      "purl": "pkg:deb/debian/libxxhash0@0.8.1-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "xxhash"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libxxhash0/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-2-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "libzstd1",
+      "version": "1.5.4+dfsg2-5",
+      "purl": "pkg:deb/debian/libzstd1@1.5.4%2Bdfsg2-5?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "libzstd"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/libzstd1/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause or GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "zlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "login",
+      "version": "1:4.13+dfsg1-1+deb12u2",
+      "purl": "pkg:deb/debian/login@1%3A4.13%2Bdfsg1-1%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "shadow"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/login/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "logsave",
+      "version": "1.47.0-2+b2",
+      "purl": "pkg:deb/debian/logsave@1.47.0-2%2Bb2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "e2fsprogs"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/logsave/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-Clause"
+          }
+        },
+        {
+          "license": {
+            "name": "Apache-2"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL or MIT-US-export"
+          }
+        },
+        {
+          "license": {
+            "name": "Kazlib"
+          }
+        },
+        {
+          "license": {
+            "name": "Latex2e"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ with Texinfo exception"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "mawk",
+      "version": "1.3.4.20200120-3.1",
+      "purl": "pkg:deb/debian/mawk@1.3.4.20200120-3.1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "mawk"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/mawk/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "CC-BY-3.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "mount",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/mount@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/mount/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "ncurses-base",
+      "version": "6.4-4",
+      "purl": "pkg:deb/debian/ncurses-base@6.4-4?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "ncurses"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/ncurses-base/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT/X11"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "ncurses-bin",
+      "version": "6.4-4",
+      "purl": "pkg:deb/debian/ncurses-bin@6.4-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "ncurses"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/ncurses-bin/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "MIT/X11"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "netbase",
+      "version": "6.4",
+      "purl": "pkg:deb/debian/netbase@6.4?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "netbase"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/netbase/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "openssl",
+      "version": "3.0.20-1~deb12u2",
+      "purl": "pkg:deb/debian/openssl@3.0.20-1~deb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "openssl"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/openssl/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache-2.0"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic or GPL-1+"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "passwd",
+      "version": "1:4.13+dfsg1-1+deb12u2",
+      "purl": "pkg:deb/debian/passwd@1%3A4.13%2Bdfsg1-1%2Bdeb12u2?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "shadow"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/passwd/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "perl-base",
+      "version": "5.36.0-7+deb12u3",
+      "purl": "pkg:deb/debian/perl-base@5.36.0-7%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "perl"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/perl-base/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-1+ or Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "REGCOMP, and GPL-1+ or Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+-WITH-BISON-EXCEPTION"
+          }
+        },
+        {
+          "license": {
+            "name": "Unicode"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+ or Artistic, and Unicode"
+          }
+        },
+        {
+          "license": {
+            "name": "BZIP"
+          }
+        },
+        {
+          "license": {
+            "name": "ZLIB"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+ or Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "Expat or GPL-1+ or Artistic"
+          }
+        },
+        {
+          "license": {
+            "name": "RRA-KEEP-THIS-NOTICE"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause-with-weird-numbering"
+          }
+        },
+        {
+          "license": {
+            "name": "CC0-1.0"
+          }
+        },
+        {
+          "license": {
+            "name": "TEXT-TABS"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+ or Artistic, and BSD-4-clause-POWERDOG"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+ or Artistic, and BSD-3-clause-GENERIC"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "SDBM-PUBLIC-DOMAIN"
+          }
+        },
+        {
+          "license": {
+            "name": "DONT-CHANGE-THE-GPL"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+ or Artistic or Artistic-dist"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic-dist"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic or GPL-1+ or Artistic-dist"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+ or Artistic, and Expat"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-1+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "Artistic-2"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause-POWERDOG"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause-GENERIC"
+          }
+        },
+        {
+          "license": {
+            "name": "REGCOMP"
+          }
+        },
+        {
+          "license": {
+            "name": "HSIEH-DERIVATIVE"
+          }
+        },
+        {
+          "license": {
+            "name": "HSIEH-BSD"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "readline-common",
+      "version": "8.2-1.3",
+      "purl": "pkg:deb/debian/readline-common@8.2-1.3?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "readline"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/readline-common/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3+"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC-no-attribution"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "sed",
+      "version": "4.9-1+deb12u1",
+      "purl": "pkg:deb/debian/sed@4.9-1%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "sed"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/sed/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "X11"
+          }
+        },
+        {
+          "license": {
+            "name": "GFDL-NIV-1.3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ and ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "ISC"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause-UC"
+          }
+        },
+        {
+          "license": {
+            "name": "BSL-1"
+          }
+        },
+        {
+          "license": {
+            "name": "pcre"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "sysvinit-utils",
+      "version": "3.06-4",
+      "purl": "pkg:deb/debian/sysvinit-utils@3.06-4?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "sysvinit"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/sysvinit-utils/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2.0+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3.0"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "tar",
+      "version": "1.34+dfsg-1.2+deb12u1",
+      "purl": "pkg:deb/debian/tar@1.34%2Bdfsg-1.2%2Bdeb12u1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "tar"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/tar/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+ with Bison exception"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "tzdata",
+      "version": "2026b-0+deb12u1",
+      "purl": "pkg:deb/debian/tzdata@2026b-0%2Bdeb12u1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "tzdata"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/tzdata/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "usr-is-merged",
+      "version": "37~deb12u1",
+      "purl": "pkg:deb/debian/usr-is-merged@37~deb12u1?arch=all",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "usrmerge"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/usr-is-merged/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "util-linux",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/util-linux@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/util-linux/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "util-linux-extra",
+      "version": "2.38.1-5+deb12u3",
+      "purl": "pkg:deb/debian/util-linux-extra@2.38.1-5%2Bdeb12u3?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "util-linux"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/util-linux-extra/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "GPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-2"
+          }
+        },
+        {
+          "license": {
+            "name": "GPL-3+"
+          }
+        },
+        {
+          "license": {
+            "name": "public-domain"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-4-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "MIT"
+          }
+        },
+        {
+          "license": {
+            "name": "BSD-3-clause"
+          }
+        },
+        {
+          "license": {
+            "name": "BSLA"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-2.1+"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL"
+          }
+        },
+        {
+          "license": {
+            "name": "LGPL-3+"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "zlib1g",
+      "version": "1:1.2.13.dfsg-1",
+      "purl": "pkg:deb/debian/zlib1g@1%3A1.2.13.dfsg-1?arch=arm64",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "base-image-debian"
+        },
+        {
+          "name": "ossp:source-package",
+          "value": "zlib"
+        },
+        {
+          "name": "ossp:license-file",
+          "value": "/usr/share/doc/zlib1g/copyright"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Zlib"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "numpy",
+      "version": "2.2.6",
+      "purl": "pkg:pypi/numpy@2.2.6",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "pip-require-hashes"
+        },
+        {
+          "name": "ossp:license-source",
+          "value": "Classifier"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "BSD License"
+          }
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "packaging",
+      "version": "26.3",
+      "purl": "pkg:pypi/packaging@26.3",
+      "scope": "required",
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "pip-require-hashes"
+        },
+        {
+          "name": "ossp:license-source",
+          "value": "License-Expression"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "name": "Apache-2.0 OR BSD-2-Clause"
+          }
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "name": "ossp-router",
+      "version": "1.0.0",
+      "scope": "required",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "ossp:origin",
+          "value": "participant-source"
+        },
+        {
+          "name": "ossp:note",
+          "value": "라우터 구현과 굳힌 계수. AI 모델은 포함하지 않는다"
+        }
+      ]
+    }
+  ]
+}

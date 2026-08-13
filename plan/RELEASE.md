@@ -1,0 +1,183 @@
+<!--
+SPDX-FileCopyrightText: Copyright 2026 chjnett
+SPDX-License-Identifier: Apache-2.0
+-->
+
+# 제출 실행 절차
+
+2026-08-13에 로컬 레지스트리로 전 과정을 리허설하고 그 결과를 굳힌 문서다.
+마감 당일에 다시 알아내지 않으려고 쓴다. **위에서 아래로 그대로 실행한다.**
+
+마감은 2026-08-27 18:00 KST. 이미지 동결은 8/25 24:00 (RULES F2).
+
+---
+
+## 리허설에서 걸린 것 (같은 실수를 반복하지 않기 위해)
+
+| 증상 | 원인 | 대응 |
+| --- | --- | --- |
+| `router-measure-image`가 "제출 digest를 OCI layout index에서 찾을 수 없다" | push한 이미지와 OCI 레이아웃을 **따로** 빌드했다. Docker 미디어타입과 OCI 미디어타입은 매니페스트 다이제스트가 다르다 | 두 내보내기 모두 `oci-mediatypes=true, compression=gzip` |
+| 이미지 라벨이 `unbound` | Dockerfile에 자리만 있고 build arg를 안 넘겼다. 라벨 키도 상류가 읽는 것과 달랐다 | `--build-arg SOURCE_MANIFEST_SHA256=...` 필수 |
+| 관문이 push한 커밋을 "origin에 없다"고 판정 | `remote.origin.fetch`가 `main`으로 제한돼 있어 다른 브랜치의 원격 추적 ref가 안 생긴다 | `git ls-remote`로 원격에 직접 묻는다 |
+| 관문이 정상 이미지를 실패로 판정 | 이미지와 커밋의 **동일성**을 요구했다. `.dockerignore`가 학습 코드(`cache`·`harness`·`stress`)를 일부러 뺀다 | 부분집합으로 대조 |
+| 소스 매니페스트가 이미지 라벨과 불일치 | `verify_submission_stack.py --rebuild`가 산출물을 다시 구워 `provenance`의 커밋·시각이 바뀌었다. 계수는 동일하다 | **산출물 재생성은 코드 커밋 전에 끝낸다.** 커밋 뒤에는 `--rebuild`를 돌리지 않는다 |
+
+비트 단위 재현 빌드는 **성립하지 않는다.** pip 설치 시각이 레이어에 들어가
+같은 커밋에서 두 번 빌드해도 다이제스트가 다르다. 규칙이 요구하지 않으므로
+내용 대조(`tools/verify_release.py`)로 대신한다.
+
+---
+
+## 0. 사전 조건
+
+```bash
+docker version && git status --porcelain
+```
+
+작업 트리가 **비어 있어야** 한다. `linux/arm64` 빌드가 가능해야 한다
+(Apple Silicon이면 그대로 된다).
+
+## 1. 챔피언 확정과 산출물 굽기 — 코드 커밋 **전에**
+
+```bash
+PYTHONPATH=src python3 tools/export_artifact.py
+```
+
+`provenance.commit`은 굽는 시점의 HEAD를 적는다. 그래서 산출물이 담기는
+커밋보다 항상 하나 앞선다. 정상이다.
+
+## 2. 전 스택 검증 — 여기까지가 마지막 `--rebuild`
+
+```bash
+PYTHONPATH=src python3 tools/verify_submission_stack.py --rebuild
+```
+
+7개 검사가 전부 통과하고 세 등급 예산이 통과해야 한다. 가중 최종 점수가
+all-light(0.619)보다 낮으면 제출하지 않는다 (RULES F1).
+
+## 3. 코드 커밋과 push
+
+```bash
+git add -A && git commit && git push origin HEAD
+```
+
+이 커밋이 `commit_sha`가 된다. **이 시점 이후 `--rebuild` 금지.**
+
+## 4. 이미지 빌드와 push
+
+레지스트리는 공개여야 한다. `<REGISTRY>`를 실제 값으로 바꾼다.
+
+```bash
+MAN="$(PYTHONPATH=src python3 tools/benchmark_runtime.py --print-source-manifest-sha256)"
+docker buildx build --platform linux/arm64 --provenance=false --sbom=false \
+  --build-arg "SOURCE_MANIFEST_SHA256=$MAN" \
+  --file container/router.Dockerfile \
+  --output "type=registry,name=<REGISTRY>/ossp-router:submission,oci-mediatypes=true,compression=gzip" .
+```
+
+`--provenance=false --sbom=false`가 빠지면 buildx가 attestation 매니페스트를
+붙여 고정 이미지 ID로 실행하지 못한다.
+
+같은 조건으로 OCI 레이아웃도 뽑는다. **미디어타입과 압축이 위와 같아야
+다이제스트가 일치한다.**
+
+```bash
+docker buildx build --platform linux/arm64 --provenance=false --sbom=false \
+  --build-arg "SOURCE_MANIFEST_SHA256=$MAN" \
+  --file container/router.Dockerfile \
+  --output "type=oci,dest=build/oci,tar=false,compression=gzip" .
+```
+
+다이제스트를 확보하고 로컬로 당긴다.
+
+```bash
+docker buildx imagetools inspect <REGISTRY>/ossp-router:submission
+docker pull --platform linux/arm64 <REGISTRY>/ossp-router@sha256:<64자리>
+```
+
+## 5. 공식 측정
+
+```bash
+mkdir -p build/measure && chmod 700 build/measure
+PYTHONPATH=src router-measure-image \
+  --oci-layout build/oci \
+  --image <REGISTRY>/ossp-router@sha256:<64자리> \
+  --output build/measure/evidence.json
+```
+
+리허설 측정값 (한도 대비):
+
+| 지표 | 측정 | 한도 | 사용률 |
+| --- | ---: | ---: | ---: |
+| 압축 계층 합계 | 63.4 MiB | 1024 MiB | 6.2% |
+| rootfs 겉보기 | 195.8 MiB | 2048 MiB | 9.6% |
+
+## 6. 공식 자원 한도로 실행 확인
+
+```bash
+PYTHONPATH=src python3 tools/check_runtime.py \
+  --image <REGISTRY>/ossp-router@sha256:<64자리> \
+  --report build/runtime-check-report.json
+```
+
+Train+Dev 2,640문항으로 세 등급이 각각 90초 안에 끝나야 한다. 리허설에서는
+등급당 2.1초였다.
+
+## 7. 기술 제출 JSON — **별도 커밋**
+
+저장소 루트에 `submission-ossp-skt.json`. 여섯 필드만 허용한다.
+
+```json
+{
+  "schema_version": 1,
+  "challenge_id": "ossp-2026-llm-router-challenge",
+  "repository_url": "https://github.com/chjnett/ossp-2026-llm-router-challenge",
+  "commit_sha": "<3단계 커밋의 40자리>",
+  "image_digest": "<REGISTRY>/ossp-router@sha256:<64자리>",
+  "primary_license": "Apache-2.0"
+}
+```
+
+이 커밋에는 **JSON만** 넣는다. 코드가 섞이면 `commit_sha`가 가리키는 커밋과
+제출 스냅샷의 코드가 갈린다.
+
+## 8. 관문 통과 — 제출 전 마지막 확인
+
+```bash
+PYTHONPATH=src python3 tools/validate_technical_submission.py
+PYTHONPATH=src python3 tools/verify_release.py --evidence build/measure/evidence.json
+```
+
+공식 검증기는 **형식만** 본다. 커밋 SHA는 맞고 이미지는 사흘 전 코드로 구운
+제출이 그대로 통과한다. `verify_release.py`가 9개 항목으로 내용을 본다.
+하나라도 실패하면 제출하지 않는다.
+
+```bash
+git add submission-ossp-skt.json && git commit && git push origin HEAD
+```
+
+## 9. 결과보고서
+
+`프로젝트 등록 URL`에 **JSON을 담은 8단계 커밋**의 스냅샷을 적는다.
+
+```
+https://github.com/chjnett/ossp-2026-llm-router-challenge/tree/<40자리>
+```
+
+브랜치 URL이 아니라 전체 커밋 SHA여야 한다. 요구 항목은
+[`plan/REPORT.md`](REPORT.md)에 정리한다.
+
+## 10. 접수
+
+[osscontest.kr](https://osscontest.kr/)에 원본 파일 1개와 PDF 1개.
+본문 5쪽 이내, 첫 쪽 안내 문구 삭제, 파일명
+`2026 오픈소스 개발자대회 결과보고서_접수번호(팀명)`.
+
+마감 전에는 다시 올릴 수 있고 **마지막 접수분**을 심사한다.
+
+---
+
+## 제출 후
+
+저장소는 심사 종료까지, 수상 시 5년간 공개 유지 (RULES F4).
+상류로 PR을 보낼 필요는 없다. 수상작에 한해 심사 후 별도로 요청받을 수 있다.
