@@ -39,6 +39,7 @@ SPDX-License-Identifier: Apache-2.0
 - [x] SBOM 생성 → `container/sbom.cdx.json`
 - [x] 결과보고서 원고 → [REPORT.md](REPORT.md)
 - [x] 커밋↔이미지 결속 관문 (`tools/verify_release.py`) + CI 연결
+      — `image-binding` 작업이 arm64 러너에서 초록. 실제 검사 수행 확인
 - [ ] **사용자 몫**: 공개 레지스트리 계정, 데모 영상, 공식 양식 다운로드
 - [ ] 8/25 이미지 동결
 - [ ] P5 제출 절차 실행

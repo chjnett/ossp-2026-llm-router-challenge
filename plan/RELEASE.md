@@ -26,6 +26,24 @@ SPDX-License-Identifier: Apache-2.0
 같은 커밋에서 두 번 빌드해도 다이제스트가 다르다. 규칙이 요구하지 않으므로
 내용 대조(`tools/verify_release.py`)로 대신한다.
 
+### 이 이미지는 arm64에서만 구울 수 있다
+
+`container/router-requirements.txt`가 numpy wheel의 SHA-256을 고정하는데 그
+wheel은 **aarch64용**이다. amd64에서는 pip가 x86_64 wheel을 받아
+`--require-hashes`가 막는다. 기반 이미지도 arm64 다이제스트로 고정돼 있다.
+
+QEMU 에뮬레이션으로 우회하지 말고 arm64 장비에서 굽는다. Apple Silicon이면
+그대로 되고, CI는 `ubuntu-24.04-arm` 러너를 쓴다(공개 저장소 무료).
+
+### Linux에서만 드러나는 것
+
+컨테이너는 UID 65532로 돈다. Linux의 bind mount는 호스트의 소유권과 권한을
+그대로 보여주므로 **0700 디렉터리를 마운트하면 컨테이너가 읽지 못한다.**
+macOS Docker Desktop은 소유권을 느슨하게 매핑해서 이 문제가 로컬에서는
+보이지 않는다. 검증 도구가 CI(Linux)에서 처음 깨졌다.
+
+로컬에서만 확인하고 넘어가면 안 되는 이유다. **평가 환경은 Linux arm64다.**
+
 ---
 
 ## 0. 사전 조건
