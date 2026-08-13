@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import shutil
 import subprocess
@@ -101,11 +102,24 @@ def main() -> int:
             cwd=ROOT, check=True, capture_output=True,
         )
         ok("산출물 재생성")
+        # 소스 매니페스트 라벨을 붙여 굽는다. 이것을 빼면 이 도구가 만든
+        # 이미지는 tools/verify_release.py가 검사할 수 없는 물건이 된다.
+        # 같은 Dockerfile을 두 도구가 다르게 굽고 있으면 안 된다.
+        manifest = subprocess.run(
+            [sys.executable, str(ROOT / "tools" / "benchmark_runtime.py"),
+             "--print-source-manifest-sha256"],
+            cwd=ROOT, capture_output=True, text=True,
+            env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
+        )
+        if manifest.returncode != 0:
+            fail(f"소스 매니페스트를 계산하지 못했다: {manifest.stderr[-300:]}")
+
         command = ["docker", "build"]
         if args.platform != "native":
             command += ["--platform", args.platform]
         command += [
             "--provenance=false", "--sbom=false",
+            "--build-arg", f"SOURCE_MANIFEST_SHA256={manifest.stdout.strip()}",
             "--file", "container/router.Dockerfile", "--tag", IMAGE, ".",
         ]
         build = subprocess.run(
