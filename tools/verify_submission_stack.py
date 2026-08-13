@@ -62,7 +62,17 @@ def decisions(path: Path) -> dict[str, str]:
 
 
 def run_container(input_dir: Path, input_name: str, out_dir: Path, tier: str) -> str:
+    # 컨테이너는 UID 65532로 돈다. Linux에서 bind mount는 호스트의 소유권과
+    # 권한을 그대로 보여주므로, 기본 0700인 임시 디렉터리는 65532가 읽지도
+    # 쓰지도 못한다. macOS Docker Desktop은 소유권을 느슨하게 매핑해서 이
+    # 문제가 로컬에서는 안 보였고 CI에서 처음 드러났다.
+    #
+    # 호출자가 넘기는 두 경로는 모두 임시 작업 디렉터리 안이다. 저장소 안을
+    # 건드리지 않으려고 입력도 복사해서 쓴다.
     out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.chmod(0o777)
+    input_dir.chmod(0o755)
+    (input_dir / input_name).chmod(0o644)
     result = subprocess.run(
         ["docker", "run", *ISOLATION,
          "-v", f"{input_dir}:/in:ro", "-v", f"{out_dir}:/out",
@@ -141,6 +151,7 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
+        work.chmod(0o755)  # 기본 0700이면 컨테이너의 65532가 닿지 못한다
         host_dir = work / "host"
         host_dir.mkdir()
 
@@ -159,9 +170,14 @@ def main() -> int:
         ok("호스트 실행 3등급 폴백 없음")
 
         # 4·5. 컨테이너 실행과 호스트 대조
+        # 저장소 안 파일을 그대로 마운트하면 그 권한을 고쳐야 하므로 복사한다.
+        in_dir = work / "in"
+        in_dir.mkdir()
+        shutil.copy2(DEV_INPUT, in_dir / DEV_INPUT.name)
+
         cont_dir = work / "container"
         for tier in TIERS:
-            log = run_container(DEV_INPUT.parent, DEV_INPUT.name, cont_dir, tier)
+            log = run_container(in_dir, DEV_INPUT.name, cont_dir, tier)
             if "폴백" in log or "fallback" in log:
                 fail(f"컨테이너 {tier}가 폴백을 썼다")
         ok("컨테이너 실행 3등급 폴백 없음")
