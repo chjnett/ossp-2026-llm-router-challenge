@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -191,6 +192,61 @@ def do_champion(args) -> int:
     return 0
 
 
+def do_adopt(args) -> int:
+    """점수가 낮은 설정을 **일부러** 챔피언으로 세운다.
+
+    자동 승격은 CV로만 판단한다. 그것이 맞다 — 점수가 낮은 설정이 조용히
+    챔피언이 되면 안 된다. 다만 점수를 안전과 바꾸는 결정은 사람이 내리고,
+    그럴 때 ``champion.json``을 손으로 고치면 **왜 그랬는지가 사라진다.**
+
+    이 경로는 게이트 조건(N>=2000 통과, 세 등급 예산 통과)은 그대로 요구하고
+    이유를 반드시 받아 기록에 남긴다.
+    """
+
+    records = [r for r in load_records() if r["config"]["id"] == args.config_id]
+    if not records:
+        print(f"오류: {args.config_id} 기록이 없다. 먼저 run으로 돌려야 한다", file=sys.stderr)
+        return 2
+    record = records[-1]
+
+    if not record["gate"]["passed"]:
+        print("오류: 게이트를 통과하지 못한 설정은 챔피언이 될 수 없다", file=sys.stderr)
+        return 2
+    if int(record["gate"].get("trials", 0)) < MIN_GATE_TRIALS:
+        print(
+            f"오류: 게이트 시행이 {record['gate'].get('trials', 0)}회다. "
+            f"{MIN_GATE_TRIALS}회 이상이어야 한다",
+            file=sys.stderr,
+        )
+        return 2
+    if not record["cv"]["all_passed"]:
+        print("오류: 교차검증에서 예산을 넘긴 등급이 있다", file=sys.stderr)
+        return 2
+
+    previous = None
+    if CHAMPION.exists():
+        previous = json.loads(CHAMPION.read_text(encoding="utf-8"))
+
+    record = dict(record)
+    record["adopted"] = {
+        "reason": args.reason,
+        "replaced": previous["config"]["id"] if previous else None,
+        "cv_delta": (
+            float(record["cv"]["final_score"])
+            - float(previous["cv"]["final_score"]) if previous else None
+        ),
+    }
+    CHAMPION.write_text(
+        json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    delta = record["adopted"]["cv_delta"]
+    print(f"챔피언 교체: {record['adopted']['replaced']} → {args.config_id}")
+    print(f"  CV {float(record['cv']['final_score']):.4f}" + (f" ({delta:+.4f})" if delta else ""))
+    print(f"  Dev {float(record['dev']['final_score']):.4f}")
+    print(f"  이유: {args.reason}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(prog="run.py")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -208,6 +264,13 @@ def main() -> int:
 
     p_champ = sub.add_parser("champion", help="현재 챔피언 설정을 보여준다")
     p_champ.set_defaults(func=do_champion)
+
+    p_adopt = sub.add_parser(
+        "adopt", help="점수가 낮은 설정을 일부러 챔피언으로 세운다 (이유 필수)"
+    )
+    p_adopt.add_argument("config_id", type=str)
+    p_adopt.add_argument("--reason", type=str, required=True)
+    p_adopt.set_defaults(func=do_adopt)
 
     args = parser.parse_args()
     return args.func(args)
