@@ -78,14 +78,6 @@ def run_container(input_dir: Path, input_name: str, out_dir: Path, tier: str) ->
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--rebuild", action="store_true", help="산출물과 이미지를 다시 만든다")
-    # 공식 플랫폼은 linux/arm64다. 다만 CI 러너는 amd64라 QEMU 없이는 못 굽고,
-    # 에뮬레이션은 느리다. 여기서 확인하는 것(산출물-코드 정합, 폴백 없음,
-    # 호스트-컨테이너 일치, ID·순서 감사)은 **플랫폼과 무관**하므로 CI에서는
-    # 네이티브로 굽는다. arm64 빌드는 제출 리허설에서 따로 확인한다.
-    parser.add_argument(
-        "--platform", default="linux/arm64",
-        help="이미지 플랫폼 (기본 linux/arm64, CI는 native)",
-    )
     args = parser.parse_args()
 
     if not CHAMPION.exists():
@@ -114,20 +106,21 @@ def main() -> int:
         if manifest.returncode != 0:
             fail(f"소스 매니페스트를 계산하지 못했다: {manifest.stderr[-300:]}")
 
-        command = ["docker", "build"]
-        if args.platform != "native":
-            command += ["--platform", args.platform]
-        command += [
-            "--provenance=false", "--sbom=false",
-            "--build-arg", f"SOURCE_MANIFEST_SHA256={manifest.stdout.strip()}",
-            "--file", "container/router.Dockerfile", "--tag", IMAGE, ".",
-        ]
+        # linux/arm64 고정이다. 플랫폼을 열어 두려다 CI에서 깨졌다 —
+        # container/router-requirements.txt가 numpy wheel의 SHA-256을 고정하는데
+        # 그 wheel은 aarch64용이라 amd64에서는 pip가 x86_64 wheel을 받아 해시가
+        # 어긋난다. 기반 이미지도 arm64 다이제스트로 고정돼 있다. "내용 검증은
+        # 플랫폼과 무관하다"는 말은 **검사**에 대해 맞고 **빌드**에 대해 틀렸다.
         build = subprocess.run(
-            command, cwd=ROOT, capture_output=True, text=True, timeout=1800,
+            ["docker", "build", "--platform", "linux/arm64",
+             "--provenance=false", "--sbom=false",
+             "--build-arg", f"SOURCE_MANIFEST_SHA256={manifest.stdout.strip()}",
+             "--file", "container/router.Dockerfile", "--tag", IMAGE, "."],
+            cwd=ROOT, capture_output=True, text=True, timeout=1800,
         )
         if build.returncode != 0:
             fail(f"이미지 빌드 실패: {build.stderr[-300:]}")
-        ok(f"이미지 빌드 ({args.platform})")
+        ok("이미지 빌드 (linux/arm64)")
 
     # 1. 산출물이 챔피언 설정에서 나왔는가
     artifact = json.loads(ARTIFACT.read_text(encoding="utf-8"))

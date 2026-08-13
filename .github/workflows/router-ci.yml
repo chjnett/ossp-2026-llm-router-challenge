@@ -88,12 +88,16 @@ jobs:
   # 공식 검증기도 확인하지 않는다. 형식만 본다. 산출물이 낡아 런타임이 조용히
   # all-light로 떨어진 사고를 세 번 겪었고, 같은 부류다. 매 push마다 확인한다.
   #
-  # 공식 플랫폼은 linux/arm64지만 러너는 amd64다. 여기서 보는 것(산출물-코드 정합,
-  # 폴백 없음, 호스트-컨테이너 일치, ID·순서 감사, 커밋-이미지 결속)은 플랫폼과
-  # 무관하므로 네이티브로 굽는다. arm64 빌드와 공식 크기 측정은 제출 리허설에서
-  # 따로 확인한다 (plan/RELEASE.md).
+  # arm64 러너를 쓴다. 처음에는 "내용 검증은 플랫폼과 무관하니 amd64에서 네이티브로
+  # 굽자"고 했는데 틀렸다. 검사는 플랫폼과 무관하지만 **빌드가 아니다.**
+  # container/router-requirements.txt는 numpy wheel의 SHA-256을 고정하는데 그 wheel은
+  # aarch64용이라, amd64 러너에서는 pip가 x86_64 wheel을 받아 해시가 어긋난다.
+  # 기반 이미지도 arm64 다이제스트로 고정돼 있다.
+  #
+  # ubuntu-24.04-arm은 공개 저장소에 무료이고 네이티브라 QEMU도 필요 없다.
+  # 여기서 굽는 것이 실제로 제출될 물건과 같은 플랫폼이다.
   image-binding:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,7 +122,7 @@ jobs:
         run: |
           MANIFEST="$(PYTHONPATH=src python tools/benchmark_runtime.py \
             --print-source-manifest-sha256)"
-          docker build --provenance=false --sbom=false \
+          docker build --platform linux/arm64 --provenance=false --sbom=false \
             --build-arg "SOURCE_MANIFEST_SHA256=$MANIFEST" \
             --file container/router.Dockerfile --tag ossp-router:verify .
 
