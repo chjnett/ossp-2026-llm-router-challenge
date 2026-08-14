@@ -24,28 +24,29 @@ SPDX-License-Identifier: Apache-2.0
 따라서 단일 공개 Dev 최고점이 아니라 Train OOF, nested OOF, 분포 이동 안전성의
 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t1-targeted-s075-fast0175`**다.
+현재 제출 챔피언은 **`t14-conditional-tail-sp2`**다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
-| 점수 헤드 `[Q]` | `family_mixture`, strength 0.75. 문항별 조건부 이득 신호는 `sym_math`·`code_io`에만 적용하고 나머지는 계열 평균으로 폴백 |
-| 비용 헤드 `[C]` | 계열별 ridge, `z=1.28`, light만 `z_light=-0.5`, Duan smearing과 총합 재보정 |
-| 게이트 `[G]` | `none`. ROI 포락선 배분이 불리한 선택을 이미 제거하므로 중복 하드 게이트를 두지 않음 |
-| 할당 `[A]` | 상단 볼록포의 증분 ROI 순 배분. headroom Fast 0.175 / Balanced 0.252 / Premium 0.675 |
-| 안전 `[S]` | `size_penalty=2.0`, `mu=1.0`, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
+| 점수 헤드 `[Q]` | 14개 dense 특징 + 256-bin signed unigram/bigram의 `hash_ridge(alpha=100)` |
+| 비용 헤드 `[C]` | hashed log-cost ridge + 계열·모델별 상대비용 오차 90분위 pricing |
+| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치의 ax31, 깊은 LaTeX의 K1, code_io 단일노출 꼬리만 차단 |
+| 할당 `[A]` | 상단 볼록포의 증분 ROI 순 배분. 세 등급 모두 여윳돈 headroom 100% |
+| 안전 `[S]` | `size_penalty=2.0`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
 현재 실측은 다음과 같다.
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.633523** |
-| Dev 가중 | **0.648267** |
-| Dev tier | Fast 0.623295 · Balanced 0.644318 · Premium 0.685511 |
-| Dev 비용 비율 | 1.0089 / 1.1327 / 1.6429 (한도 1.25 / 2 / 4) |
+| Train 5-fold OOF | **0.638409** |
+| Train 4/6/8-fold OOF | **0.635099 / 0.637188 / 0.636364** |
+| Dev 가중 | **0.669574** |
+| Dev tier | Fast 0.650568 · Balanced 0.671023 · Premium 0.693466 |
+| Dev 비용 비율 | 1.1043 / 1.3566 / 2.2218 (한도 1.25 / 2 / 4) |
 | 스트레스 | **36,000 tier-scenario 중 초과 0회** |
-| arm64 실행 | 2,640문항 최장 3.094초 / 한도 90초 |
-| 아티팩트 | 161.3 KB · SHA-256 `68cad6320d3384cd5ce3060ecb5f8c452c80531a7b9b2a0996c27384e308d096` |
+| arm64 실행 | 2,640문항 최장 7.454초 / 한도 90초 |
+| 아티팩트 | 84.7 KB · SHA-256 `50656eb05d7223e8a2ee649d948410d4f6462fd131c407f7eba5befff83f3b42` |
 
 #### 최신 피벗 판정
 
@@ -74,11 +75,21 @@ SPDX-License-Identifier: Apache-2.0
    ridge, Balanced/Premium은 T1을 유지한 `fast034-sp22`가 OOF 0.633750,
    Dev 0.648722였으나 최종 mild shift에서 **1/36,000회**(Fast 최대 1.028)
    초과했다. 얇은 점수 이득보다 등급 0점 위험이 커서 승격하지 않았다.
+10. T13은 실패 trial을 문항 단위로 분해해 반복될 때만 파산을 만드는 초대형
+    수치·깊은 LaTeX 노출을 tier별로 차단했다. `size_penalty=0`은 OOF 0.6395였지만
+    최종 게이트 15회, `size_penalty=2`도 6회 초과해 둘 다 거부했다.
+11. T14는 남은 꼬리가 `code_io`의 ax31·K1 단일노출에 집중됨을 확인했다.
+    Train OOF로 고른 상대비용 cap 3.25/200을 추가하자 OOF **0.638409**, Dev
+    **0.669574**, 최종 **0/36,000회**를 동시에 만족해 새 챔피언으로 승격했다.
+12. 같은 content-hash 분할을 4/6/8-fold로 바꾼 재검증에서도 T14는 각각
+    **0.635099 / 0.637188 / 0.636364**였다. 고정 T1의
+    0.632457 / 0.632443 / 0.633082보다 모든 fold에서
+    **+0.002642 / +0.004744 / +0.003281** 높았다. 실험 로그에는 이후부터
+    `folds`를 함께 기록해 이 비교가 실행 순서에 의존하지 않게 했다.
 
-따라서 T1은 제출 가능한 안전 기준선으로 동결한다. 다음 공격 트랙은 headroom
-미세조정이 아니라 **fold 밖 상대비용 tail 추정과 Fast 폭주 위험의 조건부
-모델링**이다. 모든 점수 후보는 단일 5-fold 개선만으로 승격하지 않고 nested
-OOF와 36,000회 파산 게이트를 모두 통과해야 한다.
+T14는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+hash-regex 0.695369보다는 낮다. 다음 공격 트랙은 T14 안전선을 고정한 채
+nested OOF와 leave-one-family-out에서 hashed score의 일반화를 높이는 것이다.
 
 ---
 

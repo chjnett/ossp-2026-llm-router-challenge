@@ -124,6 +124,37 @@ class Config:
         raw = self.size_penalty
         return float(raw[tier]) if isinstance(raw, dict) else float(raw)
 
+    @property
+    def relative_cost_cap(self) -> Dict[str, float] | None:
+        """한 문항에서 허용할 ``선택 모델 / light`` 예측비용 상한.
+
+        배치 총액만 제한하면 동일한 고위험 프롬프트가 몇 번 반복될 때 하나의
+        예측 실패가 등급 전체를 0점으로 만들 수 있다. 이 상한은 전체 예산을
+        더 깎지 않고 문항 하나에 집중되는 승격 노출만 제한한다.
+        """
+
+        raw = self.alloc.get("relative_cost_cap")
+        if raw is None:
+            return None
+        if isinstance(raw, (int, float)):
+            value = float(raw)
+            if value <= 1.0:
+                raise ValueError("relative_cost_cap은 1보다 커야 한다")
+            return {tier: value for tier in TIERS}
+        if not isinstance(raw, Mapping):
+            raise ValueError("relative_cost_cap은 숫자 또는 tier별 매핑이어야 한다")
+        result = {}
+        for tier in TIERS:
+            value = float(raw.get(tier, float("inf")))
+            if value <= 1.0:
+                raise ValueError("relative_cost_cap은 1보다 커야 한다")
+            result[tier] = value
+        return result
+
+    def relative_cost_cap_for_tier(self, tier: str) -> float | None:
+        caps = self.relative_cost_cap
+        return None if caps is None else float(caps[tier])
+
 
 def effective_util(
     config: Config, n_episodes: int, multipliers: Mapping[str, float]

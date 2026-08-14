@@ -20,7 +20,7 @@ from typing import Dict, Mapping, Sequence
 
 import numpy as np
 
-from .allocate import allocate, allocate_chance
+from .allocate import allocate, allocate_chance, cap_relative_cost
 from .config import DEFAULT_UTIL, Config, effective_util
 from .data import MODEL_IDS, TIERS, Dataset, budget_multipliers
 from .harness import Evaluation, evaluate
@@ -39,12 +39,20 @@ class Prediction:
     allow: np.ndarray
     versions: Dict[str, str]
     s_hat_by_tier: Dict[str, np.ndarray] | None = None
+    allow_by_tier: Dict[str, np.ndarray] | None = None
 
     def score_for_tier(self, tier: str) -> np.ndarray:
         return (
             self.s_hat_by_tier[tier]
             if self.s_hat_by_tier is not None
             else self.s_hat
+        )
+
+    def allow_for_tier(self, tier: str) -> np.ndarray:
+        return (
+            self.allow_by_tier[tier]
+            if self.allow_by_tier is not None
+            else self.allow
         )
 
 
@@ -75,7 +83,24 @@ def predict(config: Config, train: Dataset, texts: Sequence[str]) -> Prediction:
         else score_head.predict(texts)
     )
     c_hat, sd = cost_head.predict(texts)
-    allow = gate.allow(texts, s_hat, c_hat)
+    allow_tier = getattr(gate, "allow_tier", None)
+    allow_by_tier = (
+        {
+            tier: allow_tier(texts, s_hat_by_tier[tier], c_hat, tier)
+            for tier in TIERS
+        }
+        if callable(allow_tier) and s_hat_by_tier is not None
+        else (
+            {tier: allow_tier(texts, s_hat, c_hat, tier) for tier in TIERS}
+            if callable(allow_tier)
+            else None
+        )
+    )
+    allow = (
+        allow_by_tier["fast"]
+        if allow_by_tier is not None
+        else gate.allow(texts, s_hat, c_hat)
+    )
 
     return Prediction(
         s_hat=s_hat,
@@ -88,6 +113,7 @@ def predict(config: Config, train: Dataset, texts: Sequence[str]) -> Prediction:
             "gate": gate.version,
         },
         s_hat_by_tier=s_hat_by_tier,
+        allow_by_tier=allow_by_tier,
     )
 
 
@@ -105,7 +131,11 @@ def pick_all_tiers(
                 prediction.sd,
                 multiplier=multipliers[tier],
                 epsilon=config.epsilon,
-                allow=prediction.allow,
+                allow=cap_relative_cost(
+                    prediction.allow_for_tier(tier),
+                    prediction.c_hat,
+                    config.relative_cost_cap_for_tier(tier),
+                ),
                 keys=list(keys),
             ).picks
             for tier in TIERS
@@ -118,7 +148,11 @@ def pick_all_tiers(
             prediction.c_hat,
             multiplier=multipliers[tier],
             util=util[tier],
-            allow=prediction.allow,
+            allow=cap_relative_cost(
+                prediction.allow_for_tier(tier),
+                prediction.c_hat,
+                config.relative_cost_cap_for_tier(tier),
+            ),
             sd=prediction.sd,
             mu=config.mu_for_tier(tier),
             keys=list(keys),
@@ -159,6 +193,7 @@ def run_cv(config: Config, dataset: Dataset, *, k: int = 5) -> Evaluation:
     allow = np.zeros((n, n_models), dtype=bool)
     versions: Dict[str, str] = {}
     s_hat_by_tier: Dict[str, np.ndarray] | None = None
+    allow_by_tier: Dict[str, np.ndarray] | None = None
 
     for f, test_idx in enumerate(folds):
         train_idx = np.concatenate([folds[g] for g in range(k) if g != f])
@@ -176,9 +211,18 @@ def run_cv(config: Config, dataset: Dataset, *, k: int = 5) -> Evaluation:
         c_hat[test_idx] = prediction.c_hat
         sd[test_idx] = prediction.sd
         allow[test_idx] = prediction.allow
+        if prediction.allow_by_tier is not None:
+            if allow_by_tier is None:
+                allow_by_tier = {
+                    tier: np.zeros((n, n_models), dtype=bool) for tier in TIERS
+                }
+            for tier in TIERS:
+                allow_by_tier[tier][test_idx] = prediction.allow_by_tier[tier]
         versions = prediction.versions
 
-    oof = Prediction(s_hat, c_hat, sd, allow, versions, s_hat_by_tier)
+    oof = Prediction(
+        s_hat, c_hat, sd, allow, versions, s_hat_by_tier, allow_by_tier
+    )
     picks = pick_all_tiers(
         config, oof, dataset.keys, budget_multipliers(dataset.policy)
     )

@@ -18,7 +18,12 @@ import unittest
 
 import numpy as np
 
-from router.allocate import allocate, order_invariant_sum, safety_demote
+from router.allocate import (
+    allocate,
+    cap_relative_cost,
+    order_invariant_sum,
+    safety_demote,
+)
 from router.data import content_key
 
 
@@ -46,6 +51,14 @@ def _synthetic(n: int, seed: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
 
 
 class OrderInvarianceTest(unittest.TestCase):
+    def test_relative_cost_cap_never_blocks_light(self) -> None:
+        cost = np.asarray([[2.0, 9.0, 30.0], [1.0, 2.0, 3.0]])
+        allow = cap_relative_cost(None, cost, 5.0)
+        np.testing.assert_array_equal(
+            allow,
+            np.asarray([[True, True, False], [True, True, True]]),
+        )
+
     def test_fsum_is_permutation_invariant(self) -> None:
         rng = np.random.default_rng(0)
         values = rng.lognormal(-5.0, 2.0, 4000)

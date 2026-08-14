@@ -20,7 +20,7 @@ from typing import Callable, Dict, Mapping, Sequence
 
 import numpy as np
 
-from .allocate import allocate, allocate_chance
+from .allocate import allocate, allocate_chance, cap_relative_cost
 from .data import TIERS, Dataset
 
 Sampler = Callable[[np.random.Generator], np.ndarray]
@@ -130,7 +130,7 @@ def run_scenario(
     scenario: str,
     util: Dict[str, float] | float,
     multipliers: Dict[str, float],
-    allow: np.ndarray | None = None,
+    allow: np.ndarray | Mapping[str, np.ndarray] | None = None,
     sd: np.ndarray | None = None,
     mu: float | Mapping[str, float] = 0.0,
     trials: int = 2000,
@@ -138,6 +138,7 @@ def run_scenario(
     size_penalty: float | Mapping[str, float] = 0.0,
     headroom: Dict[str, float] | None = None,
     epsilon: float | None = None,
+    relative_cost_cap: Mapping[str, float] | None = None,
 ) -> GateResult:
     """한 시나리오를 ``trials``회 돌려 등급별 파산 횟수를 센다.
 
@@ -156,7 +157,6 @@ def run_scenario(
     for trial in range(trials):
         idx = sampler(rng)
         c_i = c_hat[idx]
-        allow_i = None if allow is None else allow[idx]
         sd_i = None if sd is None else sd[idx]
         keys_i = keys[idx].tolist()
         true_cost = dataset.cost[idx]
@@ -184,6 +184,13 @@ def run_scenario(
             tier_scores = s_hat[tier] if isinstance(s_hat, Mapping) else s_hat
             s_i = tier_scores[idx]
             tier_mu = float(mu.get(tier, 0.0)) if isinstance(mu, Mapping) else float(mu)
+            source_allow = allow.get(tier) if isinstance(allow, Mapping) else allow
+            allow_i = None if source_allow is None else source_allow[idx]
+            tier_allow = cap_relative_cost(
+                allow_i,
+                c_i,
+                None if relative_cost_cap is None else relative_cost_cap.get(tier),
+            )
             if epsilon is not None:
                 # 라우터가 실행 시점에 쓰는 것과 **같은** 배분 규칙이어야 한다.
                 picks = allocate_chance(
@@ -192,7 +199,7 @@ def run_scenario(
                     sd_i if sd_i is not None else np.zeros_like(c_i),
                     multiplier=multipliers[tier],
                     epsilon=epsilon,
-                    allow=allow_i,
+                    allow=tier_allow,
                     keys=keys_i,
                 ).picks
             else:
@@ -201,7 +208,7 @@ def run_scenario(
                     c_i,
                     multiplier=multipliers[tier],
                     util=utils[tier],
-                    allow=allow_i,
+                    allow=tier_allow,
                     sd=sd_i,
                     mu=tier_mu,
                     keys=keys_i,
@@ -242,7 +249,7 @@ def run_gate(
     family: np.ndarray,
     util: Dict[str, float] | float,
     multipliers: Dict[str, float],
-    allow: np.ndarray | None = None,
+    allow: np.ndarray | Mapping[str, np.ndarray] | None = None,
     sd: np.ndarray | None = None,
     mu: float | Mapping[str, float] = 0.0,
     trials: int = 2000,
@@ -251,6 +258,7 @@ def run_gate(
     size_penalty: float | Mapping[str, float] = 0.0,
     headroom: Dict[str, float] | None = None,
     epsilon: float | None = None,
+    relative_cost_cap: Mapping[str, float] | None = None,
 ) -> list[GateResult]:
     """모든 시나리오를 돌린다. 하나라도 파산이 있으면 게이트 불통과다."""
 
@@ -274,6 +282,7 @@ def run_gate(
                 size_penalty=size_penalty,
                 headroom=headroom,
                 epsilon=epsilon,
+                relative_cost_cap=relative_cost_cap,
             )
         )
     return results

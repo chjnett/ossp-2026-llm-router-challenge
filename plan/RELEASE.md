@@ -83,7 +83,7 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 ```bash
 PYTHONPATH=src python3 tools/export_artifact.py \
-  --config experiments/configs/t1-targeted-s075-fast0175.json
+  --config experiments/configs/t14-conditional-tail-sp2.json
 ```
 
 이미지 동결 전에 챔피언이 바뀌면 위 설정 경로도 반드시 함께 바꾼다.
@@ -167,9 +167,9 @@ PYTHONPATH=src python3 tools/check_runtime.py \
   --report build/runtime-check-report.json
 ```
 
-Train+Dev 2,640문항으로 세 등급이 각각 90초 안에 끝나야 한다. 2026-08-14
-현재 T1 이미지의 최장 실행은 Fast 3.094초였고 Balanced 3.023초, Premium
-2.990초였다.
+Train+Dev 2,640문항으로 세 등급이 각각 90초 안에 끝나야 한다. 2026-08-15
+현재 T14 이미지의 실행은 Fast 7.340초, Balanced 7.368초, Premium
+7.454초였다.
 
 ## 7. 기술 제출 JSON — **별도 커밋**
 

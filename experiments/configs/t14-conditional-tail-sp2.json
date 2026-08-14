@@ -1,0 +1,16 @@
+{
+  "id": "t14-conditional-tail-sp2",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.9},
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40.0,
+    "digit_ratio": 0.6,
+    "min_latex": 1.0,
+    "min_paren_depth": 3.0,
+    "fast_code_ax31_cap": 3.25,
+    "premium_code_k1_cap": 200.0
+  },
+  "alloc": {"headroom": 1.0, "size_penalty": 2.0, "mu": 0.0},
+  "note": "T14: sparse numeric/LaTeX guard + Train OOF로 고른 code_io 단일노출 cap."
+}

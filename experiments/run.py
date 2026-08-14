@@ -68,13 +68,14 @@ def do_run(args) -> int:
             family=family_codes(dev.texts),
             util=config.util,
             multipliers=budget_multipliers(dev.policy),
-            allow=prediction.allow,
+            allow=prediction.allow_by_tier or prediction.allow,
             sd=prediction.sd,
             mu=config.mu,
             trials=args.trials,
             size_penalty=config.size_penalty,
             headroom=config.headroom,
             epsilon=config.epsilon,
+            relative_cost_cap=config.relative_cost_cap,
         )
     gate_ok = bool(gate_results) and gate_passed(gate_results)
 
@@ -82,6 +83,7 @@ def do_run(args) -> int:
         "id": config.id,
         "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "commit": git_sha(),
+        "folds": args.folds,
         "config": config.as_dict(),
         "versions": prediction.versions,
         "cv": evaluation_record(cv),

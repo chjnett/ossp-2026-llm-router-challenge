@@ -24,7 +24,7 @@ from typing import Callable, Dict, Protocol, Sequence
 import numpy as np
 
 from .data import MODEL_IDS, TIERS, Dataset, cost_from_tokens
-from .features import FAMILIES, extract, family_codes
+from .features import FEATURE_NAMES, FAMILIES, extract, family_codes
 from .hash_features import FEATURE_VERSION as HASH_FEATURE_VERSION
 from .hash_features import extract_hash_features
 
@@ -1396,6 +1396,82 @@ class NoGate:
 
     def allow(self, texts, s_hat, c_hat) -> np.ndarray:
         return np.ones((len(texts), N_MODELS), dtype=bool)
+
+
+@register(GATES, "tail_exposure")
+class TailExposureGate:
+    """반복될 때 등급 전체를 무너뜨리는 희소 prompt tail을 차단한다.
+
+    총액 예산은 평균적으로 안전해도, 같은 프롬프트가 재표집되면 단일 비용
+    예측 실패가 여러 번 복제된다. Train/Dev 실패 분석에서 ax31은 초대형 수치
+    프롬프트, K1은 깊게 중첩된 LaTeX 수식에서 이 현상이 집중됐다. 공식 입력인
+    tier에 따라 실제로 위험한 모델만 막고 나머지 승격은 보존한다.
+    """
+
+    def __init__(
+        self,
+        max_log_number: float = 40.0,
+        digit_ratio: float = 0.6,
+        min_latex: float = 1.0,
+        min_paren_depth: float = 3.0,
+        fast_code_ax31_cap: float = float("inf"),
+        premium_code_k1_cap: float = float("inf"),
+        inner: str = "none",
+        **inner_kwargs,
+    ) -> None:
+        self.max_log_number = float(max_log_number)
+        self.digit_ratio = float(digit_ratio)
+        self.min_latex = float(min_latex)
+        self.min_paren_depth = float(min_paren_depth)
+        self.fast_code_ax31_cap = float(fast_code_ax31_cap)
+        self.premium_code_k1_cap = float(premium_code_k1_cap)
+        self._inner = GATES[inner](**inner_kwargs)
+        self.version = (
+            "tailexposure.v1("
+            f"num={self.max_log_number:g},digit={self.digit_ratio:g},"
+            f"latex={self.min_latex:g},depth={self.min_paren_depth:g},"
+            f"code31={self.fast_code_ax31_cap:g},"
+            f"codek1={self.premium_code_k1_cap:g})+"
+            f"{self._inner.version}"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        self._inner.fit(train)
+
+    def allow(self, texts, s_hat, c_hat) -> np.ndarray:
+        """기존 Gate 계약용 대표값. 실제 경로는 ``allow_tier``를 쓴다."""
+
+        return self.allow_tier(texts, s_hat, c_hat, "fast")
+
+    def allow_tier(self, texts, s_hat, c_hat, tier: str) -> np.ndarray:
+        if tier not in TIERS:
+            raise ValueError(f"알 수 없는 tier: {tier!r}")
+        allow = self._inner.allow(texts, s_hat, c_hat).copy()
+        features = extract(texts)
+        index = {name: i for i, name in enumerate(FEATURE_NAMES)}
+        numeric_tail = (
+            features[:, index["log_max_number"]] >= self.max_log_number
+        ) | (features[:, index["digit_ratio"]] >= self.digit_ratio)
+        deep_latex = (
+            features[:, index["latex_count"]] >= self.min_latex
+        ) & (features[:, index["paren_depth"]] >= self.min_paren_depth)
+        code = family_codes(texts) == FAMILIES.index("code_io")
+        relative = c_hat / np.maximum(c_hat[:, [0]], 1e-12)
+        if tier in ("fast", "balanced"):
+            allow[numeric_tail, 1] = False
+        if tier == "fast":
+            allow[code & (relative[:, 1] > self.fast_code_ax31_cap), 1] = False
+        if tier == "premium":
+            allow[deep_latex, 2] = False
+            allow[code & (relative[:, 2] > self.premium_code_k1_cap), 2] = False
+        allow[:, 0] = True
+        return allow
+
+    def state(self) -> dict:
+        return {"inner": self._inner.state()}
+
+    def load_state(self, state: dict) -> None:
+        self._inner.load_state(state["inner"])
 
 
 @register(GATES, "family_roi")

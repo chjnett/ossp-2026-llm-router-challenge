@@ -84,10 +84,11 @@ def main() -> int:
             family=family,
             util=config.util,
             multipliers=multipliers,
-            allow=prediction.allow,
+            allow=prediction.allow_by_tier or prediction.allow,
             sd=prediction.sd,
             mu=config.mu,
             trials=args.trials,
+            relative_cost_cap=config.relative_cost_cap,
         )
         failures = sum(r.tiers[t].failures for r in results for t in TIERS)
         ok = gate_passed(results)

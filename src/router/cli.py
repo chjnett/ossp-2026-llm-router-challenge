@@ -53,7 +53,7 @@ def _all_light(episode_ids: Sequence[str]) -> list[str]:
 def _select(inputs, tier: str, deadline: float) -> list[str]:
     """산출물을 읽어 모델을 고른다. 실패하면 호출자가 all-light로 떨어뜨린다."""
 
-    from .allocate import allocate
+    from .allocate import allocate, cap_relative_cost
     from .artifact import load_artifact, restore
     from .constants import content_key, episode_text
     from .config import effective_util
@@ -82,7 +82,15 @@ def _select(inputs, tier: str, deadline: float) -> list[str]:
     check("점수 예측")
     c_hat, sd = cost_head.predict(texts)
     check("비용 예측")
-    allow = gate.allow(texts, s_hat, c_hat)
+    allow_tier = getattr(gate, "allow_tier", None)
+    allow = (
+        allow_tier(texts, s_hat, c_hat, tier)
+        if callable(allow_tier)
+        else gate.allow(texts, s_hat, c_hat)
+    )
+    allow = cap_relative_cost(
+        allow, c_hat, config.relative_cost_cap_for_tier(tier)
+    )
     check("게이트")
 
     multipliers = {t: float(policy.tiers[t].budget_multiplier) for t in TIERS}

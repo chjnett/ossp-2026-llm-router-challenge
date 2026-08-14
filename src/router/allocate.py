@@ -33,6 +33,31 @@ from .envelope import (
 NEG = -np.inf
 
 
+def cap_relative_cost(
+    allow: np.ndarray | None,
+    c_hat: np.ndarray,
+    maximum: float | None,
+) -> np.ndarray | None:
+    """문항별 예측 light 대비 지나치게 비싼 승격을 차단한다.
+
+    총액 할당기 앞에서 적용하므로 동일 프롬프트가 반복돼도 결정이 같고,
+    문항 ID나 입력 순서를 사용하지 않는다. ``None``이면 기존 계약을 그대로
+    보존한다.
+    """
+
+    if maximum is None:
+        return allow
+    result = (
+        np.ones(c_hat.shape, dtype=bool)
+        if allow is None
+        else np.asarray(allow, dtype=bool).copy()
+    )
+    relative = c_hat / np.maximum(c_hat[:, [0]], 1e-12)
+    result[:, 1:] &= relative[:, 1:] <= float(maximum)
+    result[:, 0] = True
+    return result
+
+
 def order_invariant_sum(values: np.ndarray) -> float:
     """순서와 무관하게 같은 값을 주는 합.
 

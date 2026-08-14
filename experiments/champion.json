@@ -1,120 +1,121 @@
 {
-  "id": "t1-targeted-s075-fast0175",
-  "at": "2026-08-14T11:34:24+00:00",
-  "commit": "82e9a76ffc8bd8fd25ffc3734b844f73619e871e",
+  "id": "t14-conditional-tail-sp2",
+  "at": "2026-08-14T16:36:07+00:00",
+  "commit": "4fa119724506e88471dfed79f7630263306a9824",
   "config": {
-    "id": "t1-targeted-s075-fast0175",
+    "id": "t14-conditional-tail-sp2",
     "score": {
-      "name": "family_mixture",
-      "strength": 0.75,
-      "active_families": [
-        "sym_math",
-        "code_io"
-      ]
+      "name": "hash_ridge",
+      "alpha": 100,
+      "bins": 256
     },
     "cost": {
-      "name": "ridge",
-      "z": 1.28,
-      "z_light": -0.5,
-      "smearing": true
+      "name": "hash_ridge",
+      "alpha": 100,
+      "bins": 256,
+      "risk_quantile": 0.9
     },
-    "gate": "none",
+    "gate": {
+      "name": "tail_exposure",
+      "max_log_number": 40.0,
+      "digit_ratio": 0.6,
+      "min_latex": 1.0,
+      "min_paren_depth": 3.0,
+      "fast_code_ax31_cap": 3.25,
+      "premium_code_k1_cap": 200.0
+    },
     "alloc": {
-      "headroom": {
-        "fast": 0.175,
-        "balanced": 0.252,
-        "premium": 0.675
-      },
+      "headroom": 1.0,
       "size_penalty": 2.0,
-      "mu": 1.0
+      "mu": 0.0
     },
-    "note": "Fast 0.20이 N=2000 family-dominant에서 최대 1.001로 한 번 초과했다. 경계 밖으로 내리기 위해 Fast 여윳돈을 한 단계 더 0.175로 낮춘다."
+    "note": "T14: sparse numeric/LaTeX guard + Train OOF로 고른 code_io 단일노출 cap."
   },
   "versions": {
-    "score": "familymix.v2(a=20,s=0.75,f=code_io+sym_math)",
-    "cost": "ridgecost.v4(z=1.28,zl=-0.5,a=3,sm=1)",
-    "gate": "none.v1"
+    "score": "hashscore.v1(f=hash-regex-text.v1,a=100,b=256)",
+    "cost": "hashcost.v3(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.9)",
+    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200)+none.v1"
   },
   "cv": {
-    "final_score": "0.633522727273",
+    "final_score": "0.638409090909",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.605823863636",
-        "budget_ratio": "1.009011312113",
-        "headroom": "0.240988687887",
+        "score": "0.621022727273",
+        "budget_ratio": "1.124011354652",
+        "headroom": "0.125988645348",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1656,
-          "ax31": 104,
-          "axk1-think": 0
+          "ax31-light": 1293,
+          "ax31": 464,
+          "axk1-think": 3
         }
       },
       "balanced": {
-        "score": "0.629403409091",
-        "budget_ratio": "1.083157671286",
-        "headroom": "0.916842328714",
+        "score": "0.635227272727",
+        "budget_ratio": "1.446614641275",
+        "headroom": "0.553385358725",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1230,
-          "ax31": 530,
-          "axk1-think": 0
+          "ax31-light": 913,
+          "ax31": 810,
+          "axk1-think": 37
         }
       },
       "premium": {
-        "score": "0.674573863636",
-        "budget_ratio": "1.647112459445",
-        "headroom": "2.352887540555",
+        "score": "0.664772727273",
+        "budget_ratio": "2.609959129853",
+        "headroom": "1.390040870147",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 346,
-          "ax31": 1389,
-          "axk1-think": 25
+          "ax31-light": 676,
+          "ax31": 923,
+          "axk1-think": 161
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.648267045455",
+    "final_score": "0.669573863636",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.623295454545",
-        "budget_ratio": "1.008931398393",
-        "headroom": "0.241068601607",
+        "score": "0.650568181818",
+        "budget_ratio": "1.104282755074",
+        "headroom": "0.145717244926",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 837,
-          "ax31": 43,
-          "axk1-think": 0
+          "ax31-light": 645,
+          "ax31": 233,
+          "axk1-think": 2
         }
       },
       "balanced": {
-        "score": "0.644318181818",
-        "budget_ratio": "1.132749133844",
-        "headroom": "0.867250866156",
+        "score": "0.671022727273",
+        "budget_ratio": "1.35660558019",
+        "headroom": "0.64339441981",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 642,
-          "ax31": 238,
-          "axk1-think": 0
+          "ax31-light": 443,
+          "ax31": 411,
+          "axk1-think": 26
         }
       },
       "premium": {
-        "score": "0.685511363636",
-        "budget_ratio": "1.642888451893",
-        "headroom": "2.357111548107",
+        "score": "0.693465909091",
+        "budget_ratio": "2.221807525309",
+        "headroom": "1.778192474691",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 153,
-          "ax31": 718,
-          "axk1-think": 9
+          "ax31-light": 352,
+          "ax31": 440,
+          "axk1-think": 88
         }
       }
     }
@@ -156,10 +157,5 @@
       }
     }
   },
-  "seconds": 157.74,
-  "adopted": {
-    "reason": "T4 5% blend는 5-fold OOF +0.000227였지만 4/6/8-fold 상대효과가 혼재했고, 4x3 nested OOF에서 고정 T1 대비 -0.000227이었다. 비공개 일반화를 우선해 T1으로 보수 복귀한다.",
-    "replaced": "t4-blend-template-w05",
-    "cv_delta": -0.00022727272700007184
-  }
+  "seconds": 132.26
 }

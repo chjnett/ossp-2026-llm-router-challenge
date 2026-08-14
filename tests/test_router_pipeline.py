@@ -144,6 +144,17 @@ class ConfigTest(unittest.TestCase):
         self.assertAlmostEqual(1 + (0.5 - 0.10) * 1.0, balanced_used)
         self.assertAlmostEqual(1 + 0.5 * 3.0, premium_used)
 
+    def test_relative_cost_cap_accepts_scalar_and_tier_mapping(self) -> None:
+        scalar = Config(id="a", alloc={"relative_cost_cap": 8.0})
+        self.assertEqual(8.0, scalar.relative_cost_cap_for_tier("premium"))
+        mapped = Config(
+            id="b", alloc={"relative_cost_cap": {"fast": 4.0, "premium": 30.0}}
+        )
+        self.assertEqual(4.0, mapped.relative_cost_cap_for_tier("fast"))
+        self.assertTrue(np.isinf(mapped.relative_cost_cap_for_tier("balanced")))
+        with self.assertRaisesRegex(ValueError, "1보다 커야"):
+            Config(id="c", alloc={"relative_cost_cap": 1.0}).relative_cost_cap
+
 
 class RegistryTest(unittest.TestCase):
     def test_unknown_name_is_rejected_with_options(self) -> None:
@@ -217,6 +228,43 @@ class HeadContractTest(unittest.TestCase):
                     prediction.allow[m, 2].any(), f"{name} 계열의 K1이 열려 있다"
                 )
         self.assertTrue(prediction.allow[:, 0].all(), "light가 막힌 문항이 있다")
+
+    def test_tail_exposure_gate_is_tier_specific_and_round_trips(self) -> None:
+        train, _dev = datasets()
+        spec = {
+            "name": "tail_exposure",
+            "fast_code_ax31_cap": 3.25,
+            "premium_code_k1_cap": 200.0,
+        }
+        texts = (
+            "What is 999999999999999999999999999999999999999999?",
+            r"Let \\frac{x}{((y+1))}=3 and solve exactly.",
+            "def f(text):\n    return text.replace('a', 'b')\nassert f('a') == 'b'",
+            "ordinary short question",
+        )
+        score = np.full((len(texts), 3), 0.5)
+        cost = np.asarray(
+            [[1, 12, 300], [1, 3, 40], [1, 4, 250], [1, 2, 3]],
+            dtype=float,
+        )
+        gate = build_gate(spec)
+        gate.fit(train)
+        fast = gate.allow_tier(texts, score, cost, "fast")
+        balanced = gate.allow_tier(texts, score, cost, "balanced")
+        premium = gate.allow_tier(texts, score, cost, "premium")
+        self.assertFalse(fast[0, 1])
+        self.assertFalse(balanced[0, 1])
+        self.assertFalse(premium[1, 2])
+        self.assertFalse(fast[2, 1])
+        self.assertFalse(premium[2, 2])
+        self.assertTrue(fast[:, 0].all())
+        self.assertTrue(premium[3].all())
+
+        revived = build_gate(spec)
+        revived.load_state(json.loads(json.dumps(gate.state())))
+        np.testing.assert_array_equal(
+            premium, revived.allow_tier(texts, score, cost, "premium")
+        )
 
 
 class FamilyMixtureTest(unittest.TestCase):
