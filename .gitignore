@@ -19,6 +19,7 @@
 /.venv-data/
 __pycache__/
 build/
+/plan/direction.html
 /data/cache/
 /data/materialized/
 dist/

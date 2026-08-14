@@ -1,10 +1,17 @@
 {
-  "id": "i1-headroom-0.9",
-  "at": "2026-08-13T06:05:29+00:00",
-  "commit": "0f875bfe584c53140997e869e42d6009f851cd21",
+  "id": "t1-targeted-s075-fast0175",
+  "at": "2026-08-14T11:34:24+00:00",
+  "commit": "82e9a76ffc8bd8fd25ffc3734b844f73619e871e",
   "config": {
-    "id": "i1-headroom-0.9",
-    "score": "family",
+    "id": "t1-targeted-s075-fast0175",
+    "score": {
+      "name": "family_mixture",
+      "strength": 0.75,
+      "active_families": [
+        "sym_math",
+        "code_io"
+      ]
+    },
     "cost": {
       "name": "ridge",
       "z": 1.28,
@@ -14,100 +21,100 @@
     "gate": "none",
     "alloc": {
       "headroom": {
-        "fast": 0.225,
+        "fast": 0.175,
         "balanced": 0.252,
         "premium": 0.675
       },
       "size_penalty": 2.0,
       "mu": 1.0
     },
-    "note": "여유를 h2에서 0.9배로 내린다. 자가진단 4번은 'N>=2000에서 초과 0회인가? 거기서 한 단계 더 보수적인가'를 묻는데, h2는 통과 영역의 정확히 가장자리에 앉아 있었다. 1.1배면 파산 3건이다. 게이트는 현실이 아니라 현실의 모형이므로 가장자리는 안전하지 않다. 0.95배는 최대사용률이 1.0배와 같은 0.987이라 점수만 잃는다. 0.9배가 최악 여유를 1.3%에서 2.6%로 두 배 늘리면서 Dev를 0.0005만 쓴다. mu는 family 헤드에서 0.6347~0.6349로 사실상 무반응이라 h2에서 이어받되 효과는 없다."
+    "note": "Fast 0.20이 N=2000 family-dominant에서 최대 1.001로 한 번 초과했다. 경계 밖으로 내리기 위해 Fast 여윳돈을 한 단계 더 0.175로 낮춘다."
   },
   "versions": {
-    "score": "family.v1",
+    "score": "familymix.v2(a=20,s=0.75,f=code_io+sym_math)",
     "cost": "ridgecost.v4(z=1.28,zl=-0.5,a=3,sm=1)",
     "gate": "none.v1"
   },
   "cv": {
-    "final_score": "0.633196022727",
+    "final_score": "0.633522727273",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.608948863636",
-        "budget_ratio": "1.01701033638",
-        "headroom": "0.23298966362",
+        "score": "0.605823863636",
+        "budget_ratio": "1.009011312113",
+        "headroom": "0.240988687887",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1591,
-          "ax31": 169,
+          "ax31-light": 1656,
+          "ax31": 104,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.625994318182",
-        "budget_ratio": "1.081400454521",
-        "headroom": "0.918599545479",
+        "score": "0.629403409091",
+        "budget_ratio": "1.083157671286",
+        "headroom": "0.916842328714",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1219,
-          "ax31": 541,
+          "ax31-light": 1230,
+          "ax31": 530,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.672727272727",
-        "budget_ratio": "1.599036879927",
-        "headroom": "2.400963120073",
+        "score": "0.674573863636",
+        "budget_ratio": "1.647112459445",
+        "headroom": "2.352887540555",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 331,
-          "ax31": 1410,
-          "axk1-think": 19
+          "ax31-light": 346,
+          "ax31": 1389,
+          "axk1-think": 25
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.648664772727",
+    "final_score": "0.648267045455",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.623863636364",
-        "budget_ratio": "1.015606652443",
-        "headroom": "0.234393347557",
+        "score": "0.623295454545",
+        "budget_ratio": "1.008931398393",
+        "headroom": "0.241068601607",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 803,
-          "ax31": 77,
+          "ax31-light": 837,
+          "ax31": 43,
           "axk1-think": 0
         }
       },
       "balanced": {
         "score": "0.644318181818",
-        "budget_ratio": "1.131883668521",
-        "headroom": "0.868116331479",
+        "budget_ratio": "1.132749133844",
+        "headroom": "0.867250866156",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 638,
-          "ax31": 242,
+          "ax31-light": 642,
+          "ax31": 238,
           "axk1-think": 0
         }
       },
       "premium": {
-        "score": "0.686079545455",
-        "budget_ratio": "1.632811128472",
-        "headroom": "2.367188871528",
+        "score": "0.685511363636",
+        "budget_ratio": "1.642888451893",
+        "headroom": "2.357111548107",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 147,
-          "ax31": 725,
-          "axk1-think": 8
+          "ax31-light": 153,
+          "ax31": 718,
+          "axk1-think": 9
         }
       }
     }
@@ -149,10 +156,10 @@
       }
     }
   },
-  "seconds": 163.11,
+  "seconds": 157.74,
   "adopted": {
-    "reason": "자가진단 4번: h2는 통과 영역의 정확히 가장자리였다(1.1배면 파산 3건, 최대사용률 0.987). 게이트는 현실이 아니라 현실의 모형이므로 가장자리는 안전하지 않다. 0.9배가 최악 여유를 1.3%에서 2.6%로 두 배 늘리면서 Dev를 0.0005만 쓴다. 0.95배는 최대사용률이 1.0배와 같아 점수만 잃는다. 사용자 승인 2026-08-13.",
-    "replaced": "h2-no-gate-mu1",
-    "cv_delta": -0.0017187499999999911
+    "reason": "T4 5% blend는 5-fold OOF +0.000227였지만 4/6/8-fold 상대효과가 혼재했고, 4x3 nested OOF에서 고정 T1 대비 -0.000227이었다. 비공개 일반화를 우선해 T1으로 보수 복귀한다.",
+    "replaced": "t4-blend-template-w05",
+    "cv_delta": -0.00022727272700007184
   }
 }

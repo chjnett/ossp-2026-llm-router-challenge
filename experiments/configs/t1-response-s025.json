@@ -1,0 +1,12 @@
+{
+  "id": "t1-response-s025",
+  "score": {"name": "family_mixture", "strength": 0.25},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.225, "balanced": 0.252, "premium": 0.675},
+    "size_penalty": 2.0,
+    "mu": 1.0
+  },
+  "note": "T1 스크리닝. 유용/무용 조건부 이득 혼합을 25%만 적용한다. 현재 챔피언의 비용·안전 설정은 고정한다."
+}

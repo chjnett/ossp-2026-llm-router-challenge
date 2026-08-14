@@ -268,6 +268,34 @@ class FamilyMixtureTest(unittest.TestCase):
         p = head.predict(dev.texts)
         self.assertTrue(((p >= 0.0) & (p <= 1.0)).all(), "점수가 [0,1] 밖이다")
 
+    def test_can_limit_episode_spread_to_selected_families(self) -> None:
+        """T0에서 손실이 집중된 계열만 국소적으로 순서를 바꿀 수 있어야 한다."""
+
+        train, dev = datasets()
+        from router.features import FAMILY_INDEX, family_codes
+
+        family = build_score_head("family")
+        family.fit(train)
+        mixture = build_score_head({
+            "name": "family_mixture",
+            "strength": 1.0,
+            "active_families": ["sym_math", "code_io"],
+        })
+        mixture.fit(train)
+        base = family.predict(dev.texts)
+        changed = mixture.predict(dev.texts)
+        codes = family_codes(dev.texts)
+        active = np.isin(codes, [FAMILY_INDEX["sym_math"], FAMILY_INDEX["code_io"]])
+        np.testing.assert_allclose(changed[~active], base[~active], atol=1e-9)
+        self.assertGreater(float(np.abs(changed[active] - base[active]).sum()), 0.0)
+
+    def test_rejects_unknown_active_family(self) -> None:
+        with self.assertRaisesRegex(ValueError, "알 수 없는 계열"):
+            build_score_head({
+                "name": "family_mixture",
+                "active_families": ["not-a-family"],
+            })
+
     def test_state_round_trip(self) -> None:
         """산출물로 굳혔다 되살려도 같은 답이어야 한다. 어긋나면 런타임이
         조용히 폴백으로 떨어진다."""
@@ -280,6 +308,153 @@ class FamilyMixtureTest(unittest.TestCase):
         revived = build_score_head("family_mixture")
         revived.load_state(json.loads(json.dumps(head.state())))
         np.testing.assert_allclose(before, revived.predict(dev.texts), atol=1e-12)
+
+
+class ResponseShapeTest(unittest.TestCase):
+    def test_strength_zero_is_exactly_family_score(self) -> None:
+        train, dev = datasets()
+        family = build_score_head("family")
+        family.fit(train)
+        response = build_score_head({"name": "response_shape", "strength": 0.0})
+        response.fit(train)
+        np.testing.assert_allclose(
+            response.predict(dev.texts), family.predict(dev.texts), atol=1e-9
+        )
+
+    def test_only_changes_selected_families(self) -> None:
+        train, dev = datasets()
+        from router.features import FAMILY_INDEX, family_codes
+
+        family = build_score_head("family")
+        family.fit(train)
+        response = build_score_head({
+            "name": "response_shape",
+            "active_families": ["sym_math", "code_io"],
+        })
+        response.fit(train)
+        base = family.predict(dev.texts)
+        changed = response.predict(dev.texts)
+        codes = family_codes(dev.texts)
+        active = np.isin(codes, [FAMILY_INDEX["sym_math"], FAMILY_INDEX["code_io"]])
+        np.testing.assert_allclose(changed[~active], base[~active], atol=1e-9)
+        self.assertGreater(float(np.abs(changed[active] - base[active]).sum()), 0.0)
+
+    def test_predictions_stay_in_range(self) -> None:
+        train, dev = datasets()
+        head = build_score_head("response_shape")
+        head.fit(train)
+        predicted = head.predict(dev.texts)
+        self.assertTrue(((predicted >= 0.0) & (predicted <= 1.0)).all())
+
+    def test_state_round_trip(self) -> None:
+        train, dev = datasets()
+        head = build_score_head({
+            "name": "response_shape",
+            "strength": 0.75,
+            "active_families": ["sym_math", "code_io"],
+        })
+        head.fit(train)
+        before = head.predict(dev.texts)
+        revived = build_score_head({
+            "name": "response_shape",
+            "strength": 0.75,
+            "active_families": ["sym_math", "code_io"],
+        })
+        revived.load_state(json.loads(json.dumps(head.state())))
+        np.testing.assert_allclose(before, revived.predict(dev.texts), atol=1e-12)
+
+
+class TemplateScoreTest(unittest.TestCase):
+    def test_unknown_templates_fall_back_to_family(self) -> None:
+        train, _dev = datasets()
+        family = build_score_head("family")
+        family.fit(train)
+        template = build_score_head("template")
+        template.fit(train)
+        texts = ("completely unseen synthetic prompt 9918273645",)
+        np.testing.assert_allclose(
+            template.predict(texts), family.predict(texts), atol=1e-12
+        )
+
+    def test_strength_zero_is_family_score(self) -> None:
+        train, dev = datasets()
+        family = build_score_head("family")
+        family.fit(train)
+        template = build_score_head({"name": "template", "strength": 0.0})
+        template.fit(train)
+        np.testing.assert_allclose(
+            template.predict(dev.texts), family.predict(dev.texts), atol=1e-12
+        )
+
+    def test_state_round_trip(self) -> None:
+        train, dev = datasets()
+        spec = {
+            "name": "template",
+            "scheme": "identifiers",
+            "prior": 2.0,
+            "active_families": ["sym_math"],
+        }
+        head = build_score_head(spec)
+        head.fit(train)
+        before = head.predict(dev.texts)
+        revived = build_score_head(spec)
+        revived.load_state(json.loads(json.dumps(head.state())))
+        np.testing.assert_allclose(before, revived.predict(dev.texts), atol=1e-12)
+
+    def test_rejects_invalid_settings(self) -> None:
+        with self.assertRaisesRegex(ValueError, "정규화"):
+            build_score_head({"name": "template", "scheme": "unknown"})
+        with self.assertRaisesRegex(ValueError, "prior"):
+            build_score_head({"name": "template", "prior": -1})
+
+
+class BlendScoreTest(unittest.TestCase):
+    def test_is_exact_weighted_average_and_round_trips(self) -> None:
+        train, dev = datasets()
+        specs = [
+            {
+                "name": "family_mixture",
+                "strength": 0.75,
+                "active_families": ["sym_math", "code_io"],
+            },
+            {
+                "name": "template",
+                "scheme": "digits",
+                "prior": 1.0,
+                "active_families": ["sym_math"],
+            },
+        ]
+        parts = []
+        for spec in specs:
+            head = build_score_head(spec)
+            head.fit(train)
+            parts.append(head.predict(dev.texts))
+
+        spec = {"name": "blend", "heads": specs, "weights": [0.8, 0.2]}
+        blend = build_score_head(spec)
+        blend.fit(train)
+        predicted = blend.predict(dev.texts)
+        np.testing.assert_allclose(predicted, 0.8 * parts[0] + 0.2 * parts[1])
+
+        revived = build_score_head(spec)
+        revived.load_state(json.loads(json.dumps(blend.state())))
+        np.testing.assert_allclose(predicted, revived.predict(dev.texts), atol=1e-12)
+
+    def test_rejects_invalid_weights(self) -> None:
+        with self.assertRaisesRegex(ValueError, "둘 이상"):
+            build_score_head({"name": "blend", "heads": ["family"], "weights": [1]})
+        with self.assertRaisesRegex(ValueError, "길이"):
+            build_score_head({
+                "name": "blend",
+                "heads": ["family", "global"],
+                "weights": [1],
+            })
+        with self.assertRaisesRegex(ValueError, "합이 양수"):
+            build_score_head({
+                "name": "blend",
+                "heads": ["family", "global"],
+                "weights": [0, 0],
+            })
 
 
 class PipelineTest(unittest.TestCase):

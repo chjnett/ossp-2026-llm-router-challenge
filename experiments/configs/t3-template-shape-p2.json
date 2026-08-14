@@ -1,0 +1,8 @@
+{
+  "id": "t3-template-shape-p2",
+  "score": {"name": "template", "scheme": "shape", "prior": 2.0, "strength": 1.0, "active_families": ["sym_math"]},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {"headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675}, "size_penalty": 2.0, "mu": 1.0},
+  "note": "단어까지 형태로 치환한 넓은 템플릿의 과도한 충돌 여부를 확인한다."
+}

@@ -1,0 +1,15 @@
+{
+  "id": "t4-blend-template-w10",
+  "score": {
+    "name": "blend",
+    "heads": [
+      {"name": "family_mixture", "strength": 0.75, "active_families": ["sym_math", "code_io"]},
+      {"name": "template", "scheme": "digits", "prior": 1.0, "strength": 1.0, "active_families": ["sym_math"]}
+    ],
+    "weights": [0.9, 0.1]
+  },
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {"headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675}, "size_penalty": 2.0, "mu": 1.0},
+  "note": "T1을 90% 유지하고 T3 digits 템플릿을 10%만 혼합한다."
+}

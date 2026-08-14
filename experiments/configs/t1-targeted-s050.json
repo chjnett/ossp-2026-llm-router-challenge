@@ -1,0 +1,8 @@
+{
+  "id": "t1-targeted-s050",
+  "score": {"name": "family_mixture", "strength": 0.5, "active_families": ["sym_math", "code_io"]},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {"headroom": {"fast": 0.225, "balanced": 0.252, "premium": 0.675}, "size_penalty": 2.0, "mu": 1.0},
+  "note": "T0 상위 손실 두 계열에만 조건부 이득 혼합 50%를 적용한다."
+}

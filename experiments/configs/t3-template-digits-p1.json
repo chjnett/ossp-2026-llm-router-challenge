@@ -1,0 +1,8 @@
+{
+  "id": "t3-template-digits-p1",
+  "score": {"name": "template", "scheme": "digits", "prior": 1.0, "strength": 1.0, "active_families": ["sym_math"]},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {"headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675}, "size_penalty": 2.0, "mu": 1.0},
+  "note": "숫자만 정규화한 반복 템플릿을 sym_math에 한정한다. prior=1."
+}

@@ -17,6 +17,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import re
 from typing import Callable, Dict, Protocol, Sequence
 
 import numpy as np
@@ -174,6 +176,72 @@ class _UselessModel:
         self.mean_by_family = {int(k): float(v) for k, v in state["mean_by_family"].items()}
 
 
+class _BinaryProbabilityModel:
+    """계열별 ridge로 이진 사건의 확률을 예측한다.
+
+    분류 정확도 자체가 목적이 아니다. 양성/비양성 조건부 이득을 혼합하기 위한
+    확률이므로, 출력은 [0, 1]로 자르고 최종 평가는 라우팅 OOF로 한다.
+    """
+
+    def fit(
+        self,
+        train: Dataset,
+        target: np.ndarray,
+        alpha: float,
+        min_family: int,
+    ) -> None:
+        codes = family_codes(train.texts)
+        features = extract(train.texts)
+        target = np.asarray(target, dtype=float)
+        self.overall = float(target.mean())
+        self.global_fit = _ridge(features, target, alpha)
+        self.by_family: Dict[int, tuple] = {}
+        self.mean_by_family: Dict[int, float] = {}
+        for f in range(len(FAMILIES)):
+            mask = codes == f
+            if not mask.any():
+                continue
+            self.mean_by_family[f] = float(target[mask].mean())
+            if mask.sum() >= min_family:
+                self.by_family[f] = _ridge(features[mask], target[mask], alpha)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        features = extract(texts)
+        codes = family_codes(texts)
+        out = np.full(len(texts), self.overall)
+        for f in np.unique(codes):
+            mask = codes == f
+            key = int(f)
+            if key in self.by_family:
+                out[mask] = _ridge_apply(features[mask], self.by_family[key])
+            elif key in self.mean_by_family:
+                out[mask] = self.mean_by_family[key]
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        def pack(fit):
+            mu, sd, weight = fit
+            return [mu.tolist(), sd.tolist(), weight.tolist()]
+
+        return {
+            "overall": self.overall,
+            "global": pack(self.global_fit),
+            "by_family": {str(k): pack(v) for k, v in self.by_family.items()},
+            "mean_by_family": {str(k): v for k, v in self.mean_by_family.items()},
+        }
+
+    def load_state(self, state: dict) -> None:
+        def unpack(row):
+            return tuple(np.asarray(x, dtype=float) for x in row)
+
+        self.overall = float(state["overall"])
+        self.global_fit = unpack(state["global"])
+        self.by_family = {int(k): unpack(v) for k, v in state["by_family"].items()}
+        self.mean_by_family = {
+            int(k): float(v) for k, v in state["mean_by_family"].items()
+        }
+
+
 @register(SCORE_HEADS, "family_mixture")
 class FamilyMixtureScore:
     """``family_useful``의 확률 이중계산을 고친다 (T6).
@@ -200,12 +268,24 @@ class FamilyMixtureScore:
     """
 
     def __init__(self, alpha: float = 20.0, min_family: int = 40,
-                 strength: float = 1.0) -> None:
+                 strength: float = 1.0,
+                 active_families: Sequence[str] | None = None) -> None:
         self.alpha = float(alpha)
         self.min_family = int(min_family)
         # 0이면 계열 평균으로 되돌아간다. 1이면 문항별 확률을 그대로 쓴다.
         self.strength = float(strength)
-        self.version = f"familymix.v1(a={self.alpha:g},s={self.strength:g})"
+        unknown = set(active_families or ()) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 계열: {sorted(unknown)}")
+        self.active_families = (
+            frozenset(active_families) if active_families is not None else None
+        )
+        scope = "all" if self.active_families is None else "+".join(
+            sorted(self.active_families)
+        )
+        self.version = (
+            f"familymix.v2(a={self.alpha:g},s={self.strength:g},f={scope})"
+        )
 
     def fit(self, train: Dataset) -> None:
         codes = family_codes(train.texts)
@@ -243,7 +323,15 @@ class FamilyMixtureScore:
         codes = family_codes(texts)
         p_useful = 1.0 - self._useless.predict(texts)
         # strength=0이면 계열 평균 유용확률로 되돌아가 family 헤드와 같아진다.
-        p = self._share[codes] + self.strength * (p_useful - self._share[codes])
+        strength = np.full(len(texts), self.strength)
+        if self.active_families is not None:
+            active_codes = {
+                i for i, name in enumerate(FAMILIES) if name in self.active_families
+            }
+            strength = np.array(
+                [self.strength if int(code) in active_codes else 0.0 for code in codes]
+            )
+        p = self._share[codes] + strength * (p_useful - self._share[codes])
         p = np.clip(p, 0.0, 1.0)[:, None]
 
         gain = p * self._hit[codes] + (1.0 - p) * self._miss[codes]
@@ -266,6 +354,292 @@ class FamilyMixtureScore:
         self._share = np.asarray(state["share"], dtype=float)
         self._useless = _UselessModel()
         self._useless.load_state(state["useless"])
+
+
+@register(SCORE_HEADS, "response_shape")
+class ResponseShapeScore:
+    """두 단계의 계산량 반응을 따로 예측한다.
+
+    단일 ``P(any model beats light)``는 ax31과 K1을 같은 방향으로 움직인다.
+    하지만 공개 outcome에는 ``light→ax31``에서 오르는 early-gain과
+    ``ax31→K1``에서만 오르는 late-gain이 다르게 나타난다. 두 증분을 분리한다.
+
+    각 단계 k에서 다음 조건부 기댓값을 사용한다.
+
+        E[Δq_k|x] = P(Δq_k>0|x)·E[Δq_k|Δq_k>0,family]
+                   + (1-P)·E[Δq_k|Δq_k≤0,family]
+
+    ``strength=0``이면 정확히 계열 평균으로 돌아가고, 선택한 계열에만 문항별
+    확률을 적용할 수 있다. 최종 목적은 분류 AUC가 아니라 OOF 라우팅 점수다.
+    """
+
+    def __init__(
+        self,
+        alpha: float = 20.0,
+        min_family: int = 40,
+        strength: float = 1.0,
+        active_families: Sequence[str] | None = None,
+    ) -> None:
+        self.alpha = float(alpha)
+        self.min_family = int(min_family)
+        self.strength = float(strength)
+        unknown = set(active_families or ()) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 계열: {sorted(unknown)}")
+        self.active_families = (
+            frozenset(active_families) if active_families is not None else None
+        )
+        scope = "all" if self.active_families is None else "+".join(
+            sorted(self.active_families)
+        )
+        self.version = (
+            f"response.v1(a={self.alpha:g},s={self.strength:g},f={scope})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        codes = family_codes(train.texts)
+        score = np.asarray(train.score, dtype=float)
+        stage_gain = np.column_stack(
+            [score[:, 1] - score[:, 0], score[:, 2] - score[:, 1]]
+        )
+        positive = stage_gain > 0
+        n_families = len(FAMILIES)
+        self._light = np.zeros(n_families)
+        self._share = np.zeros((n_families, 2))
+        self._hit = np.zeros((n_families, 2))
+        self._miss = np.zeros((n_families, 2))
+
+        light_overall = float(score[:, 0].mean())
+        for f in range(n_families):
+            family_mask = codes == f
+            if not family_mask.any():
+                family_mask = np.ones(len(train), dtype=bool)
+            self._light[f] = (
+                float(score[family_mask, 0].mean()) if family_mask.any()
+                else light_overall
+            )
+            for stage in range(2):
+                values = stage_gain[family_mask, stage]
+                is_positive = positive[family_mask, stage]
+                share = float(is_positive.mean())
+                mean = float(values.mean())
+                hit = float(values[is_positive].mean()) if is_positive.any() else mean
+                miss = float(values[~is_positive].mean()) if (~is_positive).any() else mean
+                self._share[f, stage] = share
+                self._hit[f, stage] = hit
+                self._miss[f, stage] = miss
+
+        self._probability = []
+        for stage in range(2):
+            model = _BinaryProbabilityModel()
+            model.fit(
+                train,
+                positive[:, stage].astype(float),
+                self.alpha,
+                self.min_family,
+            )
+            self._probability.append(model)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        codes = family_codes(texts)
+        strength = np.full(len(texts), self.strength)
+        if self.active_families is not None:
+            active_codes = {
+                i for i, name in enumerate(FAMILIES) if name in self.active_families
+            }
+            strength = np.array(
+                [self.strength if int(code) in active_codes else 0.0 for code in codes]
+            )
+
+        gains = np.zeros((len(texts), 2))
+        for stage, model in enumerate(self._probability):
+            predicted = model.predict(texts)
+            share = self._share[codes, stage]
+            probability = np.clip(share + strength * (predicted - share), 0.0, 1.0)
+            gains[:, stage] = (
+                probability * self._hit[codes, stage]
+                + (1.0 - probability) * self._miss[codes, stage]
+            )
+
+        light = self._light[codes]
+        out = np.column_stack([light, light + gains[:, 0], light + gains.sum(axis=1)])
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "light": self._light.tolist(),
+            "share": self._share.tolist(),
+            "hit": self._hit.tolist(),
+            "miss": self._miss.tolist(),
+            "probability": [model.state() for model in self._probability],
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._light = np.asarray(state["light"], dtype=float)
+        self._share = np.asarray(state["share"], dtype=float)
+        self._hit = np.asarray(state["hit"], dtype=float)
+        self._miss = np.asarray(state["miss"], dtype=float)
+        self._probability = []
+        for model_state in state["probability"]:
+            model = _BinaryProbabilityModel()
+            model.load_state(model_state)
+            self._probability.append(model)
+
+
+_TEMPLATE_NUMBER = re.compile(r"-?\d+(?:\.\d+)?")
+_TEMPLATE_IDENTIFIER = re.compile(r"\b[a-z_][a-z0-9_]*\b")
+_TEMPLATE_WORD = re.compile(r"[a-z가-힣]+")
+_TEMPLATE_SPACE = re.compile(r"\s+")
+
+
+def _template_key(text: str, scheme: str) -> str:
+    normalized = _TEMPLATE_NUMBER.sub("#", text.lower())
+    if scheme == "identifiers":
+        normalized = _TEMPLATE_IDENTIFIER.sub("v", normalized)
+    elif scheme == "shape":
+        normalized = _TEMPLATE_WORD.sub("w", normalized)
+    elif scheme != "digits":
+        raise ValueError(f"알 수 없는 template 정규화: {scheme!r}")
+    normalized = _TEMPLATE_SPACE.sub(" ", normalized).strip()
+    return hashlib.blake2b(normalized.encode("utf-8"), digest_size=16).hexdigest()
+
+
+@register(SCORE_HEADS, "template")
+class TemplateScore:
+    """정규화 템플릿의 공개 Train outcome을 계열 평균에 축소해 사용한다.
+
+    숫자·식별자가 다른 반복 문제를 같은 템플릿으로 묶는다. 아티팩트에는 원문,
+    문항 ID나 개별 특징을 넣지 않고 BLAKE2 템플릿 해시와 집계값만 저장한다.
+    공개 자료의 정확한 프롬프트/해시 조회는 공식 규칙에서 허용된다.
+
+    ``prior``가 클수록 표본이 적은 템플릿을 계열 평균으로 더 강하게 당긴다.
+    미지 템플릿은 언제나 계열 평균으로 폴백한다.
+    """
+
+    def __init__(
+        self,
+        scheme: str = "identifiers",
+        prior: float = 2.0,
+        strength: float = 1.0,
+        active_families: Sequence[str] | None = None,
+    ) -> None:
+        if scheme not in {"digits", "identifiers", "shape"}:
+            raise ValueError(f"알 수 없는 template 정규화: {scheme!r}")
+        if prior < 0:
+            raise ValueError("template prior는 0 이상이어야 한다")
+        self.scheme = scheme
+        self.prior = float(prior)
+        self.strength = float(strength)
+        unknown = set(active_families or ()) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 계열: {sorted(unknown)}")
+        self.active_families = (
+            frozenset(active_families) if active_families is not None else None
+        )
+        scope = "all" if self.active_families is None else "+".join(
+            sorted(self.active_families)
+        )
+        self.version = (
+            f"template.v1(n={self.scheme},p={self.prior:g},"
+            f"s={self.strength:g},f={scope})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        codes = family_codes(train.texts)
+        overall = train.score.mean(axis=0)
+        self._family = np.zeros((len(FAMILIES), N_MODELS))
+        for f in range(len(FAMILIES)):
+            mask = codes == f
+            self._family[f] = train.score[mask].mean(axis=0) if mask.any() else overall
+
+        grouped: Dict[str, list] = {}
+        for text, score in zip(train.texts, train.score, strict=True):
+            key = _template_key(text, self.scheme)
+            if key not in grouped:
+                grouped[key] = [0, np.zeros(N_MODELS)]
+            grouped[key][0] += 1
+            grouped[key][1] += score
+        self._templates = {
+            key: (int(count), total / count)
+            for key, (count, total) in grouped.items()
+        }
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        codes = family_codes(texts)
+        out = self._family[codes].copy()
+        for i, (text, code) in enumerate(zip(texts, codes, strict=True)):
+            family = FAMILIES[int(code)]
+            if self.active_families is not None and family not in self.active_families:
+                continue
+            found = self._templates.get(_template_key(text, self.scheme))
+            if found is None:
+                continue
+            count, mean = found
+            weight = self.strength * count / (count + self.prior)
+            weight = min(max(weight, 0.0), 1.0)
+            out[i] = self._family[code] + weight * (mean - self._family[code])
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "family": self._family.tolist(),
+            "templates": {
+                key: [count, mean.tolist()]
+                for key, (count, mean) in self._templates.items()
+            },
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._family = np.asarray(state["family"], dtype=float)
+        self._templates = {
+            key: (int(row[0]), np.asarray(row[1], dtype=float))
+            for key, row in state["templates"].items()
+        }
+
+
+@register(SCORE_HEADS, "blend")
+class BlendScore:
+    """여러 점수 헤드의 정적 가중 평균.
+
+    서로 다른 일반화 오류를 가진 헤드를 작은 비율로 합칠 때만 사용한다.
+    각 내부 헤드는 같은 Train fold에서 독립적으로 적합되므로 OOF 경계가
+    보존되고, 제출 아티팩트에는 내부 헤드의 집계 상태만 저장된다.
+    """
+
+    def __init__(self, heads: Sequence, weights: Sequence[float]) -> None:
+        if len(heads) < 2:
+            raise ValueError("blend에는 점수 헤드가 둘 이상 필요하다")
+        if len(heads) != len(weights):
+            raise ValueError("blend heads와 weights 길이가 다르다")
+        weight = np.asarray(weights, dtype=float)
+        if not np.isfinite(weight).all() or (weight < 0).any() or weight.sum() <= 0:
+            raise ValueError("blend weights는 유한한 0 이상이며 합이 양수여야 한다")
+        self._specs = list(heads)
+        self._heads = [build_score_head(spec) for spec in self._specs]
+        self._weights = weight / weight.sum()
+        joined = "+".join(
+            f"{w:g}*{head.version}"
+            for w, head in zip(self._weights, self._heads, strict=True)
+        )
+        self.version = f"blend.v1({joined})"
+
+    def fit(self, train: Dataset) -> None:
+        for head in self._heads:
+            head.fit(train)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        predictions = np.stack([head.predict(texts) for head in self._heads])
+        return np.clip(np.tensordot(self._weights, predictions, axes=1), 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {"heads": [head.state() for head in self._heads]}
+
+    def load_state(self, state: dict) -> None:
+        rows = state["heads"]
+        if len(rows) != len(self._heads):
+            raise ValueError("blend 아티팩트의 내부 헤드 수가 설정과 다르다")
+        for head, row in zip(self._heads, rows, strict=True):
+            head.load_state(row)
 
 
 @register(SCORE_HEADS, "family_useful")

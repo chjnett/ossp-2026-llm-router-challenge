@@ -1,0 +1,8 @@
+{
+  "id": "t3-template-ident-p05",
+  "score": {"name": "template", "scheme": "identifiers", "prior": 0.5, "strength": 1.0, "active_families": ["sym_math"]},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {"headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675}, "size_penalty": 2.0, "mu": 1.0},
+  "note": "숫자와 식별자를 정규화한 반복 템플릿. 희소 매치를 약하게 축소한다."
+}

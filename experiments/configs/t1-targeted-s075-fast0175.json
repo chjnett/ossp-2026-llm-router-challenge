@@ -1,0 +1,12 @@
+{
+  "id": "t1-targeted-s075-fast0175",
+  "score": {"name": "family_mixture", "strength": 0.75, "active_families": ["sym_math", "code_io"]},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675},
+    "size_penalty": 2.0,
+    "mu": 1.0
+  },
+  "note": "Fast 0.20이 N=2000 family-dominant에서 최대 1.001로 한 번 초과했다. 경계 밖으로 내리기 위해 Fast 여윳돈을 한 단계 더 0.175로 낮춘다."
+}

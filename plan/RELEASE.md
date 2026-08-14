@@ -5,7 +5,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # 제출 실행 절차
 
-2026-08-13에 로컬 레지스트리로 전 과정을 리허설하고 그 결과를 굳힌 문서다.
+2026-08-13에 로컬 레지스트리로 전 과정을 리허설하고, 2026-08-14 현재 제출
+챔피언으로 다시 검증한 문서다.
 마감 당일에 다시 알아내지 않으려고 쓴다. **위에서 아래로 그대로 실행한다.**
 
 마감은 2026-08-27 18:00 KST. 이미지 동결은 8/25 24:00 (RULES F2).
@@ -81,8 +82,13 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 ## 1. 챔피언 확정과 산출물 굽기 — 코드 커밋 **전에**
 
 ```bash
-PYTHONPATH=src python3 tools/export_artifact.py
+PYTHONPATH=src python3 tools/export_artifact.py \
+  --config experiments/configs/t1-targeted-s075-fast0175.json
 ```
+
+이미지 동결 전에 챔피언이 바뀌면 위 설정 경로도 반드시 함께 바꾼다.
+`experiments/champion.json`의 ID와 아티팩트 `config.id`가 다르면 다음 단계의
+`verify_submission_stack.py`가 실패해야 정상이다.
 
 `provenance.commit`은 굽는 시점의 HEAD를 적는다. 그래서 산출물이 담기는
 커밋보다 항상 하나 앞선다. 정상이다.
@@ -161,8 +167,9 @@ PYTHONPATH=src python3 tools/check_runtime.py \
   --report build/runtime-check-report.json
 ```
 
-Train+Dev 2,640문항으로 세 등급이 각각 90초 안에 끝나야 한다. 리허설에서는
-등급당 2.1초였다.
+Train+Dev 2,640문항으로 세 등급이 각각 90초 안에 끝나야 한다. 2026-08-14
+현재 T1 이미지의 최장 실행은 Fast 3.094초였고 Balanced 3.023초, Premium
+2.990초였다.
 
 ## 7. 기술 제출 JSON — **별도 커밋**
 
