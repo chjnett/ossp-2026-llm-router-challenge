@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # DESIGN — Efficient LLM Routing Challenge
 
-작성 2026-08-10 · **최근 판정 2026-08-14** · 마감 2026-08-27 18:00 KST · 규칙은 [RULES.md](RULES.md), 일정은 [TODO.md](TODO.md)
+작성 2026-08-10 · **최근 판정 2026-08-15** · 마감 2026-08-27 18:00 KST · 규칙은 [RULES.md](RULES.md), 일정은 [TODO.md](TODO.md)
 
 이 문서는 **측정된 것**과 **가설인 것**을 구분해서 적는다.
 숫자에는 전부 출처가 있고, 근거 없는 문장은 §6의 미검증 목록으로 보낸다.
@@ -59,10 +59,26 @@ SPDX-License-Identifier: Apache-2.0
 5. T4의 T1 95% + T3 5% 블렌드는 단일 5-fold OOF 0.633750으로 잠시
    승격했으나, 4/6/8-fold 효과가 혼재하고 **4×3 nested OOF에서 고정 T1보다
    −0.000227** 낮았다. 비공개 일반화를 우선해 T4 승격을 취소했다.
+6. T5에서 공식 hash-regex의 14개 dense 특징과 256-bin signed word
+   unigram/bigram을 prompt-only 계약으로 재구현했다. content-hash OOF
+   0.6539, Dev 0.6882까지 올랐지만 raw 로그비용은 예비 스트레스에서
+   578/3,600회를 초과했다. 안전형도 최종 11/36,000회라 승격하지 않았다.
+7. T6~T10의 계열별 총합 보정, 정규 확률제약, 보수 비용헤드 결합, runaway/K1
+   게이트는 각각 점수 또는 꼬리 안전을 동시에 만족하지 못했다. 특히 정규
+   확률제약은 heavy tail에서 OOF 예산부터 초과해 즉시 폐기했다.
+8. T11은 문항별 `(실제 upgrade/light)/(예측 upgrade/light)`의 계열·모델별
+   90분위를 비용에 반영했다. `t11-tier-070`은 OOF 0.636818, Dev 0.663608로
+   개선했지만 최종 게이트에서 **8/36,000회** 초과했다. 더 낮춘 0회 후보는
+   OOF 0.632074로 T1보다 낮았다.
+9. T12는 공식 입력인 budget tier별로 점수 헤드를 분리했다. Fast만 hashed
+   ridge, Balanced/Premium은 T1을 유지한 `fast034-sp22`가 OOF 0.633750,
+   Dev 0.648722였으나 최종 mild shift에서 **1/36,000회**(Fast 최대 1.028)
+   초과했다. 얇은 점수 이득보다 등급 0점 위험이 커서 승격하지 않았다.
 
-따라서 다음 트랙은 새로운 점수 블렌드가 아니라 **Balanced·Premium에 남은
-예산을 비용 보정과 Pareto 배분 경계로 회수하는 것**이다. 이후 모든 점수
-후보는 단일 5-fold 개선만으로 승격하지 않고 nested OOF까지 통과해야 한다.
+따라서 T1은 제출 가능한 안전 기준선으로 동결한다. 다음 공격 트랙은 headroom
+미세조정이 아니라 **fold 밖 상대비용 tail 추정과 Fast 폭주 위험의 조건부
+모델링**이다. 모든 점수 후보는 단일 5-fold 개선만으로 승격하지 않고 nested
+OOF와 36,000회 파산 게이트를 모두 통과해야 한다.
 
 ---
 

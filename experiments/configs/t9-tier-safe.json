@@ -1,0 +1,12 @@
+{
+  "id": "t9-tier-safe",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.45, "balanced": 0.65, "premium": 1.75},
+    "size_penalty": 2.0,
+    "mu": {"fast": 0.5, "balanced": 0.0, "premium": 0.0}
+  },
+  "note": "T9 보수형: 등급별 실제 안전경계, Fast에만 불확실성 페널티."
+}

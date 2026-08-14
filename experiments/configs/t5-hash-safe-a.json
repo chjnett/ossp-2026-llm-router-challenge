@@ -1,0 +1,12 @@
+{
+  "id": "t5-hash-safe-a",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "hash_ridge", "alpha": 100, "bins": 256, "z": 0.67},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.20, "balanced": 0.50, "premium": 0.65},
+    "size_penalty": 2.0,
+    "mu": 0.0
+  },
+  "note": "T5 안전 A: Fast heavy-tail만 강하게 감쇠하고 Balanced/Premium lexical 이득을 보존."
+}

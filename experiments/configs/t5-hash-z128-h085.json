@@ -1,0 +1,8 @@
+{
+  "id": "t5-hash-z128-h085",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "hash_ridge", "alpha": 100, "bins": 256, "z": 1.28},
+  "gate": "none",
+  "alloc": {"headroom": 0.85, "size_penalty": 2.0, "mu": 0.0},
+  "note": "T5: hashed score/cost + 승격비용 90분위 편향 + 소배치 감쇠. headroom 85%."
+}

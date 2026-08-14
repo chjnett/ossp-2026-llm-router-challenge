@@ -57,8 +57,22 @@ class Config:
         return merged
 
     @property
-    def mu(self) -> float:
-        return float(self.alloc.get("mu", 0.0))
+    def mu(self) -> float | Dict[str, float]:
+        """비용 불확실성 페널티. 등급별 값도 허용한다.
+
+        Fast는 0점 위험이 가장 크고 최종 가중치도 0.4라 강하게 방어할 가치가
+        있지만, 같은 페널티를 Premium에 걸면 쓸 수 있는 예산을 버리게 된다.
+        budget tier는 공식 런타임 입력이므로 이 분기는 규칙상 허용된다.
+        """
+
+        raw = self.alloc.get("mu", 0.0)
+        if isinstance(raw, Mapping):
+            return {tier: float(raw.get(tier, 0.0)) for tier in TIERS}
+        return float(raw)
+
+    def mu_for_tier(self, tier: str) -> float:
+        raw = self.mu
+        return float(raw[tier]) if isinstance(raw, dict) else float(raw)
 
     @property
     def headroom(self) -> Dict[str, float] | None:
@@ -93,7 +107,7 @@ class Config:
         return None if raw is None else float(raw)
 
     @property
-    def size_penalty(self) -> float:
+    def size_penalty(self) -> float | Dict[str, float]:
         """배치가 작을수록 여유를 더 준다.
 
         실현 비용 비율의 흔들림은 표본 수의 제곱근에 반비례한다. 200문항
@@ -101,7 +115,14 @@ class Config:
         정보이고, 문항 ID나 입력 순서를 쓰는 것과는 다르다.
         """
 
-        return float(self.alloc.get("size_penalty", 0.0))
+        raw = self.alloc.get("size_penalty", 0.0)
+        if isinstance(raw, Mapping):
+            return {tier: float(raw.get(tier, 0.0)) for tier in TIERS}
+        return float(raw)
+
+    def size_penalty_for_tier(self, tier: str) -> float:
+        raw = self.size_penalty
+        return float(raw[tier]) if isinstance(raw, dict) else float(raw)
 
 
 def effective_util(
@@ -113,15 +134,23 @@ def effective_util(
     반환값은 항상 '전체 예산 대비 비율'이라 할당기 쪽은 바뀌지 않는다.
     """
 
-    penalty = config.size_penalty / max(1.0, float(n_episodes)) ** 0.5
     headroom = config.headroom
     if headroom is None:
-        return {t: max(0.0, u - penalty) for t, u in config.util.items()}
+        return {
+            tier: max(
+                0.0,
+                util - config.size_penalty_for_tier(tier)
+                / max(1.0, float(n_episodes)) ** 0.5,
+            )
+            for tier, util in config.util.items()
+        }
     result = {}
     for tier, h in headroom.items():
         multiplier = float(multipliers[tier])
+        penalty = (
+            config.size_penalty_for_tier(tier)
+            / max(1.0, float(n_episodes)) ** 0.5
+        )
         adjusted = max(0.0, h - penalty)
         result[tier] = (1.0 + adjusted * (multiplier - 1.0)) / multiplier
     return result
-
-

@@ -1,0 +1,1 @@
+{"id":"t11-risk90-h065","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"hash_ridge","alpha":100,"bins":256,"risk_quantile":0.90},"gate":"none","alloc":{"headroom":0.65,"size_penalty":2.0,"mu":0.0},"note":"T11 상대 tail-risk 90분위, headroom 65%."}

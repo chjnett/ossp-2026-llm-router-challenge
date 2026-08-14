@@ -38,6 +38,14 @@ class Prediction:
     sd: np.ndarray
     allow: np.ndarray
     versions: Dict[str, str]
+    s_hat_by_tier: Dict[str, np.ndarray] | None = None
+
+    def score_for_tier(self, tier: str) -> np.ndarray:
+        return (
+            self.s_hat_by_tier[tier]
+            if self.s_hat_by_tier is not None
+            else self.s_hat
+        )
 
 
 def predict(config: Config, train: Dataset, texts: Sequence[str]) -> Prediction:
@@ -55,7 +63,17 @@ def predict(config: Config, train: Dataset, texts: Sequence[str]) -> Prediction:
     cost_head.fit(train)
     gate.fit(train)
 
-    s_hat = score_head.predict(texts)
+    predict_tier = getattr(score_head, "predict_tier", None)
+    s_hat_by_tier = (
+        {tier: predict_tier(texts, tier) for tier in TIERS}
+        if callable(predict_tier)
+        else None
+    )
+    s_hat = (
+        s_hat_by_tier["fast"]
+        if s_hat_by_tier is not None
+        else score_head.predict(texts)
+    )
     c_hat, sd = cost_head.predict(texts)
     allow = gate.allow(texts, s_hat, c_hat)
 
@@ -69,6 +87,7 @@ def predict(config: Config, train: Dataset, texts: Sequence[str]) -> Prediction:
             "cost": cost_head.version,
             "gate": gate.version,
         },
+        s_hat_by_tier=s_hat_by_tier,
     )
 
 
@@ -81,7 +100,7 @@ def pick_all_tiers(
     if config.epsilon is not None:
         return {
             tier: allocate_chance(
-                prediction.s_hat,
+                prediction.score_for_tier(tier),
                 prediction.c_hat,
                 prediction.sd,
                 multiplier=multipliers[tier],
@@ -95,13 +114,13 @@ def pick_all_tiers(
     util = effective_util(config, len(keys), multipliers)
     return {
         tier: allocate(
-            prediction.s_hat,
+            prediction.score_for_tier(tier),
             prediction.c_hat,
             multiplier=multipliers[tier],
             util=util[tier],
             allow=prediction.allow,
             sd=prediction.sd,
-            mu=config.mu,
+            mu=config.mu_for_tier(tier),
             keys=list(keys),
         ).picks
         for tier in TIERS
@@ -139,6 +158,7 @@ def run_cv(config: Config, dataset: Dataset, *, k: int = 5) -> Evaluation:
     sd = np.zeros((n, n_models))
     allow = np.zeros((n, n_models), dtype=bool)
     versions: Dict[str, str] = {}
+    s_hat_by_tier: Dict[str, np.ndarray] | None = None
 
     for f, test_idx in enumerate(folds):
         train_idx = np.concatenate([folds[g] for g in range(k) if g != f])
@@ -146,12 +166,19 @@ def run_cv(config: Config, dataset: Dataset, *, k: int = 5) -> Evaluation:
         texts = tuple(dataset.texts[i] for i in test_idx)
         prediction = predict(config, fit_part, texts)
         s_hat[test_idx] = prediction.s_hat
+        if prediction.s_hat_by_tier is not None:
+            if s_hat_by_tier is None:
+                s_hat_by_tier = {
+                    tier: np.zeros((n, n_models)) for tier in TIERS
+                }
+            for tier in TIERS:
+                s_hat_by_tier[tier][test_idx] = prediction.s_hat_by_tier[tier]
         c_hat[test_idx] = prediction.c_hat
         sd[test_idx] = prediction.sd
         allow[test_idx] = prediction.allow
         versions = prediction.versions
 
-    oof = Prediction(s_hat, c_hat, sd, allow, versions)
+    oof = Prediction(s_hat, c_hat, sd, allow, versions, s_hat_by_tier)
     picks = pick_all_tiers(
         config, oof, dataset.keys, budget_multipliers(dataset.policy)
     )

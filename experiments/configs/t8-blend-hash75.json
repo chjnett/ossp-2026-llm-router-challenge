@@ -1,0 +1,15 @@
+{
+  "id": "t8-blend-hash75",
+  "score": {
+    "name": "blend",
+    "heads": [
+      {"name": "family_mixture", "strength": 0.75, "active_families": ["sym_math", "code_io"]},
+      {"name": "hash_ridge", "alpha": 100, "bins": 256}
+    ],
+    "weights": [0.25, 0.75]
+  },
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {"headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675}, "size_penalty": 2.0, "mu": 1.0},
+  "note": "T8: hashed lexical 점수 75% + T1 점수 25% 축소 혼합, T1 안전비용 유지."
+}

@@ -73,7 +73,12 @@ def _select(inputs, tier: str, deadline: float) -> list[str]:
             raise TimeoutError(f"시간 예산 초과: {stage}")
 
     check("산출물 로드")
-    s_hat = score_head.predict(texts)
+    predict_tier = getattr(score_head, "predict_tier", None)
+    s_hat = (
+        predict_tier(texts, tier)
+        if callable(predict_tier)
+        else score_head.predict(texts)
+    )
     check("점수 예측")
     c_hat, sd = cost_head.predict(texts)
     check("비용 예측")
@@ -89,7 +94,7 @@ def _select(inputs, tier: str, deadline: float) -> list[str]:
         util=util[tier],
         allow=allow,
         sd=sd,
-        mu=config.mu,
+        mu=config.mu_for_tier(tier),
         keys=keys,
     ).picks
     return [MODEL_IDS[int(p)] for p in picks]

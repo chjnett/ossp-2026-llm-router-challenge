@@ -1,0 +1,8 @@
+{
+  "id": "t5-hash-h035",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "gate": "none",
+  "alloc": {"headroom": 0.35, "size_penalty": 0.0, "mu": 0.0},
+  "note": "T5 공격적 후보: 공식 hashed lexical 표현 + 배치 적응형 Pareto 할당. 안전 여윳돈 35%."
+}

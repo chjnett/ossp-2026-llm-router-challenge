@@ -23,8 +23,10 @@ from typing import Callable, Dict, Protocol, Sequence
 
 import numpy as np
 
-from .data import MODEL_IDS, Dataset, cost_from_tokens
+from .data import MODEL_IDS, TIERS, Dataset, cost_from_tokens
 from .features import FAMILIES, extract, family_codes
+from .hash_features import FEATURE_VERSION as HASH_FEATURE_VERSION
+from .hash_features import extract_hash_features
 
 N_MODELS = len(MODEL_IDS)
 
@@ -73,6 +75,73 @@ def register(table: Dict[str, Callable], name: str):
 # --------------------------------------------------------------------------
 # 점수 헤드
 # --------------------------------------------------------------------------
+
+
+def _hash_ridge_fit(design: np.ndarray, target: np.ndarray, alpha: float) -> tuple:
+    """공식 베이스라인과 같은 표준화 ridge를 다중 목표에 한 번에 적합한다."""
+
+    target = np.asarray(target, dtype=float)
+    if target.ndim == 1:
+        target = target[:, None]
+    mean = design.mean(axis=0)
+    scale = design.std(axis=0)
+    scale = np.where(scale > 1e-12, scale, 1.0)
+    standardized = (design - mean) / scale
+    intercept = target.mean(axis=0)
+    centered = target - intercept
+    rows, columns = standardized.shape
+    if rows <= columns:
+        system = standardized @ standardized.T + alpha * np.eye(rows)
+        coefficients = standardized.T @ np.linalg.solve(system, centered)
+    else:
+        system = standardized.T @ standardized + alpha * np.eye(columns)
+        coefficients = np.linalg.solve(system, standardized.T @ centered)
+    return mean, scale, intercept, coefficients
+
+
+def _hash_ridge_apply(design: np.ndarray, fitted: tuple) -> np.ndarray:
+    mean, scale, intercept, coefficients = fitted
+    return (design - mean) / scale @ coefficients + intercept
+
+
+def _pack_hash_ridge(fitted: tuple) -> list:
+    return [np.asarray(value).tolist() for value in fitted]
+
+
+def _unpack_hash_ridge(state: list) -> tuple:
+    return tuple(np.asarray(value, dtype=float) for value in state)
+
+
+@register(SCORE_HEADS, "hash_ridge")
+class HashRidgeScore:
+    """전역 signed unigram/bigram ridge 점수 예측.
+
+    계열 평균이 버리던 계열 내부의 lexical 신호를 살린다. 공개 베이스라인의
+    표현은 재사용하되, 위험했던 고정 safety ratio 선택기는 쓰지 않고 우리
+    배치 적응형 예산 할당기로 넘긴다.
+    """
+
+    def __init__(self, alpha: float = 100.0, bins: int = 256) -> None:
+        self.alpha = float(alpha)
+        self.bins = int(bins)
+        extract_hash_features((), self.bins)
+        self.version = (
+            f"hashscore.v1(f={HASH_FEATURE_VERSION},a={self.alpha:g},b={self.bins})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        design = extract_hash_features(train.texts, self.bins)
+        self._fitted = _hash_ridge_fit(design, train.score, self.alpha)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        design = extract_hash_features(texts, self.bins)
+        return np.clip(_hash_ridge_apply(design, self._fitted), 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {"fitted": _pack_hash_ridge(self._fitted)}
+
+    def load_state(self, state: dict) -> None:
+        self._fitted = _unpack_hash_ridge(state["fitted"])
 
 
 @register(SCORE_HEADS, "global")
@@ -642,6 +711,54 @@ class BlendScore:
             head.load_state(row)
 
 
+@register(SCORE_HEADS, "tiered")
+class TieredScore:
+    """budget tier마다 독립적인 점수 헤드를 쓴다.
+
+    tier는 공식 런타임 입력이다. 저예산에서는 작은 이득도 파산 위험보다
+    중요하고, Premium에서는 K1 품질 순위가 중요하므로 같은 점수 모델을 모든
+    등급에 강제할 이유가 없다. 각 내부 헤드는 같은 Train fold에서 적합된다.
+    """
+
+    def __init__(self, heads: Dict[str, object]) -> None:
+        missing = set(TIERS) - set(heads)
+        extra = set(heads) - set(TIERS)
+        if missing or extra:
+            raise ValueError(f"tiered heads 등급 오류: 누락={sorted(missing)}, 초과={sorted(extra)}")
+        self._specs = {tier: heads[tier] for tier in TIERS}
+        self._heads = {
+            tier: build_score_head(self._specs[tier]) for tier in TIERS
+        }
+        joined = ";".join(
+            f"{tier}={self._heads[tier].version}" for tier in TIERS
+        )
+        self.version = f"tieredscore.v1({joined})"
+
+    def fit(self, train: Dataset) -> None:
+        for head in self._heads.values():
+            head.fit(train)
+
+    def predict_tier(self, texts: Sequence[str], tier: str) -> np.ndarray:
+        if tier not in self._heads:
+            raise ValueError(f"알 수 없는 tier: {tier!r}")
+        return self._heads[tier].predict(texts)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        """기존 ScoreHead 계약용 대표값. 실제 할당은 ``predict_tier``를 쓴다."""
+
+        return self.predict_tier(texts, "fast")
+
+    def state(self) -> dict:
+        return {"heads": {tier: self._heads[tier].state() for tier in TIERS}}
+
+    def load_state(self, state: dict) -> None:
+        rows = state["heads"]
+        if set(rows) != set(TIERS):
+            raise ValueError("tiered 아티팩트의 등급 목록이 설정과 다르다")
+        for tier in TIERS:
+            self._heads[tier].load_state(rows[tier])
+
+
 @register(SCORE_HEADS, "family_useful")
 class FamilyUsefulScore:
     """계열 평균 이득을 **문항별 '유용할 확률'로 축소**한다.
@@ -794,6 +911,129 @@ class RidgeScore:
 # --------------------------------------------------------------------------
 # 비용 헤드
 # --------------------------------------------------------------------------
+
+
+@register(COST_HEADS, "hash_ridge")
+class HashRidgeCost:
+    """총 monetary cost를 직접 로그 회귀하는 hashed n-gram 비용 헤드.
+
+    출력 토큰을 경유하는 기존 ``ridge``와 달리 공개 채점식으로 계산된 최종
+    비용 자체를 목표로 삼는다. ``z``는 필요할 때 승격 비용만 위로 편향하는
+    안전 손잡이다. 기본값 0은 공식 베이스라인의 예측과 같다.
+    """
+
+    def __init__(
+        self,
+        alpha: float = 100.0,
+        bins: int = 256,
+        z: float = 0.0,
+        z_light: float = 0.0,
+        calibration: bool = False,
+        risk_quantile: float | None = None,
+    ) -> None:
+        self.alpha = float(alpha)
+        self.bins = int(bins)
+        self.z = float(z)
+        self.z_light = float(z_light)
+        self.calibration = bool(calibration)
+        self.risk_quantile = (
+            None if risk_quantile is None else float(risk_quantile)
+        )
+        if self.risk_quantile is not None and not 0.5 <= self.risk_quantile < 1.0:
+            raise ValueError("risk_quantile은 0.5 이상 1.0 미만이어야 한다")
+        extract_hash_features((), self.bins)
+        self.version = (
+            f"hashcost.v3(f={HASH_FEATURE_VERSION},a={self.alpha:g},b={self.bins},"
+            f"z={self.z:g},zl={self.z_light:g},cal={int(self.calibration)},"
+            f"rq={self.risk_quantile})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        design = extract_hash_features(train.texts, self.bins)
+        log_cost = np.log(train.cost)
+        self._fitted = _hash_ridge_fit(design, log_cost, self.alpha)
+        residual = log_cost - _hash_ridge_apply(design, self._fitted)
+        self._sd_log = residual.std(axis=0)
+        # 비공개 입력의 이상치 하나가 exp를 폭주시켜 전체를 all-light로 만드는
+        # 것을 막되, 학습 범위 주변의 정상 외삽은 허용한다.
+        margin = np.log(2.0)
+        self._log_lo = log_cost.min(axis=0) - margin
+        self._log_hi = log_cost.max(axis=0) + margin
+
+        # 로그 평균을 exp로 되돌리면 heavy tail의 산술 평균을 체계적으로
+        # 과소추정한다(Jensen). 예산은 개별 중앙값이 아니라 **총합**에 걸리므로
+        # 프롬프트 계열·모델별 학습 총합이 맞도록 배율을 보정한다.
+        raw_cost = np.exp(_hash_ridge_apply(design, self._fitted))
+        codes = family_codes(train.texts)
+        global_calibration = train.cost.sum(axis=0) / np.maximum(
+            raw_cost.sum(axis=0), 1e-12
+        )
+        self._calibration = np.tile(global_calibration, (len(FAMILIES), 1))
+        for family in range(len(FAMILIES)):
+            mask = codes == family
+            if mask.sum() >= 40:
+                self._calibration[family] = train.cost[mask].sum(axis=0) / np.maximum(
+                    raw_cost[mask].sum(axis=0), 1e-12
+                )
+        self._calibration = np.clip(self._calibration, 0.2, 5.0)
+
+        # 평균 보정으로도 생성 폭주 꼬리는 남는다. family/model 조합별
+        # 실제/예측 배율의 상위 분위로 그 조합의 empirical tail risk를 가격에
+        # 넣는다. 문항별 outcome lookup이 아니라 Train에서 학습한 정적 통계다.
+        actual_relative = train.cost / np.maximum(train.cost[:, [0]], 1e-12)
+        predicted_relative = raw_cost / np.maximum(raw_cost[:, [0]], 1e-12)
+        ratio = actual_relative / np.maximum(predicted_relative, 1e-12)
+        quantile = self.risk_quantile if self.risk_quantile is not None else 0.5
+        global_risk = np.quantile(ratio, quantile, axis=0)
+        self._risk = np.tile(global_risk, (len(FAMILIES), 1))
+        for family in range(len(FAMILIES)):
+            mask = codes == family
+            if mask.sum() >= 40:
+                self._risk[family] = np.quantile(ratio[mask], quantile, axis=0)
+        # 위에서 이미 문항별 upgrade/light 상대오차를 만들었다. 위험 pricing은
+        # 안전 방향으로만 작동하도록 승격 배율의 하한을 1로 둔다.
+        self._risk[:, 0] = 1.0
+        self._risk[:, 1:] = np.clip(self._risk[:, 1:], 1.0, 20.0)
+
+    def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
+        design = extract_hash_features(texts, self.bins)
+        log_cost = _hash_ridge_apply(design, self._fitted)
+        bias = np.full(N_MODELS, self.z)
+        bias[0] = self.z_light
+        log_cost = np.clip(
+            log_cost + bias * self._sd_log,
+            self._log_lo,
+            self._log_hi,
+        )
+        cost = np.exp(log_cost)
+        if self.calibration:
+            cost = cost * self._calibration[family_codes(texts)]
+        if self.risk_quantile is not None:
+            cost = cost * self._risk[family_codes(texts)]
+        # 후보 모델은 정책상 싼 순서다. 회귀의 작은 교차를 그대로 두면
+        # 포락선에서 음수 추가비용이 생기므로 단조성을 강제한다.
+        cost[:, 1] = np.maximum(cost[:, 1], cost[:, 0] * (1.0 + 1e-12))
+        cost[:, 2] = np.maximum(cost[:, 2], cost[:, 1] * (1.0 + 1e-12))
+        sd = cost * np.expm1(self._sd_log)[None, :]
+        return cost, sd
+
+    def state(self) -> dict:
+        return {
+            "fitted": _pack_hash_ridge(self._fitted),
+            "sd_log": self._sd_log.tolist(),
+            "log_lo": self._log_lo.tolist(),
+            "log_hi": self._log_hi.tolist(),
+            "calibration": self._calibration.tolist(),
+            "risk": self._risk.tolist(),
+        }
+
+    def load_state(self, state: dict, policy) -> None:
+        self._fitted = _unpack_hash_ridge(state["fitted"])
+        self._sd_log = np.asarray(state["sd_log"], dtype=float)
+        self._log_lo = np.asarray(state["log_lo"], dtype=float)
+        self._log_hi = np.asarray(state["log_hi"], dtype=float)
+        self._calibration = np.asarray(state["calibration"], dtype=float)
+        self._risk = np.asarray(state["risk"], dtype=float)
 
 
 @register(COST_HEADS, "family")

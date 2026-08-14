@@ -1,0 +1,1 @@
+{"id":"t8-hashscore-ridge-h200","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"ridge","z":1.28,"z_light":-0.5,"smearing":true},"gate":"none","alloc":{"headroom":2.0,"size_penalty":2.0,"mu":0.0},"note":"T8 보수적 비용 상향편향을 감안한 예측 headroom 200%; 공식 실제비용 게이트로 제한."}

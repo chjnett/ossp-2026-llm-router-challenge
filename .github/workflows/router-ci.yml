@@ -71,7 +71,7 @@ jobs:
           train, dev = load_dataset("train"), load_dataset("dev")
           evaluation, prediction, _ = run_on_split(config, train, dev)
           results = run_gate(
-              dev, prediction.s_hat, prediction.c_hat,
+              dev, prediction.s_hat_by_tier or prediction.s_hat, prediction.c_hat,
               family=family_codes(dev.texts), util=config.util,
               multipliers=budget_multipliers(dev.policy),
               allow=prediction.allow, sd=prediction.sd, mu=config.mu,

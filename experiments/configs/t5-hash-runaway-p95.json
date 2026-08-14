@@ -1,0 +1,12 @@
+{
+  "id": "t5-hash-runaway-p95",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "hash_ridge", "alpha": 100, "bins": 256, "z": 0.67},
+  "gate": {"name": "runaway_guard", "percentile": 95, "inner": "none"},
+  "alloc": {
+    "headroom": {"fast": 0.30, "balanced": 0.55, "premium": 0.70},
+    "size_penalty": 2.0,
+    "mu": 0.0
+  },
+  "note": "T5 runaway: 예측 light 비용 상위 5% 승격 차단 + tier별 headroom."
+}

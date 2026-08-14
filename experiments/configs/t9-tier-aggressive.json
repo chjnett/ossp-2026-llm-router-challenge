@@ -1,0 +1,12 @@
+{
+  "id": "t9-tier-aggressive",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.50, "balanced": 0.75, "premium": 2.00},
+    "size_penalty": 2.0,
+    "mu": {"fast": 0.5, "balanced": 0.0, "premium": 0.0}
+  },
+  "note": "T9 공격형: 보수 비용 헤드의 상향편향을 등급별 headroom으로 회수."
+}

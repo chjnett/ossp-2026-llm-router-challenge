@@ -79,7 +79,7 @@ def main() -> int:
         dev_eval, prediction, _ = run_on_split(config, train, dev)
         results = run_gate(
             dev,
-            prediction.s_hat,
+            prediction.s_hat_by_tier or prediction.s_hat,
             prediction.c_hat,
             family=family,
             util=config.util,

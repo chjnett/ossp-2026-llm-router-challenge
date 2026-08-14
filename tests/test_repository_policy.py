@@ -678,6 +678,7 @@ class RepositoryPolicyTest(unittest.TestCase):
             "!src/router/data.py",
             "!src/router/envelope.py",
             "!src/router/features.py",
+            "!src/router/hash_features.py",
             "!src/router/heads.py",
             "!src/router/pipeline.py",
             "!src/router/resources/",

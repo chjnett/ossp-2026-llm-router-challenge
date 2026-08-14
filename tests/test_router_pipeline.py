@@ -119,6 +119,31 @@ class ConfigTest(unittest.TestCase):
         for value in effective_util(config, 4, M).values():
             self.assertGreaterEqual(value, 0.0)
 
+    def test_mu_accepts_tier_specific_mapping(self) -> None:
+        config = Config(id="a", alloc={"mu": {"fast": 1.0, "premium": 0.25}})
+        self.assertEqual(1.0, config.mu_for_tier("fast"))
+        self.assertEqual(0.0, config.mu_for_tier("balanced"))
+        self.assertEqual(0.25, config.mu_for_tier("premium"))
+
+    def test_size_penalty_accepts_tier_specific_mapping(self) -> None:
+        from router.pipeline import effective_util
+
+        multipliers = {"fast": 1.25, "balanced": 2.0, "premium": 4.0}
+        config = Config(
+            id="a",
+            alloc={
+                "headroom": 0.5,
+                "size_penalty": {"fast": 2.2, "balanced": 1.0},
+            },
+        )
+        util = effective_util(config, 100, multipliers)
+        fast_used = util["fast"] * multipliers["fast"]
+        balanced_used = util["balanced"] * multipliers["balanced"]
+        premium_used = util["premium"] * multipliers["premium"]
+        self.assertAlmostEqual(1 + (0.5 - 0.22) * 0.25, fast_used)
+        self.assertAlmostEqual(1 + (0.5 - 0.10) * 1.0, balanced_used)
+        self.assertAlmostEqual(1 + 0.5 * 3.0, premium_used)
+
 
 class RegistryTest(unittest.TestCase):
     def test_unknown_name_is_rejected_with_options(self) -> None:
@@ -455,6 +480,37 @@ class BlendScoreTest(unittest.TestCase):
                 "heads": ["family", "global"],
                 "weights": [0, 0],
             })
+
+
+class TieredScoreTest(unittest.TestCase):
+    def test_uses_independent_heads_and_round_trips(self) -> None:
+        train, dev = datasets()
+        spec = {
+            "name": "tiered",
+            "heads": {
+                "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+                "balanced": "family",
+                "premium": "family_mixture",
+            },
+        }
+        head = build_score_head(spec)
+        head.fit(train)
+        fast = head.predict_tier(dev.texts[:80], "fast")
+        balanced = head.predict_tier(dev.texts[:80], "balanced")
+        self.assertGreater(float(np.abs(fast - balanced).sum()), 0.0)
+
+        revived = build_score_head(spec)
+        revived.load_state(json.loads(json.dumps(head.state())))
+        for tier in TIERS:
+            np.testing.assert_allclose(
+                head.predict_tier(dev.texts[:80], tier),
+                revived.predict_tier(dev.texts[:80], tier),
+                atol=1e-12,
+            )
+
+    def test_requires_exactly_the_official_tiers(self) -> None:
+        with self.assertRaisesRegex(ValueError, "등급 오류"):
+            build_score_head({"name": "tiered", "heads": {"fast": "family"}})
 
 
 class PipelineTest(unittest.TestCase):

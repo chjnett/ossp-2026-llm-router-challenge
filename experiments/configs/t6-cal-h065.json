@@ -1,0 +1,1 @@
+{"id":"t6-cal-h065","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"hash_ridge","alpha":100,"bins":256,"calibration":true},"gate":"none","alloc":{"headroom":0.65,"size_penalty":2.0,"mu":0.0},"note":"T6 계열별 총합보정 hashed 비용, headroom 65%."}

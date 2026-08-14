@@ -1,0 +1,1 @@
+{"id":"t7-chance-e005","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"hash_ridge","alpha":100,"bins":256,"calibration":true},"gate":"none","alloc":{"epsilon":0.005,"mu":0.0},"note":"T7 hashed 총합보정 + 비용분산 확률제약 epsilon 0.005."}

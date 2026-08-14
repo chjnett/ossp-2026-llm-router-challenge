@@ -1,0 +1,1 @@
+{"id":"t6-cal-z067-h075","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"hash_ridge","alpha":100,"bins":256,"z":0.67,"calibration":true},"gate":"none","alloc":{"headroom":0.75,"size_penalty":2.0,"mu":0.0},"note":"T6 총합보정 + 승격비용 75분위, headroom 75%."}

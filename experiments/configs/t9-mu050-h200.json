@@ -1,0 +1,1 @@
+{"id":"t9-mu050-h200","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"ridge","z":1.28,"z_light":-0.5,"smearing":true},"gate":"none","alloc":{"headroom":2.0,"size_penalty":2.0,"mu":0.50},"note":"T9 hashed 점수 + 보수비용, 불확실성 mu 0.50."}

@@ -1,0 +1,8 @@
+{
+  "id":"t11-tier-safe2-a",
+  "score":{"name":"hash_ridge","alpha":100,"bins":256},
+  "cost":{"name":"hash_ridge","alpha":100,"bins":256,"risk_quantile":0.90},
+  "gate":"none",
+  "alloc":{"headroom":{"fast":0.60,"balanced":0.55,"premium":0.85},"size_penalty":3.0,"mu":0.0},
+  "note":"T11 full-gate 8회 실패 후 등급별 0.10~0.15 국소 감쇠."
+}

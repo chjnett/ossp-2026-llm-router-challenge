@@ -1,0 +1,1 @@
+{"id":"t8-hashscore-ridge-h100","score":{"name":"hash_ridge","alpha":100,"bins":256},"cost":{"name":"ridge","z":1.28,"z_light":-0.5,"smearing":true},"gate":"none","alloc":{"headroom":1.0,"size_penalty":2.0,"mu":0.0},"note":"T8 hashed 점수 + 검증된 보수적 ridge 비용, mu 제거, headroom 100%."}

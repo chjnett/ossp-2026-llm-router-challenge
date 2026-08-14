@@ -63,7 +63,7 @@ def do_run(args) -> int:
     if not args.skip_gate:
         gate_results = run_gate(
             dev,
-            prediction.s_hat,
+            prediction.s_hat_by_tier or prediction.s_hat,
             prediction.c_hat,
             family=family_codes(dev.texts),
             util=config.util,

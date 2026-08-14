@@ -1,0 +1,8 @@
+{
+  "id":"t11-tier-safe2-b",
+  "score":{"name":"hash_ridge","alpha":100,"bins":256},
+  "cost":{"name":"hash_ridge","alpha":100,"bins":256,"risk_quantile":0.90},
+  "gate":"none",
+  "alloc":{"headroom":{"fast":0.55,"balanced":0.50,"premium":0.80},"size_penalty":3.0,"mu":0.0},
+  "note":"T11 full-gate 8회 실패 후 한 단계 더 보수적인 경계."
+}

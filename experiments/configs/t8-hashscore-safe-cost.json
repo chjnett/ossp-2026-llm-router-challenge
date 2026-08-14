@@ -1,0 +1,12 @@
+{
+  "id": "t8-hashscore-safe-cost",
+  "score": {"name": "hash_ridge", "alpha": 100, "bins": 256},
+  "cost": {"name": "ridge", "z": 1.28, "z_light": -0.5, "smearing": true},
+  "gate": "none",
+  "alloc": {
+    "headroom": {"fast": 0.175, "balanced": 0.252, "premium": 0.675},
+    "size_penalty": 2.0,
+    "mu": 1.0
+  },
+  "note": "T8: 강한 hashed 점수 순위 + 36,000 시나리오를 통과한 T1 비용/안전 정책."
+}

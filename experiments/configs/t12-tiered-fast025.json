@@ -1,0 +1,12 @@
+{
+  "id":"t12-tiered-fast025",
+  "score":{"name":"tiered","heads":{
+    "fast":{"name":"hash_ridge","alpha":100,"bins":256},
+    "balanced":{"name":"family_mixture","strength":0.75,"active_families":["sym_math","code_io"]},
+    "premium":{"name":"family_mixture","strength":0.75,"active_families":["sym_math","code_io"]}
+  }},
+  "cost":{"name":"ridge","z":1.28,"z_light":-0.5,"smearing":true},
+  "gate":"none",
+  "alloc":{"headroom":{"fast":0.25,"balanced":0.252,"premium":0.675},"size_penalty":2.0,"mu":{"fast":0.5,"balanced":1.0,"premium":1.0}},
+  "note":"T12 Fast만 hashed score; Balanced/Premium은 검증된 T1 정책 그대로."
+}

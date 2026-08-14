@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Sequence
+from typing import Callable, Dict, Mapping, Sequence
 
 import numpy as np
 
@@ -123,7 +123,7 @@ def uniform_sampler(n: int, size: int) -> Sampler:
 
 def run_scenario(
     dataset: Dataset,
-    s_hat: np.ndarray,
+    s_hat: np.ndarray | Mapping[str, np.ndarray],
     c_hat: np.ndarray,
     sampler: Sampler,
     *,
@@ -132,10 +132,10 @@ def run_scenario(
     multipliers: Dict[str, float],
     allow: np.ndarray | None = None,
     sd: np.ndarray | None = None,
-    mu: float = 0.0,
+    mu: float | Mapping[str, float] = 0.0,
     trials: int = 2000,
     seed: int = 0,
-    size_penalty: float = 0.0,
+    size_penalty: float | Mapping[str, float] = 0.0,
     headroom: Dict[str, float] | None = None,
     epsilon: float | None = None,
 ) -> GateResult:
@@ -155,24 +155,35 @@ def run_scenario(
 
     for trial in range(trials):
         idx = sampler(rng)
-        s_i, c_i = s_hat[idx], c_hat[idx]
+        c_i = c_hat[idx]
         allow_i = None if allow is None else allow[idx]
         sd_i = None if sd is None else sd[idx]
         keys_i = keys[idx].tolist()
         true_cost = dataset.cost[idx]
         # 한도의 분모는 실제 light 비용이다. 라우터는 이 값을 모른다.
         light = float(true_cost[:, 0].sum())
-        shrink = size_penalty / max(1.0, float(len(idx))) ** 0.5
+        shrink = {
+            tier: (
+                float(size_penalty.get(tier, 0.0))
+                if isinstance(size_penalty, Mapping)
+                else float(size_penalty)
+            )
+            / max(1.0, float(len(idx))) ** 0.5
+            for tier in TIERS
+        }
         if headroom is None:
-            utils = {t: max(0.0, u - shrink) for t, u in base_utils.items()}
+            utils = {t: max(0.0, u - shrink[t]) for t, u in base_utils.items()}
         else:
             # 여윳돈 기준. 라우터가 실행 시점에 쓰는 규칙과 같아야 한다.
             utils = {
-                t: (1.0 + max(0.0, h - shrink) * (multipliers[t] - 1.0)) / multipliers[t]
+                t: (1.0 + max(0.0, h - shrink[t]) * (multipliers[t] - 1.0)) / multipliers[t]
                 for t, h in headroom.items()
             }
 
         for tier in TIERS:
+            tier_scores = s_hat[tier] if isinstance(s_hat, Mapping) else s_hat
+            s_i = tier_scores[idx]
+            tier_mu = float(mu.get(tier, 0.0)) if isinstance(mu, Mapping) else float(mu)
             if epsilon is not None:
                 # 라우터가 실행 시점에 쓰는 것과 **같은** 배분 규칙이어야 한다.
                 picks = allocate_chance(
@@ -192,7 +203,7 @@ def run_scenario(
                     util=utils[tier],
                     allow=allow_i,
                     sd=sd_i,
-                    mu=mu,
+                    mu=tier_mu,
                     keys=keys_i,
                 ).picks
             used = float(true_cost[np.arange(len(idx)), picks].sum())
@@ -225,7 +236,7 @@ def default_scenarios(
 
 def run_gate(
     dataset: Dataset,
-    s_hat: np.ndarray,
+    s_hat: np.ndarray | Mapping[str, np.ndarray],
     c_hat: np.ndarray,
     *,
     family: np.ndarray,
@@ -233,11 +244,11 @@ def run_gate(
     multipliers: Dict[str, float],
     allow: np.ndarray | None = None,
     sd: np.ndarray | None = None,
-    mu: float = 0.0,
+    mu: float | Mapping[str, float] = 0.0,
     trials: int = 2000,
     seed: int = 0,
     scenarios: Dict[str, Sampler] | None = None,
-    size_penalty: float = 0.0,
+    size_penalty: float | Mapping[str, float] = 0.0,
     headroom: Dict[str, float] | None = None,
     epsilon: float | None = None,
 ) -> list[GateResult]:
