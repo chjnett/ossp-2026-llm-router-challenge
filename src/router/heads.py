@@ -930,6 +930,7 @@ class HashRidgeCost:
         z_light: float = 0.0,
         calibration: bool = False,
         risk_quantile: float | None = None,
+        unseen_family_risk: bool = False,
     ) -> None:
         self.alpha = float(alpha)
         self.bins = int(bins)
@@ -939,13 +940,16 @@ class HashRidgeCost:
         self.risk_quantile = (
             None if risk_quantile is None else float(risk_quantile)
         )
+        self.unseen_family_risk = bool(unseen_family_risk)
         if self.risk_quantile is not None and not 0.5 <= self.risk_quantile < 1.0:
             raise ValueError("risk_quantile은 0.5 이상 1.0 미만이어야 한다")
         extract_hash_features((), self.bins)
+        version = "v4" if self.unseen_family_risk else "v3"
+        unseen = ",ur=1" if self.unseen_family_risk else ""
         self.version = (
-            f"hashcost.v3(f={HASH_FEATURE_VERSION},a={self.alpha:g},b={self.bins},"
-            f"z={self.z:g},zl={self.z_light:g},cal={int(self.calibration)},"
-            f"rq={self.risk_quantile})"
+            f"hashcost.{version}(f={HASH_FEATURE_VERSION},a={self.alpha:g},"
+            f"b={self.bins},z={self.z:g},zl={self.z_light:g},"
+            f"cal={int(self.calibration)},rq={self.risk_quantile}{unseen})"
         )
 
     def fit(self, train: Dataset) -> None:
@@ -965,6 +969,9 @@ class HashRidgeCost:
         # 프롬프트 계열·모델별 학습 총합이 맞도록 배율을 보정한다.
         raw_cost = np.exp(_hash_ridge_apply(design, self._fitted))
         codes = family_codes(train.texts)
+        self._seen_families = np.bincount(
+            codes, minlength=len(FAMILIES)
+        ).astype(bool)
         global_calibration = train.cost.sum(axis=0) / np.maximum(
             raw_cost.sum(axis=0), 1e-12
         )
@@ -994,6 +1001,7 @@ class HashRidgeCost:
         # 안전 방향으로만 작동하도록 승격 배율의 하한을 1로 둔다.
         self._risk[:, 0] = 1.0
         self._risk[:, 1:] = np.clip(self._risk[:, 1:], 1.0, 20.0)
+        self._unseen_risk = self._risk.max(axis=0)
 
     def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
         design = extract_hash_features(texts, self.bins)
@@ -1009,7 +1017,11 @@ class HashRidgeCost:
         if self.calibration:
             cost = cost * self._calibration[family_codes(texts)]
         if self.risk_quantile is not None:
-            cost = cost * self._risk[family_codes(texts)]
+            codes = family_codes(texts)
+            risk = self._risk[codes].copy()
+            if self.unseen_family_risk:
+                risk[~self._seen_families[codes]] = self._unseen_risk
+            cost = cost * risk
         # 후보 모델은 정책상 싼 순서다. 회귀의 작은 교차를 그대로 두면
         # 포락선에서 음수 추가비용이 생기므로 단조성을 강제한다.
         cost[:, 1] = np.maximum(cost[:, 1], cost[:, 0] * (1.0 + 1e-12))
@@ -1025,6 +1037,14 @@ class HashRidgeCost:
             "log_hi": self._log_hi.tolist(),
             "calibration": self._calibration.tolist(),
             "risk": self._risk.tolist(),
+            **(
+                {
+                    "seen_families": self._seen_families.tolist(),
+                    "unseen_risk": self._unseen_risk.tolist(),
+                }
+                if self.unseen_family_risk
+                else {}
+            ),
         }
 
     def load_state(self, state: dict, policy) -> None:
@@ -1034,6 +1054,9 @@ class HashRidgeCost:
         self._log_hi = np.asarray(state["log_hi"], dtype=float)
         self._calibration = np.asarray(state["calibration"], dtype=float)
         self._risk = np.asarray(state["risk"], dtype=float)
+        if self.unseen_family_risk:
+            self._seen_families = np.asarray(state["seen_families"], dtype=bool)
+            self._unseen_risk = np.asarray(state["unseen_risk"], dtype=float)
 
 
 @register(COST_HEADS, "family")
@@ -1416,6 +1439,8 @@ class TailExposureGate:
         min_paren_depth: float = 3.0,
         fast_code_ax31_cap: float = float("inf"),
         premium_code_k1_cap: float = float("inf"),
+        block_code_k1: bool = False,
+        block_other_k1: bool = False,
         inner: str = "none",
         **inner_kwargs,
     ) -> None:
@@ -1425,13 +1450,17 @@ class TailExposureGate:
         self.min_paren_depth = float(min_paren_depth)
         self.fast_code_ax31_cap = float(fast_code_ax31_cap)
         self.premium_code_k1_cap = float(premium_code_k1_cap)
+        self.block_code_k1 = bool(block_code_k1)
+        self.block_other_k1 = bool(block_other_k1)
         self._inner = GATES[inner](**inner_kwargs)
         self.version = (
             "tailexposure.v1("
             f"num={self.max_log_number:g},digit={self.digit_ratio:g},"
             f"latex={self.min_latex:g},depth={self.min_paren_depth:g},"
             f"code31={self.fast_code_ax31_cap:g},"
-            f"codek1={self.premium_code_k1_cap:g})+"
+            f"codek1={self.premium_code_k1_cap:g},"
+            f"blockcodek1={int(self.block_code_k1)},"
+            f"blockotherk1={int(self.block_other_k1)})+"
             f"{self._inner.version}"
         )
 
@@ -1455,8 +1484,14 @@ class TailExposureGate:
         deep_latex = (
             features[:, index["latex_count"]] >= self.min_latex
         ) & (features[:, index["paren_depth"]] >= self.min_paren_depth)
-        code = family_codes(texts) == FAMILIES.index("code_io")
+        codes = family_codes(texts)
+        code = codes == FAMILIES.index("code_io")
+        other = codes == FAMILIES.index("other")
         relative = c_hat / np.maximum(c_hat[:, [0]], 1e-12)
+        if self.block_code_k1:
+            allow[code, 2] = False
+        if self.block_other_k1:
+            allow[other, 2] = False
         if tier in ("fast", "balanced"):
             allow[numeric_tail, 1] = False
         if tier == "fast":

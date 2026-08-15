@@ -83,7 +83,7 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 ```bash
 PYTHONPATH=src python3 tools/export_artifact.py \
-  --config experiments/configs/t14-conditional-tail-sp2.json
+  --config experiments/configs/t15-shrunk-hash-a32000.json
 ```
 
 이미지 동결 전에 챔피언이 바뀌면 위 설정 경로도 반드시 함께 바꾼다.
@@ -168,8 +168,8 @@ PYTHONPATH=src python3 tools/check_runtime.py \
 ```
 
 Train+Dev 2,640문항으로 세 등급이 각각 90초 안에 끝나야 한다. 2026-08-15
-현재 T14 이미지의 실행은 Fast 7.340초, Balanced 7.368초, Premium
-7.454초였다.
+현재 T15 이미지의 실행은 Fast 7.731초, Balanced 7.497초, Premium
+7.674초였다.
 
 ## 7. 기술 제출 JSON — **별도 커밋**
 

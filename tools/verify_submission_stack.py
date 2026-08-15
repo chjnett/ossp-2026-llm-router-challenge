@@ -102,6 +102,7 @@ def main() -> int:
             [sys.executable, str(ROOT / "tools" / "export_artifact.py"),
              "--config", str(config_path)],
             cwd=ROOT, check=True, capture_output=True,
+            env={**os.environ, "PYTHONPATH": str(ROOT / "src")},
         )
         ok("산출물 재생성")
         # 소스 매니페스트 라벨을 붙여 굽는다. 이것을 빼면 이 도구가 만든

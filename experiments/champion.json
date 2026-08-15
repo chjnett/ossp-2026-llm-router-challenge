@@ -1,19 +1,21 @@
 {
-  "id": "t14-conditional-tail-sp2",
-  "at": "2026-08-14T16:36:07+00:00",
-  "commit": "4fa119724506e88471dfed79f7630263306a9824",
+  "id": "t15-shrunk-hash-a32000",
+  "at": "2026-08-15T01:27:13+00:00",
+  "commit": "5779858b36ccb17f6754a6afc0d307dbcdd1dcd1",
+  "folds": 5,
   "config": {
-    "id": "t14-conditional-tail-sp2",
+    "id": "t15-shrunk-hash-a32000",
     "score": {
       "name": "hash_ridge",
-      "alpha": 100,
+      "alpha": 32000,
       "bins": 256
     },
     "cost": {
       "name": "hash_ridge",
       "alpha": 100,
       "bins": 256,
-      "risk_quantile": 0.9
+      "risk_quantile": 0.9,
+      "unseen_family_risk": true
     },
     "gate": {
       "name": "tail_exposure",
@@ -22,100 +24,109 @@
       "min_latex": 1.0,
       "min_paren_depth": 3.0,
       "fast_code_ax31_cap": 3.25,
-      "premium_code_k1_cap": 200.0
+      "premium_code_k1_cap": 200.0,
+      "block_code_k1": true,
+      "block_other_k1": true
     },
     "alloc": {
-      "headroom": 1.0,
+      "headroom": {
+        "fast": 1.0,
+        "balanced": 1.0,
+        "premium": 0.9
+      },
       "size_penalty": 2.0,
-      "mu": 0.0
+      "mu": 0.0,
+      "relative_cost_cap": {
+        "premium": 70.0
+      }
     },
-    "note": "T14: sparse numeric/LaTeX guard + Train OOF로 고른 code_io 단일노출 cap."
+    "note": "T15: 강한 score 축소 + 미관측 family 최악 q90 비용 폴백 + Premium 0.9."
   },
   "versions": {
-    "score": "hashscore.v1(f=hash-regex-text.v1,a=100,b=256)",
-    "cost": "hashcost.v3(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.9)",
-    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200)+none.v1"
+    "score": "hashscore.v1(f=hash-regex-text.v1,a=32000,b=256)",
+    "cost": "hashcost.v4(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.9,ur=1)",
+    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.638409090909",
+    "final_score": "0.654673295455",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.621022727273",
-        "budget_ratio": "1.124011354652",
-        "headroom": "0.125988645348",
+        "score": "0.635795454545",
+        "budget_ratio": "1.141154305326",
+        "headroom": "0.108845694674",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1293,
-          "ax31": 464,
-          "axk1-think": 3
+          "ax31-light": 1066,
+          "ax31": 693,
+          "axk1-think": 1
         }
       },
       "balanced": {
-        "score": "0.635227272727",
-        "budget_ratio": "1.446614641275",
-        "headroom": "0.553385358725",
+        "score": "0.653835227273",
+        "budget_ratio": "1.621228216973",
+        "headroom": "0.378771783027",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 913,
-          "ax31": 810,
-          "axk1-think": 37
+          "ax31-light": 542,
+          "ax31": 1145,
+          "axk1-think": 73
         }
       },
       "premium": {
-        "score": "0.664772727273",
-        "budget_ratio": "2.609959129853",
-        "headroom": "1.390040870147",
+        "score": "0.680681818182",
+        "budget_ratio": "2.233872548085",
+        "headroom": "1.766127451915",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 676,
-          "ax31": 923,
-          "axk1-think": 161
+          "ax31-light": 158,
+          "ax31": 1382,
+          "axk1-think": 220
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.669573863636",
+    "final_score": "0.670426136364",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.650568181818",
-        "budget_ratio": "1.104282755074",
-        "headroom": "0.145717244926",
+        "score": "0.648011363636",
+        "budget_ratio": "1.121411690892",
+        "headroom": "0.128588309108",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 645,
-          "ax31": 233,
-          "axk1-think": 2
+          "ax31-light": 525,
+          "ax31": 355,
+          "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.671022727273",
-        "budget_ratio": "1.35660558019",
-        "headroom": "0.64339441981",
+        "score": "0.676704545455",
+        "budget_ratio": "1.518747375513",
+        "headroom": "0.481252624487",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 443,
-          "ax31": 411,
-          "axk1-think": 26
+          "ax31-light": 268,
+          "ax31": 573,
+          "axk1-think": 39
         }
       },
       "premium": {
-        "score": "0.693465909091",
-        "budget_ratio": "2.221807525309",
-        "headroom": "1.778192474691",
+        "score": "0.694034090909",
+        "budget_ratio": "2.113803231504",
+        "headroom": "1.886196768496",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 352,
-          "ax31": 440,
-          "axk1-think": 88
+          "ax31-light": 69,
+          "ax31": 707,
+          "axk1-think": 104
         }
       }
     }
@@ -157,5 +168,5 @@
       }
     }
   },
-  "seconds": 132.26
+  "seconds": 156.25
 }

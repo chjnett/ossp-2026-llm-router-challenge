@@ -215,6 +215,48 @@ class HeadContractTest(unittest.TestCase):
         self.assertTrue((high.c_hat >= low.c_hat - 1e-12).all())
         self.assertGreater(high.c_hat.sum(), low.c_hat.sum())
 
+    def test_hash_cost_uses_worst_risk_for_unseen_family(self) -> None:
+        """LOFO에서는 전역 평균 대신 관측 계열 중 최악의 q90으로 폴백한다."""
+
+        from router.features import FAMILY_INDEX, family_codes
+
+        train, _dev = datasets()
+        codes = family_codes(train.texts)
+        held_out = FAMILY_INDEX["other"]
+        fit_part = train.subset(np.where(codes != held_out)[0])
+        texts = tuple(
+            train.texts[i] for i in np.where(codes == held_out)[0][:8]
+        )
+        base = build_cost_head(
+            {"name": "hash_ridge", "risk_quantile": 0.9}
+        )
+        guarded = build_cost_head(
+            {
+                "name": "hash_ridge",
+                "risk_quantile": 0.9,
+                "unseen_family_risk": True,
+            }
+        )
+        base.fit(fit_part)
+        guarded.fit(fit_part)
+        base_cost, _ = base.predict(texts)
+        guarded_cost, _ = guarded.predict(texts)
+        self.assertTrue((guarded_cost[:, 1:] >= base_cost[:, 1:] - 1e-12).all())
+        self.assertGreater(guarded_cost[:, 1:].sum(), base_cost[:, 1:].sum())
+
+        revived = build_cost_head(
+            {
+                "name": "hash_ridge",
+                "risk_quantile": 0.9,
+                "unseen_family_risk": True,
+            }
+        )
+        revived.load_state(
+            json.loads(json.dumps(guarded.state())), train.policy
+        )
+        revived_cost, _ = revived.predict(texts)
+        np.testing.assert_allclose(guarded_cost, revived_cost)
+
     def test_roi_gate_blocks_the_known_bad_families(self) -> None:
         train, dev = datasets()
         prediction = predict(Config(id="g", gate={"name": "family_roi", "min_roi": 1.0}), train, dev.texts)
@@ -235,16 +277,19 @@ class HeadContractTest(unittest.TestCase):
             "name": "tail_exposure",
             "fast_code_ax31_cap": 3.25,
             "premium_code_k1_cap": 200.0,
+            "block_code_k1": True,
+            "block_other_k1": True,
         }
         texts = (
             "What is 999999999999999999999999999999999999999999?",
             r"Let \\frac{x}{((y+1))}=3 and solve exactly.",
             "def f(text):\n    return text.replace('a', 'b')\nassert f('a') == 'b'",
+            "If someone is kind, is it true or false?",
             "ordinary short question",
         )
         score = np.full((len(texts), 3), 0.5)
         cost = np.asarray(
-            [[1, 12, 300], [1, 3, 40], [1, 4, 250], [1, 2, 3]],
+            [[1, 12, 300], [1, 3, 40], [1, 4, 250], [1, 2, 3], [1, 2, 3]],
             dtype=float,
         )
         gate = build_gate(spec)
@@ -257,6 +302,8 @@ class HeadContractTest(unittest.TestCase):
         self.assertFalse(premium[1, 2])
         self.assertFalse(fast[2, 1])
         self.assertFalse(premium[2, 2])
+        self.assertFalse(fast[2, 2])
+        self.assertFalse(premium[4, 2])
         self.assertTrue(fast[:, 0].all())
         self.assertTrue(premium[3].all())
 

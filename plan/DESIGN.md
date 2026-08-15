@@ -21,17 +21,18 @@ SPDX-License-Identifier: Apache-2.0
 ### 1-A. 현재 제출 설계 — 이 절이 최신 권위 기준이다
 
 최종 평가는 제출 후 **구성·분포가 공개되지 않은 비공개 프롬프트**로 진행된다.
-따라서 단일 공개 Dev 최고점이 아니라 Train OOF, nested OOF, 분포 이동 안전성의
-순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행 경로 검증에만 쓴다.
+따라서 단일 공개 Dev 최고점이 아니라 Train OOF, 복수 fold·nested OOF,
+분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
+경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t14-conditional-tail-sp2`**다.
+현재 제출 챔피언은 **`t15-shrunk-hash-a32000`**다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
-| 점수 헤드 `[Q]` | 14개 dense 특징 + 256-bin signed unigram/bigram의 `hash_ridge(alpha=100)` |
-| 비용 헤드 `[C]` | hashed log-cost ridge + 계열·모델별 상대비용 오차 90분위 pricing |
-| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치의 ax31, 깊은 LaTeX의 K1, code_io 단일노출 꼬리만 차단 |
-| 할당 `[A]` | 상단 볼록포의 증분 ROI 순 배분. 세 등급 모두 여윳돈 headroom 100% |
+| 점수 헤드 `[Q]` | 14개 dense + 256-bin signed unigram/bigram의 강축소 `hash_ridge(alpha=32000)` |
+| 비용 헤드 `[C]` | hashed log-cost ridge + 계열·모델별 상대오차 q90. 미관측 계열은 관측 계열 최악 q90으로 폴백 |
+| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX 및 `code_io`·`other` K1 꼬리만 차단 |
+| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast/Balanced 100%, Premium 90%, Premium 문항별 상대비용 cap 70 |
 | 안전 `[S]` | `size_penalty=2.0`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
@@ -39,14 +40,15 @@ SPDX-License-Identifier: Apache-2.0
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.638409** |
-| Train 4/6/8-fold OOF | **0.635099 / 0.637188 / 0.636364** |
-| Dev 가중 | **0.669574** |
-| Dev tier | Fast 0.650568 · Balanced 0.671023 · Premium 0.693466 |
-| Dev 비용 비율 | 1.1043 / 1.3566 / 2.2218 (한도 1.25 / 2 / 4) |
+| Train 5-fold OOF | **0.654673** |
+| Train 4/6/8-fold OOF | **0.654787 / 0.654304 / 0.652798** |
+| Dev 가중 | **0.670426** |
+| Dev tier | Fast 0.648011 · Balanced 0.676705 · Premium 0.694034 |
+| Dev 비용 비율 | 1.1214 / 1.5187 / 2.1138 (한도 1.25 / 2 / 4) |
 | 스트레스 | **36,000 tier-scenario 중 초과 0회** |
-| arm64 실행 | 2,640문항 최장 7.454초 / 한도 90초 |
-| 아티팩트 | 84.7 KB · SHA-256 `50656eb05d7223e8a2ee649d948410d4f6462fd131c407f7eba5befff83f3b42` |
+| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.637912 |
+| arm64 실행 | 2,640문항 최장 7.731초 / 한도 90초 |
+| 아티팩트 | 85.9 KB · SHA-256 `b2f9371ed537a2c8a14e2a16ec0abf68e55c6cbdf11016d56ca7be30bdc334bf` |
 
 #### 최신 피벗 판정
 
@@ -86,10 +88,22 @@ SPDX-License-Identifier: Apache-2.0
     0.632457 / 0.632443 / 0.633082보다 모든 fold에서
     **+0.002642 / +0.004744 / +0.003281** 높았다. 실험 로그에는 이후부터
     `folds`를 함께 기록해 이 비교가 실행 순서에 의존하지 않게 했다.
+13. T15는 lexical 계수 과적합을 줄이기 위해 score ridge alpha를 100에서
+    32,000으로 높였다. T14 대비 5-fold **+0.016264**, 4/6/8-fold도 전부
+    **+0.0164 이상**이었다. 공개 Dev 상승은 +0.000852로 작지만 선택 근거는
+    Dev가 아니라 Train OOF와 복수 fold다.
+14. 첫 T15는 LOFO Premium 4.161, 예비 size-200 1회, 최종 extreme-shift
+    1회를 차례로 실패했다. 미관측 family 최악 q90 폴백, `code_io`/`other` K1
+    차단, Premium cap 70을 추가하자 LOFO 9/9와 최종 0/36,000을 통과했다.
+15. 4×3 nested 선택은 작은 inner-train에서 T15 비용모델이 예산을 넘겨 alpha=100
+    대조군을 골랐다. T15의 nested 통과를 주장하지 않는다. 대신 실제 제출 학습
+    크기의 4/5/6/8-fold 일관성과 더 강한 LOFO를 승격 근거로 삼았다.
+16. T16 tier별 alpha는 단일 5-fold 0.656264였지만 4/6/8-fold가 모두 T15보다
+    낮고 Dev도 0.668608이라 선택 과적합으로 폐기했다.
 
-T14는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
-hash-regex 0.695369보다는 낮다. 다음 공격 트랙은 T14 안전선을 고정한 채
-nested OOF와 leave-one-family-out에서 hashed score의 일반화를 높이는 것이다.
+T15는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+hash-regex 0.695369보다는 낮다. 다음 공격 트랙은 T15 안전선을 고정한 채
+Fast 품질과 nested 소표본 비용 안정성을 높이는 것이다.
 
 ---
 

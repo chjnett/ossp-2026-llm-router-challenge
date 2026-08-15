@@ -1,0 +1,36 @@
+{
+  "id": "t16-tiered-shrink",
+  "score": {
+    "name": "tiered",
+    "heads": {
+      "fast": {"name": "hash_ridge", "alpha": 320000, "bins": 256},
+      "balanced": {"name": "hash_ridge", "alpha": 320000, "bins": 256},
+      "premium": {"name": "hash_ridge", "alpha": 16000, "bins": 256}
+    }
+  },
+  "cost": {
+    "name": "hash_ridge",
+    "alpha": 100,
+    "bins": 256,
+    "risk_quantile": 0.9,
+    "unseen_family_risk": true
+  },
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40.0,
+    "digit_ratio": 0.6,
+    "min_latex": 1.0,
+    "min_paren_depth": 3.0,
+    "fast_code_ax31_cap": 3.25,
+    "premium_code_k1_cap": 200.0,
+    "block_code_k1": true,
+    "block_other_k1": true
+  },
+  "alloc": {
+    "headroom": {"fast": 1.0, "balanced": 1.0, "premium": 0.9},
+    "size_penalty": 2.0,
+    "mu": 0.0,
+    "relative_cost_cap": {"premium": 70.0}
+  },
+  "note": "T16: Train OOF에서 tier별 최적인 score ridge 축소 강도 분리."
+}
