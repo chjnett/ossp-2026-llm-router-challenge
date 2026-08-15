@@ -8,6 +8,7 @@
    },
    "mu": 0,
    "relative_cost_cap": {
+    "balanced": 10,
     "premium": 70
    },
    "size_penalty": {
@@ -35,8 +36,8 @@
    "name": "tail_exposure",
    "premium_code_k1_cap": 200
   },
-  "id": "t19-premium-local-a1000-w75",
-  "note": "T19 탐색: Premium sym_math/code_io local hash64 alpha=1000, weight=0.75.",
+  "id": "t22-balanced-cap10",
+  "note": "T22: 4/5/6-fold 상승, 8-fold 동률인 Balanced 예측 상대비용 cap=10.",
   "score": {
    "heads": {
     "balanced": {
@@ -115,9 +116,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "7f872fb7dde678666d571564981b41057ba3a9c3",
-  "config_path": "experiments/configs/t19-premium-local-a1000-w75.json",
-  "created_at": "2026-08-15T15:05:54+00:00",
+  "commit": "811d673e1fd93d8565235f047b6185f23c75f1b2",
+  "config_path": "experiments/configs/t22-balanced-cap10.json",
+  "created_at": "2026-08-15T15:51:41+00:00",
   "fit_episodes": 1760,
   "fit_inputs_sha256": "029a0fb1f70432a05b837a1291d86d42278bb202d808a6a12911b0dae8628ac4",
   "fit_outcomes_sha256": "97a5a787086b3e1d9fa9c7945518543540e527ea248df4a4760de581b612a4ba",

@@ -247,6 +247,243 @@ class FamilyHashRidgeScore:
         }
 
 
+@register(SCORE_HEADS, "hash_response")
+class HashResponseScore:
+    """hashed lexical 특징으로 두 승격 단계의 양성확률을 예측한다.
+
+    score 자체를 회귀하면 대부분 0인 이득이 평균으로 수축돼 ax31을 넓게
+    뿌린다. 대신 light→ax31, ax31→K1 이득이 양수인지 각각 예측하고 family별
+    양성/비양성 조건부 이득을 혼합한다. light 점수는 별도 강축소 hash ridge의
+    예측을 유지한다.
+    """
+
+    def __init__(
+        self,
+        alpha: float = 1000.0,
+        bins: int = 128,
+        strength: float = 1.0,
+        base_alpha: float = 32000.0,
+        active_families: Sequence[str] = (),
+        min_family: int = 40,
+    ) -> None:
+        self.alpha = float(alpha)
+        self.bins = int(bins)
+        self.strength = float(strength)
+        self.base_alpha = float(base_alpha)
+        self.min_family = int(min_family)
+        unknown = set(active_families) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 계열: {sorted(unknown)}")
+        self._active_codes = frozenset(
+            i for i, name in enumerate(FAMILIES) if name in active_families
+        )
+        extract_hash_features((), self.bins)
+        scope = "+".join(sorted(active_families)) or "global"
+        self._base = HashRidgeScore(alpha=self.base_alpha, bins=self.bins)
+        self.version = (
+            f"hashresponse.v1(f={HASH_FEATURE_VERSION},a={self.alpha:g},"
+            f"b={self.bins},s={self.strength:g},ba={self.base_alpha:g},"
+            f"min={self.min_family},scope={scope})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        self._base.fit(train)
+        design = extract_hash_features(train.texts, self.bins)
+        codes = family_codes(train.texts)
+        score = np.asarray(train.score, dtype=float)
+        gain = np.column_stack(
+            [score[:, 1] - score[:, 0], score[:, 2] - score[:, 1]]
+        )
+        positive = (gain > 0).astype(float)
+        self._probability = _hash_ridge_fit(design, positive, self.alpha)
+        self._probability_by_family: Dict[int, tuple] = {}
+        for code in self._active_codes:
+            mask = codes == code
+            if mask.sum() >= self.min_family:
+                self._probability_by_family[code] = _hash_ridge_fit(
+                    design[mask], positive[mask], self.alpha
+                )
+
+        self._share = np.zeros((len(FAMILIES), 2))
+        self._hit = np.zeros((len(FAMILIES), 2))
+        self._miss = np.zeros((len(FAMILIES), 2))
+        for code in range(len(FAMILIES)):
+            family_mask = codes == code
+            source = family_mask if family_mask.any() else np.ones(len(train), dtype=bool)
+            for stage in range(2):
+                values = gain[source, stage]
+                stage_positive = values > 0
+                self._share[code, stage] = float(stage_positive.mean())
+                self._hit[code, stage] = (
+                    float(values[stage_positive].mean())
+                    if stage_positive.any()
+                    else 0.0
+                )
+                self._miss[code, stage] = (
+                    float(values[~stage_positive].mean())
+                    if (~stage_positive).any()
+                    else 0.0
+                )
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        design = extract_hash_features(texts, self.bins)
+        codes = family_codes(texts)
+        probability = _hash_ridge_apply(design, self._probability)
+        for code, fitted in self._probability_by_family.items():
+            mask = codes == code
+            if mask.any():
+                probability[mask] = _hash_ridge_apply(design[mask], fitted)
+        probability = self._share[codes] + self.strength * (
+            probability - self._share[codes]
+        )
+        probability = np.clip(probability, 0.0, 1.0)
+        stage_gain = (
+            probability * self._hit[codes]
+            + (1.0 - probability) * self._miss[codes]
+        )
+        light = self._base.predict(texts)[:, 0]
+        out = np.column_stack(
+            [light, light + stage_gain[:, 0], light + stage_gain.sum(axis=1)]
+        )
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "base": self._base.state(),
+            "probability": _pack_hash_ridge(self._probability),
+            "probability_by_family": {
+                str(code): _pack_hash_ridge(fitted)
+                for code, fitted in self._probability_by_family.items()
+            },
+            "share": self._share.tolist(),
+            "hit": self._hit.tolist(),
+            "miss": self._miss.tolist(),
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._base.load_state(state["base"])
+        self._probability = _unpack_hash_ridge(state["probability"])
+        self._probability_by_family = {
+            int(code): _unpack_hash_ridge(fitted)
+            for code, fitted in state["probability_by_family"].items()
+        }
+        self._share = np.asarray(state["share"], dtype=float)
+        self._hit = np.asarray(state["hit"], dtype=float)
+        self._miss = np.asarray(state["miss"], dtype=float)
+
+
+@register(SCORE_HEADS, "hash_knn")
+class HashKNNScore:
+    """프롬프트 유사 이웃의 공개 outcome을 강한 전역 예측에 축소한다.
+
+    정규화 signed unigram/bigram의 cosine 유사도를 쓰며, 기본적으로 같은
+    prompt family 안에서만 이웃을 찾는다. 원문·문항 ID·출처는 아티팩트에
+    저장하지 않는다. 학습 행은 prompt 내용 해시로 정렬해 입력 순서와 top-k
+    동률 처리의 영향을 제거한다.
+
+    ``prior``는 전역 hash ridge 예측에 주는 의사 이웃 질량이다. 유사 이웃이
+    없으면 정확히 전역 예측으로 폴백하고, 낮은 유사도는 ``threshold``로
+    제거한다.
+    """
+
+    def __init__(
+        self,
+        bins: int = 64,
+        neighbors: int = 16,
+        prior: float = 8.0,
+        power: float = 2.0,
+        threshold: float = 0.0,
+        base_alpha: float = 32000.0,
+        same_family: bool = True,
+    ) -> None:
+        self.bins = int(bins)
+        self.neighbors = int(neighbors)
+        self.prior = float(prior)
+        self.power = float(power)
+        self.threshold = float(threshold)
+        self.base_alpha = float(base_alpha)
+        self.same_family = bool(same_family)
+        extract_hash_features((), self.bins)
+        if self.neighbors < 1:
+            raise ValueError("hash_knn neighbors는 1 이상이어야 한다")
+        if not np.isfinite(self.prior) or self.prior < 0:
+            raise ValueError("hash_knn prior는 유한한 0 이상이어야 한다")
+        if not np.isfinite(self.power) or self.power <= 0:
+            raise ValueError("hash_knn power는 유한한 양수여야 한다")
+        if not np.isfinite(self.threshold) or not -1.0 <= self.threshold < 1.0:
+            raise ValueError("hash_knn threshold는 -1 이상 1 미만이어야 한다")
+        self._base = HashRidgeScore(alpha=self.base_alpha, bins=self.bins)
+        self.version = (
+            f"hashknn.v1(f={HASH_FEATURE_VERSION},b={self.bins},"
+            f"k={self.neighbors},p={self.prior:g},pow={self.power:g},"
+            f"t={self.threshold:g},ba={self.base_alpha:g},"
+            f"sf={int(self.same_family)})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        self._base.fit(train)
+        hashed = extract_hash_features(train.texts, self.bins)[:, -self.bins :]
+        # Dataset.keys는 prompt 본문의 content hash다. 특징에는 넣지 않고 오직
+        # 순서 불변의 저장/tie-break 순서를 만드는 데만 사용한다.
+        order = np.argsort(np.asarray(train.keys), kind="stable")
+        self._vectors = hashed[order]
+        self._scores = np.asarray(train.score, dtype=float)[order]
+        self._families = family_codes(train.texts)[order]
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        base = self._base.predict(texts)
+        if not texts or len(self._vectors) == 0:
+            return base
+        query = extract_hash_features(texts, self.bins)[:, -self.bins :]
+        query_families = family_codes(texts)
+        output = base.copy()
+        k = min(self.neighbors, len(self._vectors))
+
+        # 전체 similarity 행렬을 아티팩트에 저장하지 않고 query chunk별로만
+        # 만든다. stable argsort는 내용 해시로 정렬된 학습행을 2차 동률 기준으로
+        # 사용하므로 실행 순서가 달라도 같은 이웃을 고른다.
+        chunk_size = 256
+        for start in range(0, len(query), chunk_size):
+            stop = min(start + chunk_size, len(query))
+            similarity = query[start:stop] @ self._vectors.T
+            if self.same_family:
+                mismatch = (
+                    query_families[start:stop, None] != self._families[None, :]
+                )
+                similarity[mismatch] = -np.inf
+            ranked = np.argsort(-similarity, axis=1, kind="stable")[:, :k]
+            selected_similarity = np.take_along_axis(similarity, ranked, axis=1)
+            weight = np.maximum(selected_similarity - self.threshold, 0.0)
+            weight = np.power(weight, self.power)
+            selected_score = self._scores[ranked]
+            weight_sum = weight.sum(axis=1)
+            denominator = self.prior + weight_sum
+            usable = denominator > 0
+            if usable.any():
+                neighbor_total = np.einsum(
+                    "nk,nkm->nm", weight[usable], selected_score[usable]
+                )
+                rows = np.where(usable)[0] + start
+                output[rows] = (
+                    self.prior * base[rows] + neighbor_total
+                ) / denominator[usable, None]
+        return np.clip(output, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "base": self._base.state(),
+            "vectors": self._vectors.tolist(),
+            "scores": self._scores.tolist(),
+            "families": self._families.tolist(),
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._base.load_state(state["base"])
+        self._vectors = np.asarray(state["vectors"], dtype=float)
+        self._scores = np.asarray(state["scores"], dtype=float)
+        self._families = np.asarray(state["families"], dtype=int)
+
+
 @register(SCORE_HEADS, "global")
 class GlobalScore:
     """전체 평균. 아무 신호도 안 쓰는 하한선."""

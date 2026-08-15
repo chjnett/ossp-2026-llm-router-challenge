@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # DESIGN — Efficient LLM Routing Challenge
 
-작성 2026-08-10 · **최근 판정 2026-08-15** · 마감 2026-08-27 18:00 KST · 규칙은 [RULES.md](RULES.md), 일정은 [TODO.md](TODO.md)
+작성 2026-08-10 · **최근 판정 2026-08-16** · 마감 2026-08-27 18:00 KST · 규칙은 [RULES.md](RULES.md), 일정은 [TODO.md](TODO.md)
 
 이 문서는 **측정된 것**과 **가설인 것**을 구분해서 적는다.
 숫자에는 전부 출처가 있고, 근거 없는 문장은 §6의 미검증 목록으로 보낸다.
@@ -25,14 +25,14 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t19-premium-local-a1000-w75`**다.
+현재 제출 챔피언은 **`t22-balanced-cap10`**이다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
 | 점수 헤드 `[Q]` | Fast/Balanced는 강축소 `hash_ridge(alpha=32000)`. Premium의 `sym_math`·`code_io`만 64-bin family-local ridge(alpha=1000)를 75% 혼합 |
 | 비용 헤드 `[C]` | hashed log-cost ridge + **4-fold 내부 OOF** 상대오차 q80. 미관측 계열은 관측 계열 최악 q80으로 폴백 |
 | 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX 및 `code_io`·`other` K1 꼬리만 차단 |
-| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 75%, Balanced/Premium 90%, Premium 문항별 상대비용 cap 70 |
+| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 75%, Balanced/Premium 90%, 문항별 상대비용 cap Balanced 10 / Premium 70 |
 | 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
@@ -40,16 +40,16 @@ SPDX-License-Identifier: Apache-2.0
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.659190** |
-| Train 4/6/8-fold OOF | **0.658608 / 0.658892 / 0.659545** |
-| Dev 가중 | **0.677159** |
-| Dev tier | Fast 0.652273 · Balanced 0.681534 · Premium 0.705966 |
-| Dev 비용 비율 | 1.1105 / 1.5173 / 2.5012 (한도 1.25 / 2 / 4) |
-| 스트레스 | **36,000 tier-scenario 중 초과 0회** |
-| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652287 |
-| nested 4×3 | T17/T19 모두 inner 0점. 소표본 예산 실패를 숨기지 않음 |
+| Train 5-fold OOF | **0.659616** |
+| Train 4/6/8-fold OOF | **0.658807 / 0.659276 / 0.659531** |
+| Dev 가중 | **0.677670** |
+| Dev tier | Fast 0.652273 · Balanced 0.683239 · Premium 0.705966 |
+| Dev 비용 비율 | 1.1105 / 1.4817 / 2.5012 (한도 1.25 / 2 / 4) |
+| 기본 스트레스 | **36,000 tier-scenario 중 초과 0회**. 추가 seed 반례는 아래에 별도 명시 |
+| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652202 |
+| nested 4×3 | T22는 미실행. T17/T19는 모두 inner 0점이었음 |
 | arm64 실행 | 2,640문항 최장 8.116초 / 한도 90초 |
-| 아티팩트 | 223.2 KB · SHA-256 `cc8c214c20977b0ebb8fe0606d87ff8950f48faf5c30d88363be61b17c881fcd` |
+| 아티팩트 | 223.2 KB · SHA-256 `ce83c720d3371707e571f100094b67bdc40aee74e427b5ceb900a4c0bd5a956e` |
 
 #### 최신 피벗 판정
 
@@ -127,8 +127,26 @@ SPDX-License-Identifier: Apache-2.0
 24. T19 역시 nested inner에서는 T17과 함께 0점이라 nested 개선을 주장하지
     않는다. 대신 0/36,000 스트레스와 linux/arm64 전체 제출 스택을 다시
     통과한 뒤 챔피언으로 승격했다.
+25. Train 5-fold OOF 선택을 같은 실제 비용의 oracle과 비교하자 T19 0.659190
+    대비 same-cost oracle 0.767798로 **0.108608의 라우팅 후회**가 남았다.
+    가장 큰 손실은 Balanced/Premium의 `code_io`·`sym_math`, Fast의
+    `logic`·`sym_math`였다. 이 분석은 Dev를 읽지 않는다.
+26. T20은 승격 이득 양성확률을 직접 맞추는 hashed response 헤드였지만 최고
+    5-fold가 약 0.6599뿐이고 6/8-fold와 Dev가 하락해 폐기했다. T21 same-family
+    cosine kNN은 Balanced에서만 4/5/6/8-fold가 모두 상승했으나 기본 스트레스에서
+    2회 초과했고, 안전 보정 후 이득이 너무 작아 승격하지 않았다.
+27. T22는 T19의 예측·비용 모델을 그대로 두고 Balanced에서 예측
+    `upgrade/light > 10`인 승격만 막는다. 4/5/6-fold는 각각
+    **+0.000170 / +0.000426 / +0.000341**, 8-fold는 동률이며 Dev는
+    **+0.000511**이다. 기본 0/36,000과 LOFO 9/9를 통과해 승격했다. T22의
+    same-cost oracle 후회는 0.106307로 줄었지만 여전히 다음 개선 여지가 크다.
+28. 기본 게이트와 다른 seed의 `family-dominant(75%)`를 추가하자 T19부터
+    공유하던 Fast `code_io` 꼬리에서 5/2,000 초과가 새로 발견됐다. cap 3.0은
+    무효, cap 2.0은 1회가 남고 OOF 손실이 컸으며 `mu=50`은 9회로 악화됐다.
+    따라서 **기본 게이트 통과를 모든 seed 안전으로 과장하지 않는다.** 다음
+    우선순위는 이 code output-token tail의 조건부 비용 모델링이다.
 
-T19는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+T22는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
 hash-regex 0.695369보다는 낮다. 다음 공격 트랙도 T17의 0/36,000 안전선을
 고정한 채 복수 fold와 미공개 분포 일반화가 함께 개선되는 경우에만 승격한다.
 

@@ -736,6 +736,94 @@ class FamilyHashRidgeScoreTest(unittest.TestCase):
             })
 
 
+class HashResponseScoreTest(unittest.TestCase):
+    def test_predictions_and_state_round_trip(self) -> None:
+        train, dev = datasets()
+        spec = {
+            "name": "hash_response",
+            "alpha": 1000,
+            "bins": 64,
+            "strength": 0.75,
+            "active_families": ["sym_math", "code_io"],
+        }
+        head = build_score_head(spec)
+        head.fit(train)
+        prediction = head.predict(dev.texts[:80])
+        self.assertEqual((80, 3), prediction.shape)
+        self.assertTrue(((prediction >= 0.0) & (prediction <= 1.0)).all())
+
+        revived = build_score_head(spec)
+        revived.load_state(json.loads(json.dumps(head.state())))
+        np.testing.assert_allclose(
+            prediction, revived.predict(dev.texts[:80]), atol=1e-12
+        )
+
+    def test_strength_zero_uses_family_stage_means(self) -> None:
+        train, dev = datasets()
+        head = build_score_head({
+            "name": "hash_response",
+            "bins": 64,
+            "strength": 0.0,
+        })
+        head.fit(train)
+        prediction = head.predict(dev.texts)
+        from router.features import family_codes
+
+        codes = family_codes(dev.texts)
+        for code in np.unique(codes):
+            mask = codes == code
+            early = prediction[mask, 1] - prediction[mask, 0]
+            self.assertLess(float(early.max() - early.min()), 1e-12)
+
+
+class HashKNNScoreTest(unittest.TestCase):
+    def test_predictions_are_order_invariant_and_round_trip(self) -> None:
+        train, dev = datasets()
+        spec = {
+            "name": "hash_knn",
+            "bins": 64,
+            "neighbors": 8,
+            "prior": 4,
+            "power": 2,
+            "same_family": True,
+        }
+        head = build_score_head(spec)
+        head.fit(train)
+        texts = dev.texts[:40]
+        prediction = head.predict(texts)
+        reversed_prediction = head.predict(tuple(reversed(texts)))[::-1]
+        np.testing.assert_allclose(prediction, reversed_prediction, atol=1e-12)
+        self.assertTrue(((prediction >= 0.0) & (prediction <= 1.0)).all())
+
+        revived = build_score_head(spec)
+        revived.load_state(json.loads(json.dumps(head.state())))
+        np.testing.assert_allclose(
+            prediction, revived.predict(texts), atol=1e-12
+        )
+
+    def test_large_threshold_falls_back_to_base(self) -> None:
+        train, dev = datasets()
+        base = build_score_head({"name": "hash_ridge", "alpha": 32000, "bins": 64})
+        knn = build_score_head({
+            "name": "hash_knn",
+            "bins": 64,
+            "neighbors": 8,
+            "prior": 4,
+            "threshold": 0.999999,
+        })
+        base.fit(train)
+        knn.fit(train)
+        np.testing.assert_allclose(
+            knn.predict(dev.texts[:40]), base.predict(dev.texts[:40]), atol=1e-12
+        )
+
+    def test_rejects_invalid_settings(self) -> None:
+        with self.assertRaisesRegex(ValueError, "neighbors"):
+            build_score_head({"name": "hash_knn", "neighbors": 0})
+        with self.assertRaisesRegex(ValueError, "prior"):
+            build_score_head({"name": "hash_knn", "prior": -1})
+
+
 class TieredScoreTest(unittest.TestCase):
     def test_uses_independent_heads_and_round_trips(self) -> None:
         train, dev = datasets()

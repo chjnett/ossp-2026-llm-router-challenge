@@ -5,7 +5,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # 제출 실행 절차
 
-2026-08-13에 로컬 레지스트리로 전 과정을 리허설하고, 2026-08-15 현재 제출
+2026-08-13에 로컬 레지스트리로 전 과정을 리허설하고, 2026-08-16 현재 제출
 챔피언으로 다시 검증한 문서다.
 마감 당일에 다시 알아내지 않으려고 쓴다. **위에서 아래로 그대로 실행한다.**
 
@@ -83,7 +83,7 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 ```bash
 PYTHONPATH=src python3 tools/export_artifact.py \
-  --config experiments/configs/t19-premium-local-a1000-w75.json
+  --config experiments/configs/t22-balanced-cap10.json
 ```
 
 이미지 동결 전에 챔피언이 바뀌면 위 설정 경로도 반드시 함께 바꾼다.

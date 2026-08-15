@@ -1,10 +1,10 @@
 {
-  "id": "t19-premium-local-a1000-w75",
-  "at": "2026-08-15T11:46:41+00:00",
-  "commit": "7f872fb7dde678666d571564981b41057ba3a9c3",
+  "id": "t22-balanced-cap10",
+  "at": "2026-08-15T15:41:53+00:00",
+  "commit": "811d673e1fd93d8565235f047b6185f23c75f1b2",
   "folds": 5,
   "config": {
-    "id": "t19-premium-local-a1000-w75",
+    "id": "t22-balanced-cap10",
     "score": {
       "name": "tiered",
       "heads": {
@@ -75,10 +75,11 @@
       },
       "mu": 0,
       "relative_cost_cap": {
+        "balanced": 10,
         "premium": 70
       }
     },
-    "note": "T19 탐색: Premium sym_math/code_io local hash64 alpha=1000, weight=0.75."
+    "note": "T22: 4/5/6-fold 상승, 8-fold 동률인 Balanced 예측 상대비용 cap=10."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
@@ -86,7 +87,7 @@
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.659190340909",
+    "final_score": "0.659616477273",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -102,15 +103,15 @@
         }
       },
       "balanced": {
-        "score": "0.662926136364",
-        "budget_ratio": "1.536150762234",
-        "headroom": "0.463849237766",
+        "score": "0.664346590909",
+        "budget_ratio": "1.451201996656",
+        "headroom": "0.548798003344",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 380,
-          "ax31": 1349,
-          "axk1-think": 31
+          "ax31-light": 351,
+          "ax31": 1406,
+          "axk1-think": 3
         }
       },
       "premium": {
@@ -128,7 +129,7 @@
     }
   },
   "dev": {
-    "final_score": "0.677159090909",
+    "final_score": "0.677670454545",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -144,15 +145,15 @@
         }
       },
       "balanced": {
-        "score": "0.681534090909",
-        "budget_ratio": "1.51732940927",
-        "headroom": "0.48267059073",
+        "score": "0.683238636364",
+        "budget_ratio": "1.481716662695",
+        "headroom": "0.518283337305",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 170,
-          "ax31": 697,
-          "axk1-think": 13
+          "ax31-light": 160,
+          "ax31": 718,
+          "axk1-think": 2
         }
       },
       "premium": {
@@ -206,5 +207,5 @@
       }
     }
   },
-  "seconds": 161.25
+  "seconds": 142.87
 }

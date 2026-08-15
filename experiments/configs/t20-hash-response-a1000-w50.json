@@ -1,0 +1,135 @@
+{
+  "id": "t20-hash-response-a1000-w50",
+  "score": {
+    "name": "tiered",
+    "heads": {
+      "fast": {
+        "name": "family_blend",
+        "base": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
+        "challenger": {
+          "name": "hash_response",
+          "alpha": 1000,
+          "bins": 64,
+          "strength": 1,
+          "base_alpha": 32000,
+          "active_families": [],
+          "min_family": 40
+        },
+        "weight": 0.5,
+        "active_families": [
+          "logic",
+          "sym_math",
+          "mcq_en",
+          "code_io"
+        ]
+      },
+      "balanced": {
+        "name": "family_blend",
+        "base": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
+        "challenger": {
+          "name": "hash_response",
+          "alpha": 1000,
+          "bins": 64,
+          "strength": 1,
+          "base_alpha": 32000,
+          "active_families": [],
+          "min_family": 40
+        },
+        "weight": 0.5,
+        "active_families": [
+          "code_io",
+          "sym_math",
+          "logic",
+          "mcq_ko"
+        ]
+      },
+      "premium": {
+        "name": "family_blend",
+        "base": {
+          "name": "family_blend",
+          "base": {
+            "name": "hash_ridge",
+            "alpha": 32000,
+            "bins": 256
+          },
+          "challenger": {
+            "name": "family_hash_ridge",
+            "alpha": 1000,
+            "bins": 64,
+            "active_families": [
+              "sym_math",
+              "code_io"
+            ],
+            "min_family": 40
+          },
+          "weight": 0.75,
+          "active_families": [
+            "sym_math",
+            "code_io"
+          ]
+        },
+        "challenger": {
+          "name": "hash_response",
+          "alpha": 1000,
+          "bins": 64,
+          "strength": 1,
+          "base_alpha": 32000,
+          "active_families": [],
+          "min_family": 40
+        },
+        "weight": 0.5,
+        "active_families": [
+          "code_io",
+          "sym_math",
+          "long_ctx",
+          "logic",
+          "other"
+        ]
+      }
+    }
+  },
+  "cost": {
+    "name": "hash_ridge",
+    "alpha": 100,
+    "bins": 256,
+    "risk_quantile": 0.8,
+    "unseen_family_risk": true,
+    "risk_oof_folds": 4
+  },
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40,
+    "digit_ratio": 0.6,
+    "min_latex": 1,
+    "min_paren_depth": 3,
+    "fast_code_ax31_cap": 3.25,
+    "premium_code_k1_cap": 200,
+    "block_code_k1": true,
+    "block_other_k1": true
+  },
+  "alloc": {
+    "headroom": {
+      "fast": 0.75,
+      "balanced": 0.9,
+      "premium": 0.9
+    },
+    "size_penalty": {
+      "fast": 2.25,
+      "balanced": 2.5,
+      "premium": 2.5
+    },
+    "mu": 0,
+    "relative_cost_cap": {
+      "premium": 70
+    }
+  },
+  "note": "T20 Train-OOF oracle regret 타깃 hashed response alpha=1000, weight=0.5."
+}
