@@ -104,6 +104,35 @@ def _hash_ridge_apply(design: np.ndarray, fitted: tuple) -> np.ndarray:
     return (design - mean) / scale @ coefficients + intercept
 
 
+def _hash_ridge_oof_apply(
+    design: np.ndarray,
+    target: np.ndarray,
+    folds: Sequence[np.ndarray],
+    alpha: float,
+) -> np.ndarray:
+    """각 행을 적합에서 제외한 ridge 예측을 원래 행 순서로 반환한다."""
+
+    target = np.asarray(target, dtype=float)
+    if target.ndim == 1:
+        target = target[:, None]
+    prediction = np.full(target.shape, np.nan, dtype=float)
+    all_rows = np.arange(len(design))
+    coverage = np.zeros(len(design), dtype=int)
+    for held_out in folds:
+        held_out = np.asarray(held_out, dtype=int)
+        if len(held_out) == 0:
+            continue
+        train_rows = all_rows[~np.isin(all_rows, held_out)]
+        if len(train_rows) == 0:
+            raise ValueError("OOF ridge에는 비어 있지 않은 학습 fold가 필요하다")
+        fitted = _hash_ridge_fit(design[train_rows], target[train_rows], alpha)
+        prediction[held_out] = _hash_ridge_apply(design[held_out], fitted)
+        coverage[held_out] += 1
+    if not np.all(coverage == 1):
+        raise ValueError("OOF fold가 모든 학습 행을 정확히 포함해야 한다")
+    return prediction
+
+
 def _pack_hash_ridge(fitted: tuple) -> list:
     return [np.asarray(value).tolist() for value in fitted]
 
@@ -931,6 +960,7 @@ class HashRidgeCost:
         calibration: bool = False,
         risk_quantile: float | None = None,
         unseen_family_risk: bool = False,
+        risk_oof_folds: int | None = None,
     ) -> None:
         self.alpha = float(alpha)
         self.bins = int(bins)
@@ -941,15 +971,32 @@ class HashRidgeCost:
             None if risk_quantile is None else float(risk_quantile)
         )
         self.unseen_family_risk = bool(unseen_family_risk)
+        self.risk_oof_folds = (
+            None if risk_oof_folds is None else int(risk_oof_folds)
+        )
         if self.risk_quantile is not None and not 0.5 <= self.risk_quantile < 1.0:
             raise ValueError("risk_quantile은 0.5 이상 1.0 미만이어야 한다")
+        if self.risk_oof_folds is not None and self.risk_oof_folds < 2:
+            raise ValueError("risk_oof_folds는 2 이상이어야 한다")
+        if self.risk_oof_folds is not None and self.risk_quantile is None:
+            raise ValueError("risk_oof_folds에는 risk_quantile이 필요하다")
         extract_hash_features((), self.bins)
-        version = "v4" if self.unseen_family_risk else "v3"
+        version = (
+            "v5"
+            if self.risk_oof_folds is not None
+            else ("v4" if self.unseen_family_risk else "v3")
+        )
         unseen = ",ur=1" if self.unseen_family_risk else ""
+        risk_oof = (
+            f",rof={self.risk_oof_folds}"
+            if self.risk_oof_folds is not None
+            else ""
+        )
         self.version = (
             f"hashcost.{version}(f={HASH_FEATURE_VERSION},a={self.alpha:g},"
             f"b={self.bins},z={self.z:g},zl={self.z_light:g},"
-            f"cal={int(self.calibration)},rq={self.risk_quantile}{unseen})"
+            f"cal={int(self.calibration)},rq={self.risk_quantile}{unseen}"
+            f"{risk_oof})"
         )
 
     def fit(self, train: Dataset) -> None:
@@ -987,8 +1034,17 @@ class HashRidgeCost:
         # 평균 보정으로도 생성 폭주 꼬리는 남는다. family/model 조합별
         # 실제/예측 배율의 상위 분위로 그 조합의 empirical tail risk를 가격에
         # 넣는다. 문항별 outcome lookup이 아니라 Train에서 학습한 정적 통계다.
+        risk_cost = raw_cost
+        if self.risk_oof_folds is not None:
+            oof_log_cost = _hash_ridge_oof_apply(
+                design,
+                log_cost,
+                train.folds(self.risk_oof_folds),
+                self.alpha,
+            )
+            risk_cost = np.exp(np.clip(oof_log_cost, self._log_lo, self._log_hi))
         actual_relative = train.cost / np.maximum(train.cost[:, [0]], 1e-12)
-        predicted_relative = raw_cost / np.maximum(raw_cost[:, [0]], 1e-12)
+        predicted_relative = risk_cost / np.maximum(risk_cost[:, [0]], 1e-12)
         ratio = actual_relative / np.maximum(predicted_relative, 1e-12)
         quantile = self.risk_quantile if self.risk_quantile is not None else 0.5
         global_risk = np.quantile(ratio, quantile, axis=0)

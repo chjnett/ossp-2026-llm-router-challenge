@@ -2,21 +2,26 @@
  "config": {
   "alloc": {
    "headroom": {
-    "balanced": 1.0,
-    "fast": 1.0,
+    "balanced": 0.9,
+    "fast": 0.75,
     "premium": 0.9
    },
    "mu": 0.0,
    "relative_cost_cap": {
     "premium": 70.0
    },
-   "size_penalty": 2.0
+   "size_penalty": {
+    "balanced": 2.5,
+    "fast": 2.25,
+    "premium": 2.5
+   }
   },
   "cost": {
    "alpha": 100,
    "bins": 256,
    "name": "hash_ridge",
-   "risk_quantile": 0.9,
+   "risk_oof_folds": 4,
+   "risk_quantile": 0.8,
    "unseen_family_risk": true
   },
   "gate": {
@@ -30,8 +35,8 @@
    "name": "tail_exposure",
    "premium_code_k1_cap": 200.0
   },
-  "id": "t15-shrunk-hash-a32000",
-  "note": "T15: 강한 score 축소 + 미관측 family 최악 q90 비용 폴백 + Premium 0.9.",
+  "id": "t17-oof-risk-sp-tiered",
+  "note": "T17: 4-fold OOF q80 비용 tail + tier별 소표본 마진. 2000회 경계 실패 3건을 최소 보정.",
   "score": {
    "alpha": 32000,
    "bins": 256,
@@ -77,9 +82,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "5779858b36ccb17f6754a6afc0d307dbcdd1dcd1",
-  "config_path": "experiments/configs/t15-shrunk-hash-a32000.json",
-  "created_at": "2026-08-15T01:41:04+00:00",
+  "commit": "ab92e6f00dd8a72680d06975cba0d9f1f513c9d6",
+  "config_path": "experiments/configs/t17-oof-risk-sp-tiered.json",
+  "created_at": "2026-08-15T11:33:11+00:00",
   "fit_episodes": 1760,
   "fit_inputs_sha256": "029a0fb1f70432a05b837a1291d86d42278bb202d808a6a12911b0dae8628ac4",
   "fit_outcomes_sha256": "97a5a787086b3e1d9fa9c7945518543540e527ea248df4a4760de581b612a4ba",
@@ -2053,48 +2058,48 @@
    "risk": [
     [
      1.0,
-     1.4133062289839977,
-     2.4753603755158635
+     1.158051302041736,
+     1.9077724328299959
     ],
     [
      1.0,
-     1.5150092825438164,
-     1.901778331494603
+     1.425382156967494,
+     1.8181921397475385
     ],
     [
      1.0,
-     1.357907910322997,
-     2.460251208586836
+     1.2855292947704302,
+     1.7282937772456233
     ],
     [
      1.0,
-     1.1120516544697037,
-     1.5853807716667572
+     1.0887498365888406,
+     1.283802789408315
     ],
     [
      1.0,
-     2.979681634958194,
-     3.699156223156016
+     1.5977737583374336,
+     2.2925845535558946
     ],
     [
      1.0,
-     3.2467111217982803,
-     3.1130319054996347
+     1.4275256699124899,
+     2.228579763938262
     ],
     [
      1.0,
-     1.292376070118732,
-     2.7619256722714276
+     1.2569530063806704,
+     2.141957455864886
     ],
     [
      1.0,
-     1.2712225353023392,
-     2.61565829367359
+     1.2228226679466152,
+     2.557406112404686
     ],
     [
      1.0,
-     1.726938399303496,
-     3.6207715277799157
+     1.4388881822862074,
+     2.122910386946171
     ]
    ],
    "sd_log": [
@@ -2115,8 +2120,8 @@
    ],
    "unseen_risk": [
     1.0,
-    3.2467111217982803,
-    3.699156223156016
+    1.5977737583374336,
+    2.557406112404686
    ]
   },
   "gate": {
@@ -4029,7 +4034,7 @@
   }
  },
  "versions": {
-  "cost": "hashcost.v4(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.9,ur=1)",
+  "cost": "hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4)",
   "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1",
   "score": "hashscore.v1(f=hash-regex-text.v1,a=32000,b=256)"
  }

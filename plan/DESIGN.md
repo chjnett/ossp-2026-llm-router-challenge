@@ -25,30 +25,31 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t15-shrunk-hash-a32000`**다.
+현재 제출 챔피언은 **`t17-oof-risk-sp-tiered`**다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
 | 점수 헤드 `[Q]` | 14개 dense + 256-bin signed unigram/bigram의 강축소 `hash_ridge(alpha=32000)` |
-| 비용 헤드 `[C]` | hashed log-cost ridge + 계열·모델별 상대오차 q90. 미관측 계열은 관측 계열 최악 q90으로 폴백 |
+| 비용 헤드 `[C]` | hashed log-cost ridge + **4-fold 내부 OOF** 상대오차 q80. 미관측 계열은 관측 계열 최악 q80으로 폴백 |
 | 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX 및 `code_io`·`other` K1 꼬리만 차단 |
-| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast/Balanced 100%, Premium 90%, Premium 문항별 상대비용 cap 70 |
-| 안전 `[S]` | `size_penalty=2.0`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
+| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 75%, Balanced/Premium 90%, Premium 문항별 상대비용 cap 70 |
+| 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
 현재 실측은 다음과 같다.
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.654673** |
-| Train 4/6/8-fold OOF | **0.654787 / 0.654304 / 0.652798** |
-| Dev 가중 | **0.670426** |
-| Dev tier | Fast 0.648011 · Balanced 0.676705 · Premium 0.694034 |
-| Dev 비용 비율 | 1.1214 / 1.5187 / 2.1138 (한도 1.25 / 2 / 4) |
+| Train 5-fold OOF | **0.658509** |
+| Train 4/6/8-fold OOF | **0.658281 / 0.658153 / 0.658878** |
+| Dev 가중 | **0.676648** |
+| Dev tier | Fast 0.652273 · Balanced 0.681534 · Premium 0.704261 |
+| Dev 비용 비율 | 1.1105 / 1.5173 / 2.5156 (한도 1.25 / 2 / 4) |
 | 스트레스 | **36,000 tier-scenario 중 초과 0회** |
-| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.637912 |
-| arm64 실행 | 2,640문항 최장 7.731초 / 한도 90초 |
-| 아티팩트 | 85.9 KB · SHA-256 `b2f9371ed537a2c8a14e2a16ec0abf68e55c6cbdf11016d56ca7be30bdc334bf` |
+| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652131 |
+| nested 4×3 | alpha=100 대조군 선택. 강축소 후보의 소표본 예산 실패를 숨기지 않음 |
+| arm64 실행 | 2,640문항 최장 8.116초 / 한도 90초 |
+| 아티팩트 | 86.0 KB · SHA-256 `39ec4e6de6701c1727c5608438c9df006d43d8bf6262d2e2eb3016a25d45529a` |
 
 #### 최신 피벗 판정
 
@@ -100,10 +101,26 @@ SPDX-License-Identifier: Apache-2.0
     크기의 4/5/6/8-fold 일관성과 더 강한 LOFO를 승격 근거로 삼았다.
 16. T16 tier별 alpha는 단일 5-fold 0.656264였지만 4/6/8-fold가 모두 T15보다
     낮고 Dev도 0.668608이라 선택 과적합으로 폐기했다.
+17. T17은 tail risk를 같은 행에 적합한 잔차가 아니라 4-fold 내부 OOF 예측
+    잔차로 추정했다. 자기 행 target을 백만 단위로 바꿔도 그 행의 OOF 예측이
+    변하지 않는 누수 테스트, 입력 순서 불변성, artifact 왕복 테스트를 추가했다.
+18. q70/q75는 점수가 높았지만 조기 파산 게이트에서 탈락했다. q80 기본형도
+    family-dominant Fast 28/200으로 탈락해 headroom을 Fast 0.75,
+    Balanced/Premium 0.90으로 피봇했다.
+19. 첫 q80 피봇은 200회 게이트를 통과했지만 최종 36,000 판정에서 Fast,
+    Balanced, Premium이 각각 한 번씩 경계를 넘었다(최대 1.001/1.004/1.019).
+    전체 headroom을 다시 깎지 않고 tier별 소표본 페널티 2.25/2.5/2.5로
+    최소 보정해 최종 **0/36,000**을 통과했다.
+20. 최종 T17은 T15 대비 5-fold **+0.003835**, Dev **+0.006222**이며,
+    4/6/8-fold도 전부 T15를 앞섰다. LOFO 결합 OOF는 0.652131로 T15의
+    0.637912보다 높고 9/9 family의 모든 tier가 예산을 통과했다.
+21. nested 4×3에서는 alpha=100 대조군이 다시 선택됐다. T17의 nested 통과를
+    주장하지 않으며, 최종 Train 크기의 복수 fold·LOFO·36,000회 게이트를
+    승격 근거로 사용한다.
 
-T15는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
-hash-regex 0.695369보다는 낮다. 다음 공격 트랙은 T15 안전선을 고정한 채
-Fast 품질과 nested 소표본 비용 안정성을 높이는 것이다.
+T17은 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+hash-regex 0.695369보다는 낮다. 다음 공격 트랙도 T17의 0/36,000 안전선을
+고정한 채 복수 fold와 미공개 분포 일반화가 함께 개선되는 경우에만 승격한다.
 
 ---
 

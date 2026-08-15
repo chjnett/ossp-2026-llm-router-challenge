@@ -1,10 +1,10 @@
 {
-  "id": "t15-shrunk-hash-a32000",
-  "at": "2026-08-15T01:27:13+00:00",
-  "commit": "5779858b36ccb17f6754a6afc0d307dbcdd1dcd1",
+  "id": "t17-oof-risk-sp-tiered",
+  "at": "2026-08-15T02:23:45+00:00",
+  "commit": "ab92e6f00dd8a72680d06975cba0d9f1f513c9d6",
   "folds": 5,
   "config": {
-    "id": "t15-shrunk-hash-a32000",
+    "id": "t17-oof-risk-sp-tiered",
     "score": {
       "name": "hash_ridge",
       "alpha": 32000,
@@ -14,8 +14,9 @@
       "name": "hash_ridge",
       "alpha": 100,
       "bins": 256,
-      "risk_quantile": 0.9,
-      "unseen_family_risk": true
+      "risk_quantile": 0.8,
+      "unseen_family_risk": true,
+      "risk_oof_folds": 4
     },
     "gate": {
       "name": "tail_exposure",
@@ -30,103 +31,107 @@
     },
     "alloc": {
       "headroom": {
-        "fast": 1.0,
-        "balanced": 1.0,
+        "fast": 0.75,
+        "balanced": 0.9,
         "premium": 0.9
       },
-      "size_penalty": 2.0,
+      "size_penalty": {
+        "fast": 2.25,
+        "balanced": 2.5,
+        "premium": 2.5
+      },
       "mu": 0.0,
       "relative_cost_cap": {
         "premium": 70.0
       }
     },
-    "note": "T15: 강한 score 축소 + 미관측 family 최악 q90 비용 폴백 + Premium 0.9."
+    "note": "T17: 4-fold OOF q80 비용 tail + tier별 소표본 마진. 2000회 경계 실패 3건을 최소 보정."
   },
   "versions": {
     "score": "hashscore.v1(f=hash-regex-text.v1,a=32000,b=256)",
-    "cost": "hashcost.v4(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.9,ur=1)",
+    "cost": "hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4)",
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.654673295455",
+    "final_score": "0.658508522727",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.635795454545",
-        "budget_ratio": "1.141154305326",
-        "headroom": "0.108845694674",
+        "score": "0.635369318182",
+        "budget_ratio": "1.116377898753",
+        "headroom": "0.133622101247",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 1066,
-          "ax31": 693,
-          "axk1-think": 1
+          "ax31-light": 1074,
+          "ax31": 686,
+          "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.653835227273",
-        "budget_ratio": "1.621228216973",
-        "headroom": "0.378771783027",
+        "score": "0.662926136364",
+        "budget_ratio": "1.536150762234",
+        "headroom": "0.463849237766",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 542,
-          "ax31": 1145,
-          "axk1-think": 73
+          "ax31-light": 380,
+          "ax31": 1349,
+          "axk1-think": 31
         }
       },
       "premium": {
-        "score": "0.680681818182",
-        "budget_ratio": "2.233872548085",
-        "headroom": "1.766127451915",
+        "score": "0.684943181818",
+        "budget_ratio": "2.683108009544",
+        "headroom": "1.316891990456",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 158,
-          "ax31": 1382,
-          "axk1-think": 220
+          "ax31-light": 103,
+          "ax31": 1335,
+          "axk1-think": 322
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.670426136364",
+    "final_score": "0.676647727273",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.648011363636",
-        "budget_ratio": "1.121411690892",
-        "headroom": "0.128588309108",
+        "score": "0.652272727273",
+        "budget_ratio": "1.110549669423",
+        "headroom": "0.139450330577",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 525,
-          "ax31": 355,
+          "ax31-light": 536,
+          "ax31": 344,
           "axk1-think": 0
         }
       },
       "balanced": {
-        "score": "0.676704545455",
-        "budget_ratio": "1.518747375513",
-        "headroom": "0.481252624487",
+        "score": "0.681534090909",
+        "budget_ratio": "1.51732940927",
+        "headroom": "0.48267059073",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 268,
-          "ax31": 573,
-          "axk1-think": 39
+          "ax31-light": 170,
+          "ax31": 697,
+          "axk1-think": 13
         }
       },
       "premium": {
-        "score": "0.694034090909",
-        "budget_ratio": "2.113803231504",
-        "headroom": "1.886196768496",
+        "score": "0.704261363636",
+        "budget_ratio": "2.515576500858",
+        "headroom": "1.484423499142",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 69,
-          "ax31": 707,
-          "axk1-think": 104
+          "ax31-light": 53,
+          "ax31": 664,
+          "axk1-think": 163
         }
       }
     }
@@ -168,5 +173,5 @@
       }
     }
   },
-  "seconds": 156.25
+  "seconds": 163.66
 }

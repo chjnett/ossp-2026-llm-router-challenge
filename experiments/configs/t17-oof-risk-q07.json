@@ -1,0 +1,40 @@
+{
+  "id": "t17-oof-risk-q07",
+  "score": {
+    "name": "hash_ridge",
+    "alpha": 32000,
+    "bins": 256
+  },
+  "cost": {
+    "name": "hash_ridge",
+    "alpha": 100,
+    "bins": 256,
+    "risk_quantile": 0.7,
+    "unseen_family_risk": true,
+    "risk_oof_folds": 4
+  },
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40,
+    "digit_ratio": 0.6,
+    "min_latex": 1,
+    "min_paren_depth": 3,
+    "fast_code_ax31_cap": 3.25,
+    "premium_code_k1_cap": 200,
+    "block_code_k1": true,
+    "block_other_k1": true
+  },
+  "alloc": {
+    "headroom": {
+      "fast": 1,
+      "balanced": 1,
+      "premium": 0.9
+    },
+    "size_penalty": 2,
+    "mu": 0,
+    "relative_cost_cap": {
+      "premium": 70
+    }
+  },
+  "note": "T17 탐색: 비용 tail q0.7를 4-fold 내부 OOF 잔차로 추정."
+}

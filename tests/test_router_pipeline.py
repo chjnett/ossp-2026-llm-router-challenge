@@ -22,6 +22,7 @@ from router.heads import (  # noqa: E402
     COST_HEADS,
     GATES,
     SCORE_HEADS,
+    _hash_ridge_oof_apply,
     build_cost_head,
     build_gate,
     build_score_head,
@@ -256,6 +257,63 @@ class HeadContractTest(unittest.TestCase):
         )
         revived_cost, _ = revived.predict(texts)
         np.testing.assert_allclose(guarded_cost, revived_cost)
+
+    def test_hash_cost_oof_risk_does_not_fit_its_own_row(self) -> None:
+        """검증 행의 target을 바꿔도 그 행의 OOF 예측은 변하면 안 된다."""
+
+        design = np.arange(24, dtype=float).reshape(8, 3)
+        target = np.stack(
+            [np.linspace(0.0, 1.0, 8), np.linspace(1.0, 3.0, 8)], axis=1
+        )
+        folds = [np.array([0, 2, 4, 6]), np.array([1, 3, 5, 7])]
+        before = _hash_ridge_oof_apply(design, target, folds, alpha=10.0)
+        changed = target.copy()
+        changed[0] += 1_000_000.0
+        after = _hash_ridge_oof_apply(design, changed, folds, alpha=10.0)
+        np.testing.assert_allclose(before[0], after[0], rtol=0.0, atol=0.0)
+        self.assertFalse(np.allclose(before[1], after[1]))
+
+    def test_hash_cost_oof_risk_is_order_invariant_and_round_trips(self) -> None:
+        """content-hash fold 위험 추정은 입력 순서와 직렬화에 무관해야 한다."""
+
+        train, dev = datasets()
+        spec = {
+            "name": "hash_ridge",
+            "risk_quantile": 0.8,
+            "unseen_family_risk": True,
+            "risk_oof_folds": 4,
+        }
+        original = build_cost_head(spec)
+        reversed_head = build_cost_head(spec)
+        original.fit(train)
+        reversed_head.fit(train.subset(np.arange(len(train))[::-1]))
+        texts = dev.texts[:16]
+        original_cost, _ = original.predict(texts)
+        reversed_cost, _ = reversed_head.predict(texts)
+        np.testing.assert_allclose(original_cost, reversed_cost, rtol=1e-10)
+
+        revived = build_cost_head(spec)
+        revived.load_state(json.loads(json.dumps(original.state())), train.policy)
+        revived_cost, _ = revived.predict(texts)
+        np.testing.assert_allclose(original_cost, revived_cost)
+
+    def test_hash_cost_oof_risk_rejects_invalid_configuration(self) -> None:
+        with self.assertRaisesRegex(ValueError, "2 이상"):
+            build_cost_head(
+                {"name": "hash_ridge", "risk_quantile": 0.9, "risk_oof_folds": 1}
+            )
+        with self.assertRaisesRegex(ValueError, "risk_quantile"):
+            build_cost_head({"name": "hash_ridge", "risk_oof_folds": 4})
+
+        design = np.arange(12, dtype=float).reshape(4, 3)
+        target = np.arange(4, dtype=float)
+        with self.assertRaisesRegex(ValueError, "정확히 포함"):
+            _hash_ridge_oof_apply(
+                design,
+                target,
+                [np.array([0, 1]), np.array([1, 2, 3])],
+                alpha=10.0,
+            )
 
     def test_roi_gate_blocks_the_known_bad_families(self) -> None:
         train, dev = datasets()
