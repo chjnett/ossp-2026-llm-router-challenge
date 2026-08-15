@@ -124,14 +124,14 @@ def uniform_sampler(n: int, size: int) -> Sampler:
 def run_scenario(
     dataset: Dataset,
     s_hat: np.ndarray | Mapping[str, np.ndarray],
-    c_hat: np.ndarray,
+    c_hat: np.ndarray | Mapping[str, np.ndarray],
     sampler: Sampler,
     *,
     scenario: str,
     util: Dict[str, float] | float,
     multipliers: Dict[str, float],
     allow: np.ndarray | Mapping[str, np.ndarray] | None = None,
-    sd: np.ndarray | None = None,
+    sd: np.ndarray | Mapping[str, np.ndarray] | None = None,
     mu: float | Mapping[str, float] = 0.0,
     trials: int = 2000,
     seed: int = 0,
@@ -156,8 +156,6 @@ def run_scenario(
 
     for trial in range(trials):
         idx = sampler(rng)
-        c_i = c_hat[idx]
-        sd_i = None if sd is None else sd[idx]
         keys_i = keys[idx].tolist()
         true_cost = dataset.cost[idx]
         # 한도의 분모는 실제 light 비용이다. 라우터는 이 값을 모른다.
@@ -183,6 +181,10 @@ def run_scenario(
         for tier in TIERS:
             tier_scores = s_hat[tier] if isinstance(s_hat, Mapping) else s_hat
             s_i = tier_scores[idx]
+            tier_cost = c_hat[tier] if isinstance(c_hat, Mapping) else c_hat
+            c_i = tier_cost[idx]
+            tier_sd = sd.get(tier) if isinstance(sd, Mapping) else sd
+            sd_i = None if tier_sd is None else tier_sd[idx]
             tier_mu = float(mu.get(tier, 0.0)) if isinstance(mu, Mapping) else float(mu)
             source_allow = allow.get(tier) if isinstance(allow, Mapping) else allow
             allow_i = None if source_allow is None else source_allow[idx]
@@ -244,13 +246,13 @@ def default_scenarios(
 def run_gate(
     dataset: Dataset,
     s_hat: np.ndarray | Mapping[str, np.ndarray],
-    c_hat: np.ndarray,
+    c_hat: np.ndarray | Mapping[str, np.ndarray],
     *,
     family: np.ndarray,
     util: Dict[str, float] | float,
     multipliers: Dict[str, float],
     allow: np.ndarray | Mapping[str, np.ndarray] | None = None,
-    sd: np.ndarray | None = None,
+    sd: np.ndarray | Mapping[str, np.ndarray] | None = None,
     mu: float | Mapping[str, float] = 0.0,
     trials: int = 2000,
     seed: int = 0,

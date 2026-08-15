@@ -30,8 +30,8 @@ def oof_prediction(config: Config, folds_count: int) -> tuple:
     folds = dataset.folds(folds_count)
     shape = (len(dataset), len(MODEL_IDS))
     score = {tier: np.zeros(shape) for tier in TIERS}
-    cost = np.zeros(shape)
-    sd = np.zeros(shape)
+    cost = {tier: np.zeros(shape) for tier in TIERS}
+    sd = {tier: np.zeros(shape) for tier in TIERS}
     allow = {tier: np.zeros(shape, dtype=bool) for tier in TIERS}
 
     for fold, test_index in enumerate(folds):
@@ -41,20 +41,22 @@ def oof_prediction(config: Config, folds_count: int) -> tuple:
         fit_part = dataset.subset(train_index)
         texts = tuple(dataset.texts[i] for i in test_index)
         fitted = predict(config, fit_part, texts)
-        cost[test_index] = fitted.c_hat
-        sd[test_index] = fitted.sd
         for tier in TIERS:
             score[tier][test_index] = fitted.score_for_tier(tier)
+            cost[tier][test_index] = fitted.cost_for_tier(tier)
+            sd[tier][test_index] = fitted.sd_for_tier(tier)
             allow[tier][test_index] = fitted.allow_for_tier(tier)
 
     prediction = Prediction(
         s_hat=score["fast"],
-        c_hat=cost,
-        sd=sd,
+        c_hat=cost["fast"],
+        sd=sd["fast"],
         allow=allow["fast"],
         versions={},
         s_hat_by_tier=score,
         allow_by_tier=allow,
+        c_hat_by_tier=cost,
+        sd_by_tier=sd,
     )
     return dataset, prediction
 

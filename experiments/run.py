@@ -23,9 +23,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-from router.data import TIERS, budget_multipliers, load_dataset
+from router.data import TIERS, budget_multipliers, combine_datasets, load_dataset
 from router.features import family_codes
-from router.pipeline import Config, run_cv, run_on_split
+from router.pipeline import Config, predict, run_cv, run_on_split
 from router.stress import gate_passed, run_gate
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,15 +61,20 @@ def do_run(args) -> int:
 
     gate_results = []
     if not args.skip_gate:
+        gate_prediction = (
+            predict(config, combine_datasets(train, dev), dev.texts)
+            if args.final_refit_gate
+            else prediction
+        )
         gate_results = run_gate(
             dev,
-            prediction.s_hat_by_tier or prediction.s_hat,
-            prediction.c_hat,
+            gate_prediction.s_hat_by_tier or gate_prediction.s_hat,
+            gate_prediction.c_hat_by_tier or gate_prediction.c_hat,
             family=family_codes(dev.texts),
             util=config.util,
             multipliers=budget_multipliers(dev.policy),
-            allow=prediction.allow_by_tier or prediction.allow,
-            sd=prediction.sd,
+            allow=gate_prediction.allow_by_tier or gate_prediction.allow,
+            sd=gate_prediction.sd_by_tier or gate_prediction.sd,
             mu=config.mu,
             trials=args.trials,
             size_penalty=config.size_penalty,
@@ -90,6 +95,9 @@ def do_run(args) -> int:
         "dev": evaluation_record(dev_eval),
         "gate": {
             "ran": bool(gate_results),
+            "fit_split": (
+                "public-train-dev" if args.final_refit_gate else "train"
+            ) if gate_results else None,
             "trials": args.trials if gate_results else 0,
             "passed": gate_ok,
             "scenarios": {
@@ -258,6 +266,11 @@ def main() -> int:
     p_run.add_argument("--folds", type=int, default=5)
     p_run.add_argument("--trials", type=int, default=300)
     p_run.add_argument("--skip-gate", action="store_true")
+    p_run.add_argument(
+        "--final-refit-gate",
+        action="store_true",
+        help="실제 제출처럼 Train+Dev 재적합 모델을 파산 게이트로 검사한다",
+    )
     p_run.set_defaults(func=do_run)
 
     p_board = sub.add_parser("leaderboard", help="기록을 CV 순으로 정렬해 보여준다")

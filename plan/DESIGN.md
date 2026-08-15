@@ -25,13 +25,13 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t22-balanced-cap10`**이다.
+현재 제출 챔피언은 **`t26-balanced-code-cap35`**이다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
 | 점수 헤드 `[Q]` | Fast/Balanced는 강축소 `hash_ridge(alpha=32000)`. Premium의 `sym_math`·`code_io`만 64-bin family-local ridge(alpha=1000)를 75% 혼합 |
 | 비용 헤드 `[C]` | hashed log-cost ridge + **4-fold 내부 OOF** 상대오차 q80. 미관측 계열은 관측 계열 최악 q80으로 폴백 |
-| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX 및 `code_io`·`other` K1 꼬리만 차단 |
+| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX, `code_io`·`other` K1 꼬리, Balanced `code_io` ax31 예측 상대비용 3.5 초과를 차단 |
 | 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 75%, Balanced/Premium 90%, 문항별 상대비용 cap Balanced 10 / Premium 70 |
 | 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
@@ -40,16 +40,18 @@ SPDX-License-Identifier: Apache-2.0
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.659616** |
-| Train 4/6/8-fold OOF | **0.658807 / 0.659276 / 0.659531** |
+| Train 5-fold OOF | **0.660213** |
+| Train 4/6/8-fold OOF | **0.658764 / 0.659276 / 0.659616** |
 | Dev 가중 | **0.677670** |
 | Dev tier | Fast 0.652273 · Balanced 0.683239 · Premium 0.705966 |
 | Dev 비용 비율 | 1.1105 / 1.4817 / 2.5012 (한도 1.25 / 2 / 4) |
-| 기본 스트레스 | **36,000 tier-scenario 중 초과 0회**. 추가 seed 반례는 아래에 별도 명시 |
+| 최종 재적합 스트레스 | 기본 **0/36,000** + 추가 family-dominant seed **0/18,000** |
 | leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652202 |
-| nested 4×3 | T22는 미실행. T17/T19는 모두 inner 0점이었음 |
+| 공개 전체 5-fold OOF | **0.6642**, 비용 비율 1.120 / 1.465 / 2.820 |
+| 역방향 Dev→Train | **0.6598**, 세 tier 예산 통과 |
+| nested 4×3 | T26은 미실행. T17/T19는 모두 inner 0점이었음 |
 | arm64 실행 | 2,640문항 최장 8.116초 / 한도 90초 |
-| 아티팩트 | 223.2 KB · SHA-256 `ce83c720d3371707e571f100094b67bdc40aee74e427b5ceb900a4c0bd5a956e` |
+| 아티팩트 | 223.5 KB · SHA-256 `2b192b34564490ed99e0df44040ed802ce0742276032126d9c717cddd3d9ef5c` |
 
 #### 최신 피벗 판정
 
@@ -143,10 +145,29 @@ SPDX-License-Identifier: Apache-2.0
 28. 기본 게이트와 다른 seed의 `family-dominant(75%)`를 추가하자 T19부터
     공유하던 Fast `code_io` 꼬리에서 5/2,000 초과가 새로 발견됐다. cap 3.0은
     무효, cap 2.0은 1회가 남고 OOF 손실이 컸으며 `mu=50`은 9회로 악화됐다.
-    따라서 **기본 게이트 통과를 모든 seed 안전으로 과장하지 않는다.** 다음
-    우선순위는 이 code output-token tail의 조건부 비용 모델링이다.
+    따라서 **기본 게이트 통과를 모든 seed 안전으로 과장하지 않는다.**
+29. T23~T25에서 `code_io`의 내부 OOF 상대비용 초과분을 prompt-only hashed
+    ridge로 예측하고 tier별로 격리했다. 추가 seed의 Fast 반례는 제거했지만,
+    최선 T25가 5-fold에서만 +0.000597이고 4/6/8-fold와 Dev가 모두 하락해
+    **챔피언으로 승격하지 않았다.** 조건부 비용·tiered cost 구현은 다음 tail
+    실험을 재현할 수 있도록 남기되 T22 제출 설정에는 넣지 않는다.
+30. Train fold 안의 true score/cost로만 예산 oracle 라벨을 만든 직접 정책
+    모사는 2.5% 혼합부터 5-fold가 0.658821로 T22보다 낮아 즉시 기각했다.
+    oracle 후회가 크다는 사실만으로 고분산 oracle action이 학습 가능하다는 뜻은
+    아니었다.
+31. 후보 선택을 끝낸 뒤 공개 Train+Dev 전체를 최종 재적합에 쓸 근거를 별도로
+    확인했다. Dev 880만 학습한 역방향 Train 평가는 0.6598, 공개 전체 2,640의
+    5-fold OOF는 0.6642였고 모두 예산을 통과했다. 따라서 **후보 선택에는 Dev를
+    격리하고, 동결된 제출 계수만 공개 전체로 재적합**한다. 재적합 결과로 새
+    설정을 고르지는 않으며 스트레스·Docker 검증만 다시 수행한다.
+32. 최종 재적합 T22는 추가 seed 3027의 Balanced에서 1/1,000 초과가 남았다.
+    원인은 `code_io` ax31의 실제 상대비용 19.68을 3.59로 과소예측한 문항이었다.
+    이 계열에서 예측 상대비용 3.5 초과만 차단한 T26은 Train 5-fold
+    **+0.000597**, 8-fold +0.000085, 6-fold 동률, 4-fold -0.000043이며 Dev는
+    동일했다. 결합 재학습 상태에서 기본 0/36,000과 추가 6-seed 0/18,000을
+    통과하고 Balanced 최악 사용률을 1.010에서 0.924로 낮춰 챔피언으로 승격했다.
 
-T22는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+T26은 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
 hash-regex 0.695369보다는 낮다. 다음 공격 트랙도 T17의 0/36,000 안전선을
 고정한 채 복수 fold와 미공개 분포 일반화가 함께 개선되는 경우에만 승격한다.
 

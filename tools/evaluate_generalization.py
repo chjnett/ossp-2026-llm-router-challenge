@@ -49,29 +49,31 @@ def _empty_buffers(n: int) -> dict:
     shape = (n, len(MODEL_IDS))
     return {
         "score": {tier: np.zeros(shape) for tier in TIERS},
-        "cost": np.zeros(shape),
-        "sd": np.zeros(shape),
+        "cost": {tier: np.zeros(shape) for tier in TIERS},
+        "sd": {tier: np.zeros(shape) for tier in TIERS},
         "allow": {tier: np.zeros(shape, dtype=bool) for tier in TIERS},
     }
 
 
 def _store(buffers: dict, index: np.ndarray, prediction: Prediction) -> None:
-    buffers["cost"][index] = prediction.c_hat
-    buffers["sd"][index] = prediction.sd
     for tier in TIERS:
         buffers["score"][tier][index] = prediction.score_for_tier(tier)
+        buffers["cost"][tier][index] = prediction.cost_for_tier(tier)
+        buffers["sd"][tier][index] = prediction.sd_for_tier(tier)
         buffers["allow"][tier][index] = prediction.allow_for_tier(tier)
 
 
 def _as_prediction(buffers: dict) -> Prediction:
     return Prediction(
         s_hat=buffers["score"]["fast"],
-        c_hat=buffers["cost"],
-        sd=buffers["sd"],
+        c_hat=buffers["cost"]["fast"],
+        sd=buffers["sd"]["fast"],
         allow=buffers["allow"]["fast"],
         versions={},
         s_hat_by_tier=buffers["score"],
         allow_by_tier=buffers["allow"],
+        c_hat_by_tier=buffers["cost"],
+        sd_by_tier=buffers["sd"],
     )
 
 

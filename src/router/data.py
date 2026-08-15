@@ -182,6 +182,58 @@ def load_dataset(
     )
 
 
+def combine_datasets(*datasets: Dataset, split: str = "public-train-dev") -> Dataset:
+    """서로 겹치지 않는 공개 split을 최종 재학습용으로 결합한다.
+
+    모델/설정 선택 중에는 Train과 Dev를 분리한다. 이 함수는 선택이 끝난 뒤
+    제출 아티팩트가 규칙상 허용된 공개 outcome을 모두 쓰도록 만드는 경로다.
+    결합 객체에는 원문과 outcome이 있지만 아티팩트에는 집계 계수만 저장된다.
+    """
+
+    if len(datasets) < 2:
+        raise ValueError("결합할 Dataset이 둘 이상 필요하다")
+    first = datasets[0]
+    if any(row.challenge_id != first.challenge_id for row in datasets[1:]):
+        raise ValueError("challenge_id가 다른 Dataset은 결합할 수 없다")
+    if any(row.policy.policy_id != first.policy.policy_id for row in datasets[1:]):
+        raise ValueError("policy_id가 다른 Dataset은 결합할 수 없다")
+    episode_ids = tuple(item for row in datasets for item in row.episode_ids)
+    if len(set(episode_ids)) != len(episode_ids):
+        raise ValueError("결합 Dataset의 episode_id가 중복된다")
+
+    inputs = InputBatch(
+        schema_version=first.inputs.schema_version,
+        challenge_id=first.challenge_id,
+        split=split,
+        episodes=tuple(item for row in datasets for item in row.inputs.episodes),
+    )
+    outcomes = OutcomeBatch(
+        schema_version=first.outcomes.schema_version,
+        challenge_id=first.challenge_id,
+        split=split,
+        outcomes=tuple(item for row in datasets for item in row.outcomes.outcomes),
+    )
+    return Dataset(
+        split=split,
+        challenge_id=first.challenge_id,
+        inputs=inputs,
+        outcomes=outcomes,
+        policy=first.policy,
+        texts=tuple(item for row in datasets for item in row.texts),
+        episode_ids=episode_ids,
+        keys=tuple(item for row in datasets for item in row.keys),
+        score=np.concatenate([row.score for row in datasets], axis=0),
+        input_tokens=np.concatenate(
+            [row.input_tokens for row in datasets], axis=0
+        ),
+        output_tokens=np.concatenate(
+            [row.output_tokens for row in datasets], axis=0
+        ),
+        generations=np.concatenate([row.generations for row in datasets], axis=0),
+        cost=np.concatenate([row.cost for row in datasets], axis=0),
+    )
+
+
 def budget_multipliers(policy: RoutingPolicy) -> Dict[str, float]:
     return {t: float(policy.tiers[t].budget_multiplier) for t in TIERS}
 

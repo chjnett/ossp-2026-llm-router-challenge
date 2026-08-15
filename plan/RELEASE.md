@@ -83,7 +83,7 @@ curl -s -o /dev/null -w "%{http_code}\n" \
 
 ```bash
 PYTHONPATH=src python3 tools/export_artifact.py \
-  --config experiments/configs/t22-balanced-cap10.json
+  --config experiments/configs/t26-balanced-code-cap35.json
 ```
 
 이미지 동결 전에 챔피언이 바뀌면 위 설정 경로도 반드시 함께 바꾼다.

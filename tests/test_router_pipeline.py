@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "experiments"))
 
 from router.cache import ArrayCache, digest, texts_digest  # noqa: E402
-from router.data import TIERS, load_dataset  # noqa: E402
+from router.data import TIERS, combine_datasets, load_dataset  # noqa: E402
 from router.heads import (  # noqa: E402
     COST_HEADS,
     GATES,
@@ -37,6 +37,24 @@ def datasets():
         _DATA["train"] = load_dataset("train")
         _DATA["dev"] = load_dataset("dev")
     return _DATA["train"], _DATA["dev"]
+
+
+class CombinedDatasetTest(unittest.TestCase):
+    def test_public_train_dev_combination_preserves_rows(self) -> None:
+        train, dev = datasets()
+        combined = combine_datasets(train, dev)
+        self.assertEqual(2640, len(combined))
+        self.assertEqual("public-train-dev", combined.split)
+        self.assertEqual(train.episode_ids + dev.episode_ids, combined.episode_ids)
+        np.testing.assert_array_equal(train.score, combined.score[: len(train)])
+        np.testing.assert_array_equal(dev.cost, combined.cost[len(train) :])
+        self.assertEqual(combined.split, combined.inputs.split)
+        self.assertEqual(combined.split, combined.outcomes.split)
+
+    def test_combination_rejects_duplicate_episodes(self) -> None:
+        train, _ = datasets()
+        with self.assertRaisesRegex(ValueError, "중복"):
+            combine_datasets(train, train)
 
 
 class ConfigTest(unittest.TestCase):
@@ -282,6 +300,10 @@ class HeadContractTest(unittest.TestCase):
             "risk_quantile": 0.8,
             "unseen_family_risk": True,
             "risk_oof_folds": 4,
+            "conditional_risk_families": ["code_io"],
+            "conditional_risk_alpha": 10,
+            "conditional_risk_bins": 128,
+            "conditional_risk_strength": 2,
         }
         original = build_cost_head(spec)
         reversed_head = build_cost_head(spec)
@@ -297,6 +319,37 @@ class HeadContractTest(unittest.TestCase):
         revived_cost, _ = revived.predict(texts)
         np.testing.assert_allclose(original_cost, revived_cost)
 
+    def test_hash_cost_conditional_risk_only_inflates_active_family(self) -> None:
+        from router.features import FAMILY_INDEX, family_codes
+
+        train, dev = datasets()
+        base_spec = {
+            "name": "hash_ridge",
+            "risk_quantile": 0.8,
+            "unseen_family_risk": True,
+            "risk_oof_folds": 4,
+        }
+        guarded_spec = {
+            **base_spec,
+            "conditional_risk_families": ["code_io"],
+            "conditional_risk_alpha": 10,
+            "conditional_risk_bins": 128,
+            "conditional_risk_strength": 2,
+        }
+        base = build_cost_head(base_spec)
+        guarded = build_cost_head(guarded_spec)
+        base.fit(train)
+        guarded.fit(train)
+        base_cost, _ = base.predict(dev.texts)
+        guarded_cost, _ = guarded.predict(dev.texts)
+        active = family_codes(dev.texts) == FAMILY_INDEX["code_io"]
+        np.testing.assert_allclose(guarded_cost[~active], base_cost[~active])
+        self.assertTrue((guarded_cost[active, 1:] >= base_cost[active, 1:]).all())
+        self.assertGreater(
+            float((guarded_cost[active, 1:] - base_cost[active, 1:]).sum()),
+            0.0,
+        )
+
     def test_hash_cost_oof_risk_rejects_invalid_configuration(self) -> None:
         with self.assertRaisesRegex(ValueError, "2 이상"):
             build_cost_head(
@@ -304,6 +357,14 @@ class HeadContractTest(unittest.TestCase):
             )
         with self.assertRaisesRegex(ValueError, "risk_quantile"):
             build_cost_head({"name": "hash_ridge", "risk_oof_folds": 4})
+        with self.assertRaisesRegex(ValueError, "risk_oof_folds"):
+            build_cost_head(
+                {
+                    "name": "hash_ridge",
+                    "risk_quantile": 0.8,
+                    "conditional_risk_families": ["code_io"],
+                }
+            )
 
         design = np.arange(12, dtype=float).reshape(4, 3)
         target = np.arange(4, dtype=float)
@@ -313,6 +374,40 @@ class HeadContractTest(unittest.TestCase):
                 target,
                 [np.array([0, 1]), np.array([1, 2, 3])],
                 alpha=10.0,
+            )
+
+    def test_tiered_cost_uses_independent_heads_and_round_trips(self) -> None:
+        train, dev = datasets()
+        spec = {
+            "name": "tiered",
+            "heads": {
+                "fast": {"name": "family", "quantile": 0.5},
+                "balanced": {"name": "family", "quantile": 0.75},
+                "premium": {"name": "family", "quantile": 0.9},
+            },
+        }
+        head = build_cost_head(spec)
+        head.fit(train)
+        fast, _ = head.predict_tier(dev.texts[:40], "fast")
+        premium, _ = head.predict_tier(dev.texts[:40], "premium")
+        self.assertGreater(float((premium - fast).sum()), 0.0)
+        np.testing.assert_allclose(head.predict(dev.texts[:40])[0], fast)
+
+        revived = build_cost_head(spec)
+        revived.load_state(json.loads(json.dumps(head.state())), train.policy)
+        for tier in TIERS:
+            expected = head.predict_tier(dev.texts[:40], tier)[0]
+            actual = revived.predict_tier(dev.texts[:40], tier)[0]
+            np.testing.assert_allclose(expected, actual)
+
+        prediction = predict(Config(id="tiered-cost", cost=spec), train, dev.texts[:40])
+        self.assertIsNotNone(prediction.c_hat_by_tier)
+        np.testing.assert_allclose(prediction.cost_for_tier("fast"), fast)
+
+    def test_tiered_cost_requires_all_official_tiers(self) -> None:
+        with self.assertRaisesRegex(ValueError, "등급 오류"):
+            build_cost_head(
+                {"name": "tiered", "heads": {"fast": "family"}}
             )
 
     def test_roi_gate_blocks_the_known_bad_families(self) -> None:
@@ -334,6 +429,7 @@ class HeadContractTest(unittest.TestCase):
         spec = {
             "name": "tail_exposure",
             "fast_code_ax31_cap": 3.25,
+            "balanced_code_ax31_cap": 3.5,
             "premium_code_k1_cap": 200.0,
             "block_code_k1": True,
             "block_other_k1": True,
@@ -359,6 +455,7 @@ class HeadContractTest(unittest.TestCase):
         self.assertFalse(balanced[0, 1])
         self.assertFalse(premium[1, 2])
         self.assertFalse(fast[2, 1])
+        self.assertFalse(balanced[2, 1])
         self.assertFalse(premium[2, 2])
         self.assertFalse(fast[2, 2])
         self.assertFalse(premium[4, 2])

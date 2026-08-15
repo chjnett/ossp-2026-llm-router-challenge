@@ -14,23 +14,23 @@ SPDX-License-Identifier: Apache-2.0
 
 ## 현재 상태 (2026-08-16 갱신) — 이 절이 최신 작업판이다
 
-제출 챔피언 **`t22-balanced-cap10`**.
+제출 챔피언 **`t26-balanced-code-cap35`**.
 
 | | |
 | --- | ---: |
 | Dev 가중 (호스트 출력 → 공식 채점기) | **0.677670** |
 | 등급별 | fast 0.652273 · balanced 0.683239 · premium 0.705966 |
 | 예산 사용 | 1.1105/1.25 · 1.4817/2 · 2.5012/4 |
-| Train 5-fold OOF | **0.659616** |
-| Train 4/6/8-fold OOF | **0.658807 / 0.659276 / 0.659531** |
-| 파산 게이트 | N=2000 × 6종 × 3등급, 초과 0회 |
+| Train 5-fold OOF | **0.660213** |
+| Train 4/6/8-fold OOF | **0.658764 / 0.659276 / 0.659616** |
+| 파산 게이트 | 최종 재적합 기본 0/36,000 + 추가 seed 0/18,000 |
 | LOFO | **9/9 family × 세 tier 예산 통과**, 결합 0.652202 |
-| nested 판정 | T22 미실행; T17/T19는 소표본 inner 0점 |
+| nested 판정 | T26 미실행; T17/T19는 소표본 inner 0점 |
 | 최종 경계 | 초기 q80 피봇 3/36,000 → tier별 size penalty로 **0/36,000** |
-| 테스트 | 전체 391개 중 376 pass / 14 skip / 기존 Python 3.14 메시지 불일치 1 |
+| 테스트 | 전체 396개 중 381 pass / 14 skip / 기존 Python 3.14 메시지 불일치 1 |
 | 이미지 | 압축 63.4 MiB / rootfs 195.8 MiB (한도 1024 / 2048) |
 | 실행 | 2,640문항 최장 8.116초 (한도 90초) |
-| 아티팩트 | 223.2 KB · SHA-256 `ce83c720…5a956e` |
+| 아티팩트 | 223.5 KB · SHA-256 `2b192b34…9ef5c` |
 
 ### 8/14 실험 판정
 
@@ -73,7 +73,8 @@ SPDX-License-Identifier: Apache-2.0
 - [x] T21 same-family kNN → Balanced 신호는 확인했으나 안전 보정 후 이득이 작아 **미승격**
 - [x] T22 Balanced 상대비용 cap 10 → 4/5/6-fold 상승·8-fold 동률·Dev 상승
 - [x] T22 기본 0/36,000 및 LOFO 9/9 통과로 챔피언 승격
-- [ ] 추가 seed Fast `code_io` 5/2,000 반례를 점수 손실 없이 제거하는 비용-tail 모델
+- [x] 최종 Train+Dev 재적합으로 추가 seed Fast 반례 제거
+- [x] T26 Balanced `code_io` cap 3.5로 seed3027 반례 제거, 기본·추가 합계 0/54,000
 
 ### 지금 할 일 — 공격 연구와 제출 안전선 분리
 
@@ -88,6 +89,7 @@ SPDX-License-Identifier: Apache-2.0
 - [x] OOF 자기행 누수·입력 순서 불변성·artifact 왕복 전용 테스트 추가
 - [x] T19 아티팩트와 챔피언 ID 일치 및 Docker 제출 스택 재검증
 - [x] T22 아티팩트와 챔피언 ID 일치 및 linux/arm64 Docker 제출 스택 재검증
+- [x] T26 아티팩트와 챔피언 ID 일치 및 linux/arm64 Docker 제출 스택 재검증
 
 ### 제출 경화 상태
 
@@ -250,7 +252,9 @@ SPDX-License-Identifier: Apache-2.0
 
 ### 블렌드
 - [ ] Train out-of-fold 예측 위에서 T1/T2/T3/T5 가중치 학습
-- [ ] **Dev는 블렌드 학습에 쓰지 않는다** (RULES D2)
+- [ ] 후보 선택·블렌드 가중치 학습에는 **Dev를 쓰지 않는다** (RULES D2)
+- [ ] 챔피언 동결 뒤 제출 아티팩트만 공개 Train+Dev 전체로 최종 재적합하고,
+      고정된 안전 게이트의 통과/실패 판정과 런타임 검증만 다시 수행
 - [ ] 트랙별 킬 기준 적용 — 개선 없는 트랙은 버린다
 
 **게이트 P2** → Dev 가중이 P1 대비 개선, 3등급 예산 통과, 파산 게이트 재통과

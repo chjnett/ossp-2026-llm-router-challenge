@@ -80,7 +80,9 @@ class ArtifactTest(unittest.TestCase):
         provenance = artifact["provenance"]
         for key in ("commit", "fit_split", "fit_inputs_sha256", "policy_id"):
             self.assertIn(key, provenance)
-        self.assertEqual("train", provenance["fit_split"], "Dev로 적합하면 안 된다")
+        self.assertEqual("public-train-dev", provenance["fit_split"])
+        self.assertEqual(2640, provenance["fit_episodes"])
+        self.assertEqual({"train", "dev"}, set(provenance["fit_sources"]))
 
 
 class RuntimeTest(unittest.TestCase):

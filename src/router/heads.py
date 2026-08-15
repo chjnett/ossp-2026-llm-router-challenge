@@ -1336,6 +1336,11 @@ class HashRidgeCost:
         risk_quantile: float | None = None,
         unseen_family_risk: bool = False,
         risk_oof_folds: int | None = None,
+        conditional_risk_families: Sequence[str] = (),
+        conditional_risk_alpha: float = 10.0,
+        conditional_risk_bins: int = 128,
+        conditional_risk_strength: float = 1.0,
+        conditional_risk_min_family: int = 40,
     ) -> None:
         self.alpha = float(alpha)
         self.bins = int(bins)
@@ -1349,15 +1354,43 @@ class HashRidgeCost:
         self.risk_oof_folds = (
             None if risk_oof_folds is None else int(risk_oof_folds)
         )
+        unknown = set(conditional_risk_families) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 conditional risk 계열: {sorted(unknown)}")
+        self._conditional_codes = frozenset(
+            code
+            for code, family in enumerate(FAMILIES)
+            if family in conditional_risk_families
+        )
+        self.conditional_risk_alpha = float(conditional_risk_alpha)
+        self.conditional_risk_bins = int(conditional_risk_bins)
+        self.conditional_risk_strength = float(conditional_risk_strength)
+        self.conditional_risk_min_family = int(conditional_risk_min_family)
         if self.risk_quantile is not None and not 0.5 <= self.risk_quantile < 1.0:
             raise ValueError("risk_quantile은 0.5 이상 1.0 미만이어야 한다")
         if self.risk_oof_folds is not None and self.risk_oof_folds < 2:
             raise ValueError("risk_oof_folds는 2 이상이어야 한다")
         if self.risk_oof_folds is not None and self.risk_quantile is None:
             raise ValueError("risk_oof_folds에는 risk_quantile이 필요하다")
+        if self._conditional_codes and self.risk_oof_folds is None:
+            raise ValueError("conditional risk에는 risk_oof_folds가 필요하다")
+        if self._conditional_codes and self.risk_quantile is None:
+            raise ValueError("conditional risk에는 risk_quantile이 필요하다")
+        if not np.isfinite(self.conditional_risk_alpha) or self.conditional_risk_alpha <= 0:
+            raise ValueError("conditional_risk_alpha는 유한한 양수여야 한다")
+        if (
+            not np.isfinite(self.conditional_risk_strength)
+            or self.conditional_risk_strength < 0
+        ):
+            raise ValueError("conditional_risk_strength는 유한한 0 이상이어야 한다")
+        if self.conditional_risk_min_family < 2:
+            raise ValueError("conditional_risk_min_family는 2 이상이어야 한다")
         extract_hash_features((), self.bins)
+        extract_hash_features((), self.conditional_risk_bins)
         version = (
-            "v5"
+            "v6"
+            if self._conditional_codes
+            else "v5"
             if self.risk_oof_folds is not None
             else ("v4" if self.unseen_family_risk else "v3")
         )
@@ -1367,11 +1400,20 @@ class HashRidgeCost:
             if self.risk_oof_folds is not None
             else ""
         )
+        conditional = ""
+        if self._conditional_codes:
+            scope = "+".join(FAMILIES[code] for code in sorted(self._conditional_codes))
+            conditional = (
+                f",crf={scope},cra={self.conditional_risk_alpha:g},"
+                f"crb={self.conditional_risk_bins},"
+                f"crs={self.conditional_risk_strength:g},"
+                f"crm={self.conditional_risk_min_family}"
+            )
         self.version = (
             f"hashcost.{version}(f={HASH_FEATURE_VERSION},a={self.alpha:g},"
             f"b={self.bins},z={self.z:g},zl={self.z_light:g},"
             f"cal={int(self.calibration)},rq={self.risk_quantile}{unseen}"
-            f"{risk_oof})"
+            f"{risk_oof}{conditional})"
         )
 
     def fit(self, train: Dataset) -> None:
@@ -1434,6 +1476,35 @@ class HashRidgeCost:
         self._risk[:, 1:] = np.clip(self._risk[:, 1:], 1.0, 20.0)
         self._unseen_risk = self._risk.max(axis=0)
 
+        # family q분위 하나는 같은 계열의 모든 문항을 똑같이 비싸게 만든다.
+        # q분위까지는 위 scalar risk가 이미 가격에 넣었으므로, 남은 양의
+        # log 초과분만 prompt lexical 특징으로 예측한다. family 평균을 빼고
+        # 양수만 쓰면 평균적인 문항은 기존 비용과 정확히 같고, 설명 가능한
+        # tail만 추가로 비싸진다.
+        self._conditional_by_family: Dict[int, tuple] = {}
+        self._conditional_center: Dict[int, np.ndarray] = {}
+        if self._conditional_codes:
+            conditional_design = extract_hash_features(
+                train.texts, self.conditional_risk_bins
+            )
+            excess = np.log(
+                np.maximum(
+                    ratio / np.maximum(self._risk[codes], 1e-12),
+                    1.0,
+                )
+            )
+            excess[:, 0] = 0.0
+            for code in self._conditional_codes:
+                mask = codes == code
+                if mask.sum() < self.conditional_risk_min_family:
+                    continue
+                self._conditional_by_family[code] = _hash_ridge_fit(
+                    conditional_design[mask],
+                    excess[mask],
+                    self.conditional_risk_alpha,
+                )
+                self._conditional_center[code] = excess[mask].mean(axis=0)
+
     def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
         design = extract_hash_features(texts, self.bins)
         log_cost = _hash_ridge_apply(design, self._fitted)
@@ -1453,6 +1524,30 @@ class HashRidgeCost:
             if self.unseen_family_risk:
                 risk[~self._seen_families[codes]] = self._unseen_risk
             cost = cost * risk
+        if self._conditional_by_family and self.conditional_risk_strength:
+            conditional_design = extract_hash_features(
+                texts, self.conditional_risk_bins
+            )
+            codes = family_codes(texts)
+            correction = np.ones_like(cost)
+            for code, fitted in self._conditional_by_family.items():
+                mask = codes == code
+                if not mask.any():
+                    continue
+                log_excess = _hash_ridge_apply(conditional_design[mask], fitted)
+                log_excess = np.maximum(
+                    log_excess - self._conditional_center[code],
+                    0.0,
+                )
+                log_excess[:, 0] = 0.0
+                correction[mask] = np.exp(
+                    np.clip(
+                        self.conditional_risk_strength * log_excess,
+                        0.0,
+                        np.log(20.0),
+                    )
+                )
+            cost = cost * correction
         # 후보 모델은 정책상 싼 순서다. 회귀의 작은 교차를 그대로 두면
         # 포락선에서 음수 추가비용이 생기므로 단조성을 강제한다.
         cost[:, 1] = np.maximum(cost[:, 1], cost[:, 0] * (1.0 + 1e-12))
@@ -1468,6 +1563,14 @@ class HashRidgeCost:
             "log_hi": self._log_hi.tolist(),
             "calibration": self._calibration.tolist(),
             "risk": self._risk.tolist(),
+            "conditional_by_family": {
+                str(code): _pack_hash_ridge(fitted)
+                for code, fitted in self._conditional_by_family.items()
+            },
+            "conditional_center": {
+                str(code): center.tolist()
+                for code, center in self._conditional_center.items()
+            },
             **(
                 {
                     "seen_families": self._seen_families.tolist(),
@@ -1485,9 +1588,69 @@ class HashRidgeCost:
         self._log_hi = np.asarray(state["log_hi"], dtype=float)
         self._calibration = np.asarray(state["calibration"], dtype=float)
         self._risk = np.asarray(state["risk"], dtype=float)
+        self._conditional_by_family = {
+            int(code): _unpack_hash_ridge(fitted)
+            for code, fitted in state.get("conditional_by_family", {}).items()
+        }
+        self._conditional_center = {
+            int(code): np.asarray(center, dtype=float)
+            for code, center in state.get("conditional_center", {}).items()
+        }
         if self.unseen_family_risk:
             self._seen_families = np.asarray(state["seen_families"], dtype=bool)
             self._unseen_risk = np.asarray(state["unseen_risk"], dtype=float)
+
+
+@register(COST_HEADS, "tiered")
+class TieredCost:
+    """공식 budget tier마다 독립적인 비용 위험 가격을 사용한다.
+
+    실제 monetary cost 자체는 tier와 무관하지만, 초과 손실과 쓸 수 있는
+    headroom은 tier마다 다르다. Fast의 희소 tail을 비싸게 보는 보정이
+    Balanced/Premium의 정상 ROI 순위까지 바꾸지 않도록 적합 상태를 분리한다.
+    각 내부 헤드는 prompt만 보고, tier는 공식 런타임 인자로만 분기한다.
+    """
+
+    def __init__(self, heads: Dict[str, object]) -> None:
+        missing = set(TIERS) - set(heads)
+        extra = set(heads) - set(TIERS)
+        if missing or extra:
+            raise ValueError(
+                f"tiered cost heads 등급 오류: 누락={sorted(missing)}, "
+                f"초과={sorted(extra)}"
+            )
+        self._specs = {tier: heads[tier] for tier in TIERS}
+        self._heads = {
+            tier: build_cost_head(self._specs[tier]) for tier in TIERS
+        }
+        joined = ";".join(
+            f"{tier}={self._heads[tier].version}" for tier in TIERS
+        )
+        self.version = f"tieredcost.v1({joined})"
+
+    def fit(self, train: Dataset) -> None:
+        for head in self._heads.values():
+            head.fit(train)
+
+    def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
+        return self.predict_tier(texts, "fast")
+
+    def predict_tier(
+        self, texts: Sequence[str], tier: str
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if tier not in self._heads:
+            raise ValueError(f"알 수 없는 tier: {tier!r}")
+        return self._heads[tier].predict(texts)
+
+    def state(self) -> dict:
+        return {"heads": {tier: self._heads[tier].state() for tier in TIERS}}
+
+    def load_state(self, state: dict, policy) -> None:
+        rows = state["heads"]
+        if set(rows) != set(TIERS):
+            raise ValueError("tiered cost 아티팩트의 tier 구성이 다르다")
+        for tier in TIERS:
+            self._heads[tier].load_state(rows[tier], policy)
 
 
 @register(COST_HEADS, "family")
@@ -1869,6 +2032,7 @@ class TailExposureGate:
         min_latex: float = 1.0,
         min_paren_depth: float = 3.0,
         fast_code_ax31_cap: float = float("inf"),
+        balanced_code_ax31_cap: float = float("inf"),
         premium_code_k1_cap: float = float("inf"),
         block_code_k1: bool = False,
         block_other_k1: bool = False,
@@ -1880,6 +2044,7 @@ class TailExposureGate:
         self.min_latex = float(min_latex)
         self.min_paren_depth = float(min_paren_depth)
         self.fast_code_ax31_cap = float(fast_code_ax31_cap)
+        self.balanced_code_ax31_cap = float(balanced_code_ax31_cap)
         self.premium_code_k1_cap = float(premium_code_k1_cap)
         self.block_code_k1 = bool(block_code_k1)
         self.block_other_k1 = bool(block_other_k1)
@@ -1889,6 +2054,7 @@ class TailExposureGate:
             f"num={self.max_log_number:g},digit={self.digit_ratio:g},"
             f"latex={self.min_latex:g},depth={self.min_paren_depth:g},"
             f"code31={self.fast_code_ax31_cap:g},"
+            f"balcode31={self.balanced_code_ax31_cap:g},"
             f"codek1={self.premium_code_k1_cap:g},"
             f"blockcodek1={int(self.block_code_k1)},"
             f"blockotherk1={int(self.block_other_k1)})+"
@@ -1927,6 +2093,10 @@ class TailExposureGate:
             allow[numeric_tail, 1] = False
         if tier == "fast":
             allow[code & (relative[:, 1] > self.fast_code_ax31_cap), 1] = False
+        if tier == "balanced":
+            allow[
+                code & (relative[:, 1] > self.balanced_code_ax31_cap), 1
+            ] = False
         if tier == "premium":
             allow[deep_latex, 2] = False
             allow[code & (relative[:, 2] > self.premium_code_k1_cap), 2] = False

@@ -1,10 +1,10 @@
 {
-  "id": "t22-balanced-cap10",
-  "at": "2026-08-15T15:41:53+00:00",
-  "commit": "811d673e1fd93d8565235f047b6185f23c75f1b2",
+  "id": "t26-balanced-code-cap35",
+  "at": "2026-08-15T16:53:48+00:00",
+  "commit": "3dc3b32f25c4f16c6a3353bc7359b5088adee5e7",
   "folds": 5,
   "config": {
-    "id": "t22-balanced-cap10",
+    "id": "t26-balanced-code-cap35",
     "score": {
       "name": "tiered",
       "heads": {
@@ -58,6 +58,7 @@
       "min_latex": 1,
       "min_paren_depth": 3,
       "fast_code_ax31_cap": 3.25,
+      "balanced_code_ax31_cap": 3.5,
       "premium_code_k1_cap": 200,
       "block_code_k1": true,
       "block_other_k1": true
@@ -79,15 +80,15 @@
         "premium": 70
       }
     },
-    "note": "T22: 4/5/6-fold 상승, 8-fold 동률인 Balanced 예측 상대비용 cap=10."
+    "note": "T26: T22에서 Balanced code_io ax31 상대비용 3.5 초과만 차단."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
     "cost": "hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4)",
-    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
+    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.659616477273",
+    "final_score": "0.660213068182",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -103,14 +104,14 @@
         }
       },
       "balanced": {
-        "score": "0.664346590909",
-        "budget_ratio": "1.451201996656",
-        "headroom": "0.548798003344",
+        "score": "0.666335227273",
+        "budget_ratio": "1.45079857844",
+        "headroom": "0.54920142156",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 351,
-          "ax31": 1406,
+          "ax31-light": 369,
+          "ax31": 1388,
           "axk1-think": 3
         }
       },
@@ -146,13 +147,13 @@
       },
       "balanced": {
         "score": "0.683238636364",
-        "budget_ratio": "1.481716662695",
-        "headroom": "0.518283337305",
+        "budget_ratio": "1.479338724726",
+        "headroom": "0.520661275274",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 160,
-          "ax31": 718,
+          "ax31-light": 165,
+          "ax31": 713,
           "axk1-think": 2
         }
       },
@@ -172,6 +173,7 @@
   },
   "gate": {
     "ran": true,
+    "fit_split": "public-train-dev",
     "trials": 2000,
     "passed": true,
     "scenarios": {
@@ -207,5 +209,5 @@
       }
     }
   },
-  "seconds": 142.87
+  "seconds": 161.48
 }

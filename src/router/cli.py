@@ -80,7 +80,12 @@ def _select(inputs, tier: str, deadline: float) -> list[str]:
         else score_head.predict(texts)
     )
     check("점수 예측")
-    c_hat, sd = cost_head.predict(texts)
+    predict_cost_tier = getattr(cost_head, "predict_tier", None)
+    c_hat, sd = (
+        predict_cost_tier(texts, tier)
+        if callable(predict_cost_tier)
+        else cost_head.predict(texts)
+    )
     check("비용 예측")
     allow_tier = getattr(gate, "allow_tier", None)
     allow = (
