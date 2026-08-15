@@ -635,6 +635,107 @@ class BlendScoreTest(unittest.TestCase):
             })
 
 
+class FamilyBlendScoreTest(unittest.TestCase):
+    def test_only_active_families_change_and_state_round_trips(self) -> None:
+        from router.features import FAMILY_INDEX, family_codes
+
+        train, dev = datasets()
+        base_spec = {"name": "hash_ridge", "alpha": 32000, "bins": 256}
+        challenger_spec = {
+            "name": "response_shape",
+            "strength": 0.75,
+            "active_families": ["sym_math", "code_io"],
+        }
+        spec = {
+            "name": "family_blend",
+            "base": base_spec,
+            "challenger": challenger_spec,
+            "weight": 0.25,
+            "active_families": ["sym_math", "code_io"],
+        }
+        base = build_score_head(base_spec)
+        base.fit(train)
+        base_prediction = base.predict(dev.texts)
+        blend = build_score_head(spec)
+        blend.fit(train)
+        prediction = blend.predict(dev.texts)
+        codes = family_codes(dev.texts)
+        active = np.isin(
+            codes, [FAMILY_INDEX["sym_math"], FAMILY_INDEX["code_io"]]
+        )
+        np.testing.assert_array_equal(prediction[~active], base_prediction[~active])
+        self.assertGreater(float(np.abs(prediction[active] - base_prediction[active]).sum()), 0.0)
+
+        revived = build_score_head(spec)
+        revived.load_state(json.loads(json.dumps(blend.state())))
+        np.testing.assert_allclose(prediction, revived.predict(dev.texts), atol=1e-12)
+
+    def test_rejects_invalid_scope_and_weight(self) -> None:
+        with self.assertRaisesRegex(ValueError, "비어"):
+            build_score_head({
+                "name": "family_blend",
+                "base": "family",
+                "challenger": "global",
+                "weight": 0.2,
+                "active_families": [],
+            })
+        with self.assertRaisesRegex(ValueError, "1 이하"):
+            build_score_head({
+                "name": "family_blend",
+                "base": "family",
+                "challenger": "global",
+                "weight": 1.1,
+                "active_families": ["sym_math"],
+            })
+
+
+class FamilyHashRidgeScoreTest(unittest.TestCase):
+    def test_local_models_change_active_families_and_round_trip(self) -> None:
+        from router.features import FAMILY_INDEX, family_codes
+
+        train, dev = datasets()
+        local_spec = {
+            "name": "family_hash_ridge",
+            "alpha": 1000,
+            "bins": 64,
+            "active_families": ["sym_math", "code_io"],
+        }
+        global_head = build_score_head(
+            {"name": "hash_ridge", "alpha": 1000, "bins": 64}
+        )
+        local_head = build_score_head(local_spec)
+        global_head.fit(train)
+        local_head.fit(train)
+        global_prediction = global_head.predict(dev.texts)
+        local_prediction = local_head.predict(dev.texts)
+        codes = family_codes(dev.texts)
+        inactive = ~np.isin(
+            codes, [FAMILY_INDEX["sym_math"], FAMILY_INDEX["code_io"]]
+        )
+        np.testing.assert_allclose(
+            local_prediction[inactive], global_prediction[inactive], atol=1e-12
+        )
+        self.assertGreater(
+            float(np.abs(local_prediction[~inactive] - global_prediction[~inactive]).sum()),
+            0.0,
+        )
+
+        revived = build_score_head(local_spec)
+        revived.load_state(json.loads(json.dumps(local_head.state())))
+        np.testing.assert_allclose(
+            local_prediction, revived.predict(dev.texts), atol=1e-12
+        )
+
+    def test_requires_nonempty_known_scope(self) -> None:
+        with self.assertRaisesRegex(ValueError, "비어"):
+            build_score_head({"name": "family_hash_ridge"})
+        with self.assertRaisesRegex(ValueError, "알 수 없는"):
+            build_score_head({
+                "name": "family_hash_ridge",
+                "active_families": ["not-a-family"],
+            })
+
+
 class TieredScoreTest(unittest.TestCase):
     def test_uses_independent_heads_and_round_trips(self) -> None:
         train, dev = datasets()

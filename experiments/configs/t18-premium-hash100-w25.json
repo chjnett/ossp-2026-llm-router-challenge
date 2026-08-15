@@ -1,0 +1,73 @@
+{
+  "id": "t18-premium-hash100-w25",
+  "score": {
+    "name": "tiered",
+    "heads": {
+      "fast": {
+        "name": "hash_ridge",
+        "alpha": 32000,
+        "bins": 256
+      },
+      "balanced": {
+        "name": "hash_ridge",
+        "alpha": 32000,
+        "bins": 256
+      },
+      "premium": {
+        "name": "family_blend",
+        "base": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
+        "challenger": {
+          "name": "hash_ridge",
+          "alpha": 100,
+          "bins": 256
+        },
+        "weight": 0.25,
+        "active_families": [
+          "sym_math",
+          "code_io",
+          "other"
+        ]
+      }
+    }
+  },
+  "cost": {
+    "name": "hash_ridge",
+    "alpha": 100,
+    "bins": 256,
+    "risk_quantile": 0.8,
+    "unseen_family_risk": true,
+    "risk_oof_folds": 4
+  },
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40,
+    "digit_ratio": 0.6,
+    "min_latex": 1,
+    "min_paren_depth": 3,
+    "fast_code_ax31_cap": 3.25,
+    "premium_code_k1_cap": 200,
+    "block_code_k1": true,
+    "block_other_k1": true
+  },
+  "alloc": {
+    "headroom": {
+      "fast": 0.75,
+      "balanced": 0.9,
+      "premium": 0.9
+    },
+    "size_penalty": {
+      "fast": 2.25,
+      "balanced": 2.5,
+      "premium": 2.5
+    },
+    "mu": 0,
+    "relative_cost_cap": {
+      "premium": 70
+    }
+  },
+  "note": "T18 탐색: Premium 세 취약 family에 hash100 0.25 조건부 혼합."
+}

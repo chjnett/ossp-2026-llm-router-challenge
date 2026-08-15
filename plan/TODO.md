@@ -14,23 +14,23 @@ SPDX-License-Identifier: Apache-2.0
 
 ## 현재 상태 (2026-08-15 갱신) — 이 절이 최신 작업판이다
 
-제출 챔피언 **`t17-oof-risk-sp-tiered`**.
+제출 챔피언 **`t19-premium-local-a1000-w75`**.
 
 | | |
 | --- | ---: |
-| Dev 가중 (호스트 출력 → 공식 채점기) | **0.676648** |
-| 등급별 | fast 0.652273 · balanced 0.681534 · premium 0.704261 |
-| 예산 사용 | 1.1105/1.25 · 1.5173/2 · 2.5156/4 |
-| Train 5-fold OOF | **0.658509** |
-| Train 4/6/8-fold OOF | **0.658281 / 0.658153 / 0.658878** |
+| Dev 가중 (호스트 출력 → 공식 채점기) | **0.677159** |
+| 등급별 | fast 0.652273 · balanced 0.681534 · premium 0.705966 |
+| 예산 사용 | 1.1105/1.25 · 1.5173/2 · 2.5012/4 |
+| Train 5-fold OOF | **0.659190** |
+| Train 4/6/8-fold OOF | **0.658608 / 0.658892 / 0.659545** |
 | 파산 게이트 | N=2000 × 6종 × 3등급, 초과 0회 |
-| LOFO | **9/9 family × 세 tier 예산 통과**, 결합 0.652131 |
-| nested 판정 | T17 강축소 후보는 소표본 inner 예산 실패; 복수 fold+LOFO 근거로 승격 |
+| LOFO | **9/9 family × 세 tier 예산 통과**, 결합 0.652287 |
+| nested 판정 | T17/T19 모두 소표본 inner 0점; 복수 fold+LOFO 근거로 승격 |
 | 최종 경계 | 초기 q80 피봇 3/36,000 → tier별 size penalty로 **0/36,000** |
-| 테스트 | 전체 382개 중 367 pass / 14 skip / 기존 Python 3.14 메시지 불일치 1 |
+| 테스트 | 전체 386개 중 371 pass / 14 skip / 기존 Python 3.14 메시지 불일치 1 |
 | 이미지 | 압축 63.4 MiB / rootfs 195.8 MiB (한도 1024 / 2048) |
 | 실행 | 2,640문항 최장 8.116초 (한도 90초) |
-| 아티팩트 | 86.0 KB · SHA-256 `39ec4e6…d45529a` |
+| 아티팩트 | 223.2 KB · SHA-256 `cc8c214…881fcd` |
 
 ### 8/14 실험 판정
 
@@ -65,6 +65,9 @@ SPDX-License-Identifier: Apache-2.0
 - [x] T17 4/5/6/8-fold 모두 T15 초과, LOFO 9/9 전 tier 통과
 - [x] T17 경계 실패 3/36,000을 tier별 size penalty로 0/36,000으로 피봇
 - [x] T17 arm64 전체 제출 스택·ID/순서 감사·공식 채점·런타임 통과
+- [x] T18 기존 보조 헤드 조건부 혼합 → fold 혼재/Dev 하락으로 **폐기**
+- [x] T19 Premium 취약 family local ridge → 4/5/6/8-fold·Dev·LOFO 동시 상승
+- [x] T19 0/36,000 및 linux/arm64 전체 제출 스택 통과로 챔피언 승격
 
 ### 지금 할 일 — 공격 연구와 제출 안전선 분리
 
@@ -77,7 +80,7 @@ SPDX-License-Identifier: Apache-2.0
 - [x] T17이 복수 fold 안정성 통과; nested 소표본 실패는 명시적으로 유지
 - [x] leave-one-family-out 미지 계열 폴백 평가
 - [x] OOF 자기행 누수·입력 순서 불변성·artifact 왕복 전용 테스트 추가
-- [x] T17 아티팩트와 챔피언 ID 일치 및 Docker 제출 스택 재검증
+- [x] T19 아티팩트와 챔피언 ID 일치 및 Docker 제출 스택 재검증
 
 ### 제출 경화 상태
 

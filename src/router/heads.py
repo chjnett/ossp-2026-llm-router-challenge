@@ -173,6 +173,80 @@ class HashRidgeScore:
         self._fitted = _unpack_hash_ridge(state["fitted"])
 
 
+@register(SCORE_HEADS, "family_hash_ridge")
+class FamilyHashRidgeScore:
+    """선택한 prompt family마다 독립적인 hashed ridge를 적합한다.
+
+    전역 ridge는 서로 다른 계열의 lexical 계수를 하나로 평균낸다. 특정 계열의
+    신호가 반대 방향이면 강한 전역 축소만으로는 순위를 복원할 수 없다. 충분한
+    표본이 있는 사전 지정 계열에는 로컬 계수를 쓰고, 그 밖에는 전역 적합으로
+    폴백한다.
+    """
+
+    def __init__(
+        self,
+        alpha: float = 1000.0,
+        bins: int = 256,
+        active_families: Sequence[str] = (),
+        min_family: int = 40,
+    ) -> None:
+        self.alpha = float(alpha)
+        self.bins = int(bins)
+        self.min_family = int(min_family)
+        unknown = set(active_families) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 계열: {sorted(unknown)}")
+        if not active_families:
+            raise ValueError("family_hash_ridge active_families는 비어 있으면 안 된다")
+        self._active_codes = frozenset(
+            i for i, name in enumerate(FAMILIES) if name in active_families
+        )
+        extract_hash_features((), self.bins)
+        scope = "+".join(sorted(active_families))
+        self.version = (
+            f"familyhashscore.v1(f={HASH_FEATURE_VERSION},a={self.alpha:g},"
+            f"b={self.bins},min={self.min_family},scope={scope})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        design = extract_hash_features(train.texts, self.bins)
+        self._global = _hash_ridge_fit(design, train.score, self.alpha)
+        codes = family_codes(train.texts)
+        self._by_family: Dict[int, tuple] = {}
+        for code in self._active_codes:
+            mask = codes == code
+            if mask.sum() >= self.min_family:
+                self._by_family[code] = _hash_ridge_fit(
+                    design[mask], train.score[mask], self.alpha
+                )
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        design = extract_hash_features(texts, self.bins)
+        out = _hash_ridge_apply(design, self._global)
+        codes = family_codes(texts)
+        for code, fitted in self._by_family.items():
+            mask = codes == code
+            if mask.any():
+                out[mask] = _hash_ridge_apply(design[mask], fitted)
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "global": _pack_hash_ridge(self._global),
+            "by_family": {
+                str(code): _pack_hash_ridge(fitted)
+                for code, fitted in self._by_family.items()
+            },
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._global = _unpack_hash_ridge(state["global"])
+        self._by_family = {
+            int(code): _unpack_hash_ridge(fitted)
+            for code, fitted in state["by_family"].items()
+        }
+
+
 @register(SCORE_HEADS, "global")
 class GlobalScore:
     """전체 평균. 아무 신호도 안 쓰는 하한선."""
@@ -738,6 +812,70 @@ class BlendScore:
             raise ValueError("blend 아티팩트의 내부 헤드 수가 설정과 다르다")
         for head, row in zip(self._heads, rows, strict=True):
             head.load_state(row)
+
+
+@register(SCORE_HEADS, "family_blend")
+class FamilyBlendScore:
+    """선택한 prompt family에서만 보조 점수 헤드를 섞는다.
+
+    전역 blend는 이미 잘 맞는 계열의 순위까지 바꾼다. 이 래퍼는 비활성
+    계열에서 base 예측을 그대로 반환하고, Train 진단으로 미리 지정한 계열만
+    ``(1-weight) * base + weight * challenger``로 보정한다. family 판별은
+    prompt 본문만 사용하며 평가 메타데이터를 보지 않는다.
+    """
+
+    def __init__(
+        self,
+        base,
+        challenger,
+        weight: float,
+        active_families: Sequence[str],
+    ) -> None:
+        self.weight = float(weight)
+        if not np.isfinite(self.weight) or not 0.0 <= self.weight <= 1.0:
+            raise ValueError("family_blend weight는 0 이상 1 이하여야 한다")
+        unknown = set(active_families) - set(FAMILIES)
+        if unknown:
+            raise ValueError(f"알 수 없는 계열: {sorted(unknown)}")
+        if not active_families:
+            raise ValueError("family_blend active_families는 비어 있으면 안 된다")
+        self._active_codes = frozenset(
+            i for i, name in enumerate(FAMILIES) if name in active_families
+        )
+        self._base = build_score_head(base)
+        self._challenger = build_score_head(challenger)
+        scope = "+".join(sorted(active_families))
+        self.version = (
+            f"familyblend.v1(w={self.weight:g},f={scope},"
+            f"base={self._base.version},challenger={self._challenger.version})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        self._base.fit(train)
+        self._challenger.fit(train)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        base = self._base.predict(texts)
+        active = np.isin(family_codes(texts), tuple(self._active_codes))
+        if not active.any() or self.weight == 0.0:
+            return base
+        challenger = self._challenger.predict(texts)
+        out = base.copy()
+        out[active] = (
+            (1.0 - self.weight) * base[active]
+            + self.weight * challenger[active]
+        )
+        return np.clip(out, 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {
+            "base": self._base.state(),
+            "challenger": self._challenger.state(),
+        }
+
+    def load_state(self, state: dict) -> None:
+        self._base.load_state(state["base"])
+        self._challenger.load_state(state["challenger"])
 
 
 @register(SCORE_HEADS, "tiered")

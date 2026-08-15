@@ -1,14 +1,47 @@
 {
-  "id": "t17-oof-risk-sp-tiered",
-  "at": "2026-08-15T02:23:45+00:00",
-  "commit": "ab92e6f00dd8a72680d06975cba0d9f1f513c9d6",
+  "id": "t19-premium-local-a1000-w75",
+  "at": "2026-08-15T11:46:41+00:00",
+  "commit": "7f872fb7dde678666d571564981b41057ba3a9c3",
   "folds": 5,
   "config": {
-    "id": "t17-oof-risk-sp-tiered",
+    "id": "t19-premium-local-a1000-w75",
     "score": {
-      "name": "hash_ridge",
-      "alpha": 32000,
-      "bins": 256
+      "name": "tiered",
+      "heads": {
+        "fast": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
+        "balanced": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
+        "premium": {
+          "name": "family_blend",
+          "base": {
+            "name": "hash_ridge",
+            "alpha": 32000,
+            "bins": 256
+          },
+          "challenger": {
+            "name": "family_hash_ridge",
+            "alpha": 1000,
+            "bins": 64,
+            "active_families": [
+              "sym_math",
+              "code_io"
+            ],
+            "min_family": 40
+          },
+          "weight": 0.75,
+          "active_families": [
+            "sym_math",
+            "code_io"
+          ]
+        }
+      }
     },
     "cost": {
       "name": "hash_ridge",
@@ -20,12 +53,12 @@
     },
     "gate": {
       "name": "tail_exposure",
-      "max_log_number": 40.0,
+      "max_log_number": 40,
       "digit_ratio": 0.6,
-      "min_latex": 1.0,
-      "min_paren_depth": 3.0,
+      "min_latex": 1,
+      "min_paren_depth": 3,
       "fast_code_ax31_cap": 3.25,
-      "premium_code_k1_cap": 200.0,
+      "premium_code_k1_cap": 200,
       "block_code_k1": true,
       "block_other_k1": true
     },
@@ -40,20 +73,20 @@
         "balanced": 2.5,
         "premium": 2.5
       },
-      "mu": 0.0,
+      "mu": 0,
       "relative_cost_cap": {
-        "premium": 70.0
+        "premium": 70
       }
     },
-    "note": "T17: 4-fold OOF q80 비용 tail + tier별 소표본 마진. 2000회 경계 실패 3건을 최소 보정."
+    "note": "T19 탐색: Premium sym_math/code_io local hash64 alpha=1000, weight=0.75."
   },
   "versions": {
-    "score": "hashscore.v1(f=hash-regex-text.v1,a=32000,b=256)",
+    "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
     "cost": "hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4)",
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.658508522727",
+    "final_score": "0.659190340909",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -81,21 +114,21 @@
         }
       },
       "premium": {
-        "score": "0.684943181818",
-        "budget_ratio": "2.683108009544",
-        "headroom": "1.316891990456",
+        "score": "0.687215909091",
+        "budget_ratio": "2.915608544773",
+        "headroom": "1.084391455227",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 103,
-          "ax31": 1335,
-          "axk1-think": 322
+          "ax31-light": 111,
+          "ax31": 1343,
+          "axk1-think": 306
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.676647727273",
+    "final_score": "0.677159090909",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -123,15 +156,15 @@
         }
       },
       "premium": {
-        "score": "0.704261363636",
-        "budget_ratio": "2.515576500858",
-        "headroom": "1.484423499142",
+        "score": "0.705965909091",
+        "budget_ratio": "2.501237081381",
+        "headroom": "1.498762918619",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 53,
-          "ax31": 664,
-          "axk1-think": 163
+          "ax31-light": 59,
+          "ax31": 670,
+          "axk1-think": 151
         }
       }
     }
@@ -173,5 +206,5 @@
       }
     }
   },
-  "seconds": 163.66
+  "seconds": 161.25
 }

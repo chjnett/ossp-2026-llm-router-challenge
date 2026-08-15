@@ -25,11 +25,11 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t17-oof-risk-sp-tiered`**다.
+현재 제출 챔피언은 **`t19-premium-local-a1000-w75`**다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
-| 점수 헤드 `[Q]` | 14개 dense + 256-bin signed unigram/bigram의 강축소 `hash_ridge(alpha=32000)` |
+| 점수 헤드 `[Q]` | Fast/Balanced는 강축소 `hash_ridge(alpha=32000)`. Premium의 `sym_math`·`code_io`만 64-bin family-local ridge(alpha=1000)를 75% 혼합 |
 | 비용 헤드 `[C]` | hashed log-cost ridge + **4-fold 내부 OOF** 상대오차 q80. 미관측 계열은 관측 계열 최악 q80으로 폴백 |
 | 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX 및 `code_io`·`other` K1 꼬리만 차단 |
 | 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 75%, Balanced/Premium 90%, Premium 문항별 상대비용 cap 70 |
@@ -40,16 +40,16 @@ SPDX-License-Identifier: Apache-2.0
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.658509** |
-| Train 4/6/8-fold OOF | **0.658281 / 0.658153 / 0.658878** |
-| Dev 가중 | **0.676648** |
-| Dev tier | Fast 0.652273 · Balanced 0.681534 · Premium 0.704261 |
-| Dev 비용 비율 | 1.1105 / 1.5173 / 2.5156 (한도 1.25 / 2 / 4) |
+| Train 5-fold OOF | **0.659190** |
+| Train 4/6/8-fold OOF | **0.658608 / 0.658892 / 0.659545** |
+| Dev 가중 | **0.677159** |
+| Dev tier | Fast 0.652273 · Balanced 0.681534 · Premium 0.705966 |
+| Dev 비용 비율 | 1.1105 / 1.5173 / 2.5012 (한도 1.25 / 2 / 4) |
 | 스트레스 | **36,000 tier-scenario 중 초과 0회** |
-| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652131 |
-| nested 4×3 | alpha=100 대조군 선택. 강축소 후보의 소표본 예산 실패를 숨기지 않음 |
+| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652287 |
+| nested 4×3 | T17/T19 모두 inner 0점. 소표본 예산 실패를 숨기지 않음 |
 | arm64 실행 | 2,640문항 최장 8.116초 / 한도 90초 |
-| 아티팩트 | 86.0 KB · SHA-256 `39ec4e6de6701c1727c5608438c9df006d43d8bf6262d2e2eb3016a25d45529a` |
+| 아티팩트 | 223.2 KB · SHA-256 `cc8c214c20977b0ebb8fe0606d87ff8950f48faf5c30d88363be61b17c881fcd` |
 
 #### 최신 피벗 판정
 
@@ -117,8 +117,18 @@ SPDX-License-Identifier: Apache-2.0
 21. nested 4×3에서는 alpha=100 대조군이 다시 선택됐다. T17의 nested 통과를
     주장하지 않으며, 최종 Train 크기의 복수 fold·LOFO·36,000회 게이트를
     승격 근거로 사용한다.
+22. T18은 hash-regex와의 선택 격차 0.018722 중 `sym_math`·`code_io`가
+    0.019716을 설명하고 Premium 손실이 0.010739임을 확인했다. 기존
+    family-mixture/response 보조 헤드는 최대 OOF +0.0008에 Dev가 하락하고
+    fold 효과도 혼재해 전부 기각했다.
+23. T19는 Premium의 두 취약 family에서만 64-bin local hash ridge를 적합하고
+    전역 예측과 75% 혼합했다. 비활성 family는 T17 예측과 완전히 동일하다.
+    T17 대비 4/5/6/8-fold가 모두 상승하고 Dev도 +0.000511, LOFO도 상승했다.
+24. T19 역시 nested inner에서는 T17과 함께 0점이라 nested 개선을 주장하지
+    않는다. 대신 0/36,000 스트레스와 linux/arm64 전체 제출 스택을 다시
+    통과한 뒤 챔피언으로 승격했다.
 
-T17은 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+T19는 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
 hash-regex 0.695369보다는 낮다. 다음 공격 트랙도 T17의 0/36,000 안전선을
 고정한 채 복수 fold와 미공개 분포 일반화가 함께 개선되는 경우에만 승격한다.
 
