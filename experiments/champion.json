@@ -1,10 +1,10 @@
 {
-  "id": "t34-aggressive-prem07-unblockcode",
-  "at": "2026-08-16T19:40:00+00:00",
-  "commit": "4cb9786",
+  "id": "t35-prem-q077-blockcode",
+  "at": "2026-08-16T20:00:00+00:00",
+  "commit": "8a23492",
   "folds": 5,
   "config": {
-    "id": "t34-aggressive-prem07-unblockcode",
+    "id": "t35-prem-q077-blockcode",
     "score": {
       "name": "tiered",
       "heads": {
@@ -30,7 +30,7 @@
       "heads": {
         "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
         "balanced": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
-        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.7, "unseen_family_risk": true, "risk_oof_folds": 4}
+        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.77, "unseen_family_risk": true, "risk_oof_folds": 4}
       }
     },
     "gate": {
@@ -42,7 +42,7 @@
       "fast_code_ax31_cap": 3.25,
       "balanced_code_ax31_cap": 3.5,
       "premium_code_k1_cap": 200,
-      "block_code_k1": false,
+      "block_code_k1": true,
       "block_other_k1": true
     },
     "alloc": {
@@ -51,20 +51,19 @@
       "mu": 0,
       "relative_cost_cap": {"balanced": 10, "premium": 70}
     },
-    "note": "T34(공격): Premium risk_quantile 0.7 + code_io K1 차단 해제. C4 개정(파산 ≤0.1%). 기대 +0.0022, Premium 파산 12/12,000."
+    "note": "T35: Premium risk_quantile 0.77 + code_io K1 차단. LOFO 통과(결합 3.94) + 스트레스 1/12,000."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
-    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.7,ur=1,rof=4))",
-    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=0,blockotherk1=1)+none.v1"
+    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.77,ur=1,rof=4))",
+    "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.666435",
-    "all_passed": true,
-    "note": "5-fold OOF. 복수 fold(4/6/8)는 별도 재검증 대상."
+    "final_score": "0.664645",
+    "all_passed": true
   },
   "dev": {
-    "final_score": "0.683551136364",
+    "final_score": "0.682528409091",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -80,10 +79,10 @@
         "counts": {"ax31-light": 119, "ax31": 759, "axk1-think": 2}
       },
       "premium": {
-        "score": "0.719602272727",
-        "budget_ratio": "2.869344167016",
+        "score": "0.716193181818",
+        "budget_ratio": "2.646166172001",
         "passed": true,
-        "counts": {"ax31-light": 68, "ax31": 581, "axk1-think": 231}
+        "counts": {"ax31-light": 68, "ax31": 616, "axk1-think": 196}
       }
     }
   },
@@ -92,19 +91,19 @@
     "fit_split": "public-train-dev",
     "trials": 2000,
     "passed": true,
-    "note": "C4 개정: 등급별 파산 ≤0.1%(12/12,000) 허용. Premium 12회 = size-200 1 + shift-extreme 4 + family-dominant 7.",
+    "note": "스트레스 Premium 1/12,000(0.008%) — size-200 1회. LOFO 9/9 + 결합 통과(Premium 3.94).",
     "scenarios": {
       "size-200": {"fast": 0, "balanced": 0, "premium": 1},
       "size-800": {"fast": 0, "balanced": 0, "premium": 0},
       "size-2640": {"fast": 0, "balanced": 0, "premium": 0},
       "shift-mild(conc=5)": {"fast": 0, "balanced": 0, "premium": 0},
-      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 4},
-      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 7}
+      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 0},
+      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 0}
     }
   },
   "adopted": {
-    "reason": "파레토 프론티어에서 EV 최적(q≈0.70) 채택. T30(0.681335, 0리스크) 대비 +0.0022, Premium 파산 0.1% 감수. 기대 손실 0.0002 < 기대 이득 0.0022.",
-    "replaced": "t30-headroom-b1075-p100",
-    "cv_delta": 0.002983
+    "reason": "LOFO 재검증에서 T34(q=0.7, code 해제)가 결합 Premium 4.5 초과로 실패. LOFO를 통과하는 최대 공격점 q=0.77로 보정. T30 대비 +0.0012, 스트레스 0.008%.",
+    "replaced": "t34-aggressive-prem07-unblockcode",
+    "cv_delta": 0.001193
   }
 }

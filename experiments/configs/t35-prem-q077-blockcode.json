@@ -1,0 +1,50 @@
+{
+  "id": "t35-prem-q077-blockcode",
+  "score": {
+    "name": "tiered",
+    "heads": {
+      "fast": {"name": "hash_ridge", "alpha": 32000, "bins": 256},
+      "balanced": {"name": "hash_ridge", "alpha": 32000, "bins": 256},
+      "premium": {
+        "name": "family_blend",
+        "base": {"name": "hash_ridge", "alpha": 32000, "bins": 256},
+        "challenger": {
+          "name": "family_hash_ridge",
+          "alpha": 1000,
+          "bins": 64,
+          "active_families": ["sym_math", "code_io"],
+          "min_family": 40
+        },
+        "weight": 0.75,
+        "active_families": ["sym_math", "code_io"]
+      }
+    }
+  },
+  "cost": {
+    "name": "tiered",
+    "heads": {
+      "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
+      "balanced": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
+      "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.77, "unseen_family_risk": true, "risk_oof_folds": 4}
+    }
+  },
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40,
+    "digit_ratio": 0.6,
+    "min_latex": 1,
+    "min_paren_depth": 3,
+    "fast_code_ax31_cap": 3.25,
+    "balanced_code_ax31_cap": 3.5,
+    "premium_code_k1_cap": 200,
+    "block_code_k1": true,
+    "block_other_k1": true
+  },
+  "alloc": {
+    "headroom": {"fast": 0.75, "balanced": 1.075, "premium": 1.0},
+    "size_penalty": {"fast": 2.25, "balanced": 2.5, "premium": 2.5},
+    "mu": 0,
+    "relative_cost_cap": {"balanced": 10, "premium": 70}
+  },
+  "note": "T35: Premium risk_quantile 0.77(공격) + code_io K1 차단 유지. LOFO 통과(결합 Premium 3.94) + 스트레스 1/12,000. T34(q=0.7)는 LOFO 실패로 폐기."
+}
