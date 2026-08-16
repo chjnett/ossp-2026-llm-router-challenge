@@ -25,14 +25,14 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t26-balanced-code-cap35`**이다.
+현재 제출 챔피언은 **`t30-headroom-b1075-p100`**이다.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
 | 점수 헤드 `[Q]` | Fast/Balanced는 강축소 `hash_ridge(alpha=32000)`. Premium의 `sym_math`·`code_io`만 64-bin family-local ridge(alpha=1000)를 75% 혼합 |
 | 비용 헤드 `[C]` | hashed log-cost ridge + **4-fold 내부 OOF** 상대오차 q80. 미관측 계열은 관측 계열 최악 q80으로 폴백 |
 | 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX, `code_io`·`other` K1 꼬리, Balanced `code_io` ax31 예측 상대비용 3.5 초과를 차단 |
-| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 75%, Balanced/Premium 90%, 문항별 상대비용 cap Balanced 10 / Premium 70 |
+| 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 0.75 / Balanced 1.075 / Premium 1.0, 문항별 상대비용 cap Balanced 10 / Premium 70 |
 | 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
@@ -40,18 +40,19 @@ SPDX-License-Identifier: Apache-2.0
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.660213** |
-| Train 4/6/8-fold OOF | **0.658764 / 0.659276 / 0.659616** |
-| Dev 가중 | **0.677670** |
-| Dev tier | Fast 0.652273 · Balanced 0.683239 · Premium 0.705966 |
-| Dev 비용 비율 | 1.1105 / 1.4817 / 2.5012 (한도 1.25 / 2 / 4) |
-| 최종 재적합 스트레스 | 기본 **0/36,000** + 추가 family-dominant seed **0/18,000** |
+| Train 5-fold OOF | **0.663452** |
+| Train 4/6/8-fold OOF | **0.662429 / 0.661832 / 0.661662** |
+| Dev 가중 | **0.679290** |
+| Dev tier | Fast 0.652273 · Balanced 0.684659 · Premium 0.709943 |
+| Dev 비용 비율 | 1.1105 / 1.5619 / 2.6179 (한도 1.25 / 2 / 4) |
+| 최종 재적합 스트레스 | 기본 **0/36,000** + 추가 dominant/extreme seed **0/36,000** |
 | leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652202 |
 | 공개 전체 5-fold OOF | **0.6642**, 비용 비율 1.120 / 1.465 / 2.820 |
 | 역방향 Dev→Train | **0.6598**, 세 tier 예산 통과 |
-| nested 4×3 | T26은 미실행. T17/T19는 모두 inner 0점이었음 |
+| nested 4×3 | T30은 미실행. T17/T19는 모두 inner 0점이었음 |
 | arm64 실행 | 2,640문항 최장 8.116초 / 한도 90초 |
-| 아티팩트 | 223.5 KB · SHA-256 `2b192b34564490ed99e0df44040ed802ce0742276032126d9c717cddd3d9ef5c` |
+| 최종 재적합 공개 확인 | **0.6813**, 비용 비율 1.108 / 1.536 / 2.543 |
+| 아티팩트 | 223.5 KB · SHA-256 `8b0087c9925f6b8a3f06e52434021bef6127fd6b2a1b561818b230ee2a9f55a1` |
 
 #### 최신 피벗 판정
 
@@ -166,8 +167,19 @@ SPDX-License-Identifier: Apache-2.0
     **+0.000597**, 8-fold +0.000085, 6-fold 동률, 4-fold -0.000043이며 Dev는
     동일했다. 결합 재학습 상태에서 기본 0/36,000과 추가 6-seed 0/18,000을
     통과하고 Balanced 최악 사용률을 1.010에서 0.924로 낮춰 챔피언으로 승격했다.
+33. 얕은 LightGBM 점수 헤드를 Train-only OOF로 실제 검증했다. dense 특징의
+    최선 10% 혼합은 +0.000028뿐이고 Dev는 하락했으며, lexical hash 트리는
+    OOF·Dev 모두 T26을 넘지 못했다. 따라서 JSON/NumPy 런타임 이식 전에
+    **GBDT 트랙을 기각**했다.
+34. 최종 재적합 비용 헤드가 보수적이어서 특히 Premium 예산을 과도하게 남긴
+    점을 headroom OOF 스윕으로 공격했다. T28 `1.10/1.10`은 4/5/6/8-fold가
+    모두 상승했지만 extreme shift 1/2,000으로 탈락했다. T29 `1.10/1.025`는
+    기본·확장 0/72,000이었으나 최대 사용률 0.995/0.992가 경계에 가까웠다.
+    T30 `1.075/1.0`은 T29 대비 OOF -0.000213만 양보하고 최대치를
+    Balanced 0.986 / Premium 0.978로 낮췄다. T26 대비 5-fold +0.003239,
+    4/6/8-fold도 모두 상승해 안전 우선 챔피언으로 채택했다.
 
-T26은 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
+T30은 공개 Dev에서 prompt-heuristic 0.655341을 넘었고, 예산에 붙어 있는
 hash-regex 0.695369보다는 낮다. 다음 공격 트랙도 T17의 0/36,000 안전선을
 고정한 채 복수 fold와 미공개 분포 일반화가 함께 개선되는 경우에만 승격한다.
 

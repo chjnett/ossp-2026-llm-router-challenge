@@ -2,9 +2,9 @@
  "config": {
   "alloc": {
    "headroom": {
-    "balanced": 0.9,
+    "balanced": 1.075,
     "fast": 0.75,
-    "premium": 0.9
+    "premium": 1.0
    },
    "mu": 0,
    "relative_cost_cap": {
@@ -37,8 +37,8 @@
    "name": "tail_exposure",
    "premium_code_k1_cap": 200
   },
-  "id": "t26-balanced-code-cap35",
-  "note": "T26: T22에서 Balanced code_io ax31 상대비용 3.5 초과만 차단.",
+  "id": "t30-headroom-b1075-p100",
+  "note": "T30: 확장 seed 여유를 위해 Balanced/Premium headroom 1.075/1.0.",
   "score": {
    "heads": {
     "balanced": {
@@ -117,9 +117,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "3dc3b32f25c4f16c6a3353bc7359b5088adee5e7",
-  "config_path": "experiments/configs/t26-balanced-code-cap35.json",
-  "created_at": "2026-08-15T17:23:33+00:00",
+  "commit": "4af5dfe2512c731a51e7f48ac83ccbe949d89324",
+  "config_path": "experiments/configs/t30-headroom-b1075-p100.json",
+  "created_at": "2026-08-16T06:00:28+00:00",
   "fit_episodes": 2640,
   "fit_inputs_sha256": "e05172440400a4f6b287640f730a7e94c7ba1a52b81a2951b55344d21436ecc0",
   "fit_outcomes_sha256": "c30799bc86761692e1ca6c4be023ed86188e10eb9e4bdea6ba34d7836eda73dd",

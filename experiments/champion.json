@@ -1,10 +1,10 @@
 {
-  "id": "t26-balanced-code-cap35",
-  "at": "2026-08-15T16:53:48+00:00",
-  "commit": "3dc3b32f25c4f16c6a3353bc7359b5088adee5e7",
+  "id": "t30-headroom-b1075-p100",
+  "at": "2026-08-16T04:36:12+00:00",
+  "commit": "4af5dfe2512c731a51e7f48ac83ccbe949d89324",
   "folds": 5,
   "config": {
-    "id": "t26-balanced-code-cap35",
+    "id": "t30-headroom-b1075-p100",
     "score": {
       "name": "tiered",
       "heads": {
@@ -66,8 +66,8 @@
     "alloc": {
       "headroom": {
         "fast": 0.75,
-        "balanced": 0.9,
-        "premium": 0.9
+        "balanced": 1.075,
+        "premium": 1.0
       },
       "size_penalty": {
         "fast": 2.25,
@@ -80,7 +80,7 @@
         "premium": 70
       }
     },
-    "note": "T26: T22에서 Balanced code_io ax31 상대비용 3.5 초과만 차단."
+    "note": "T30: 확장 seed 여유를 위해 Balanced/Premium headroom 1.075/1.0."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
@@ -88,7 +88,7 @@
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.660213068182",
+    "final_score": "0.663451704545",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -104,33 +104,33 @@
         }
       },
       "balanced": {
-        "score": "0.666335227273",
-        "budget_ratio": "1.45079857844",
-        "headroom": "0.54920142156",
+        "score": "0.674857954545",
+        "budget_ratio": "1.59074387508",
+        "headroom": "0.40925612492",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 369,
-          "ax31": 1388,
-          "axk1-think": 3
+          "ax31-light": 269,
+          "ax31": 1485,
+          "axk1-think": 6
         }
       },
       "premium": {
-        "score": "0.687215909091",
-        "budget_ratio": "2.915608544773",
-        "headroom": "1.084391455227",
+        "score": "0.689488636364",
+        "budget_ratio": "3.109987357659",
+        "headroom": "0.890012642341",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 111,
-          "ax31": 1343,
-          "axk1-think": 306
+          "ax31-light": 103,
+          "ax31": 1314,
+          "axk1-think": 343
         }
       }
     }
   },
   "dev": {
-    "final_score": "0.677670454545",
+    "final_score": "0.679289772727",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -146,27 +146,27 @@
         }
       },
       "balanced": {
-        "score": "0.683238636364",
-        "budget_ratio": "1.479338724726",
-        "headroom": "0.520661275274",
+        "score": "0.684659090909",
+        "budget_ratio": "1.561936979451",
+        "headroom": "0.438063020549",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 165,
-          "ax31": 713,
+          "ax31-light": 112,
+          "ax31": 766,
           "axk1-think": 2
         }
       },
       "premium": {
-        "score": "0.705965909091",
-        "budget_ratio": "2.501237081381",
-        "headroom": "1.498762918619",
+        "score": "0.709943181818",
+        "budget_ratio": "2.617901447884",
+        "headroom": "1.382098552116",
         "passed": true,
         "near_budget": false,
         "counts": {
-          "ax31-light": 59,
-          "ax31": 670,
-          "axk1-think": 151
+          "ax31-light": 54,
+          "ax31": 656,
+          "axk1-think": 170
         }
       }
     }
@@ -209,5 +209,10 @@
       }
     }
   },
-  "seconds": 161.48
+  "seconds": 157.64,
+  "adopted": {
+    "reason": "T29 대비 OOF -0.000213만 양보하고 확장 seed 최대 사용률을 Balanced 0.995→0.986, Premium 0.992→0.978로 낮춰 tier 0점 위험을 줄인다.",
+    "replaced": "t29-headroom-b110-p1025",
+    "cv_delta": -0.0002130681819999536
+  }
 }
