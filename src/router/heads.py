@@ -242,6 +242,56 @@ class HashRidgeWeightedScore:
         self._fitted = _unpack_hash_ridge(state["fitted"])
 
 
+# --- 임베딩 점수 헤드 (Track B) -------------------------------------------
+# fastembed는 오프라인 학습·평가 전용이다. 런타임 이미지에 넣으려면 별도로
+# 모델 파일과 추론 경로(onnxruntime 또는 numpy)를 고정하고 A3 출처·라이선스를
+# 기록해야 한다. 여기서는 "임베딩이 라우팅 OOF를 올리는가"를 먼저 판정한다.
+
+_EMBED_MODEL = None
+_EMBED_CACHE: Dict[str, np.ndarray] = {}
+_EMBED_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+
+def _embed(texts: Sequence[str]) -> np.ndarray:
+    global _EMBED_MODEL
+    if _EMBED_MODEL is None:
+        from fastembed import TextEmbedding
+
+        _EMBED_MODEL = TextEmbedding(model_name=_EMBED_NAME)
+    missing = [t for t in texts if t not in _EMBED_CACHE]
+    if missing:
+        for text, vec in zip(missing, _EMBED_MODEL.embed(missing)):
+            _EMBED_CACHE[text] = np.asarray(vec, dtype=np.float64)
+    return np.stack([_EMBED_CACHE[t] for t in texts])
+
+
+@register(SCORE_HEADS, "embedding_ridge")
+class EmbeddingRidgeScore:
+    """사전학습 다국어 임베딩 + ridge 점수 예측.
+
+    해시 n-gram이 못 잡는 의미적 난이도를 사전학습 인코더로 표현한다. Track B의
+    판정용 구현이다. 결정성: ONNX float32 고정, mean-pooling, dropout 없음.
+    """
+
+    def __init__(self, alpha: float = 1000.0) -> None:
+        self.alpha = float(alpha)
+        self.version = f"embedscore.v1({_EMBED_NAME.rsplit('/', 1)[-1]},a={self.alpha:g})"
+
+    def fit(self, train: Dataset) -> None:
+        design = _embed(train.texts)
+        self._fitted = _hash_ridge_fit(design, train.score, self.alpha)
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        design = _embed(texts)
+        return np.clip(_hash_ridge_apply(design, self._fitted), 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {"fitted": _pack_hash_ridge(self._fitted)}
+
+    def load_state(self, state: dict) -> None:
+        self._fitted = _unpack_hash_ridge(state["fitted"])
+
+
 @register(SCORE_HEADS, "family_hash_ridge")
 class FamilyHashRidgeScore:
     """선택한 prompt family마다 독립적인 hashed ridge를 적합한다.

@@ -1,0 +1,38 @@
+{
+  "id": "t32-embedding",
+  "score": {
+    "name": "tiered",
+    "heads": {
+      "fast": {"name": "embedding_ridge", "alpha": 1000},
+      "balanced": {"name": "embedding_ridge", "alpha": 1000},
+      "premium": {"name": "embedding_ridge", "alpha": 1000}
+    }
+  },
+  "cost": {
+    "name": "hash_ridge",
+    "alpha": 100,
+    "bins": 256,
+    "risk_quantile": 0.8,
+    "unseen_family_risk": true,
+    "risk_oof_folds": 4
+  },
+  "gate": {
+    "name": "tail_exposure",
+    "max_log_number": 40,
+    "digit_ratio": 0.6,
+    "min_latex": 1,
+    "min_paren_depth": 3,
+    "fast_code_ax31_cap": 3.25,
+    "balanced_code_ax31_cap": 3.5,
+    "premium_code_k1_cap": 200,
+    "block_code_k1": true,
+    "block_other_k1": true
+  },
+  "alloc": {
+    "headroom": {"fast": 0.75, "balanced": 1.075, "premium": 1.0},
+    "size_penalty": {"fast": 2.25, "balanced": 2.5, "premium": 2.5},
+    "mu": 0,
+    "relative_cost_cap": {"balanced": 10, "premium": 70}
+  },
+  "note": "T32: embedding_ridge(MiniLM 384d, a=1000) 점수 헤드. T30과 비용·게이트·할당 동일."
+}
