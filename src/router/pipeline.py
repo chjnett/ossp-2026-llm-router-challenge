@@ -203,6 +203,7 @@ def pick_all_tiers(
             sd=prediction.sd_for_tier(tier),
             mu=config.mu_for_tier(tier),
             keys=list(keys),
+            k1_cap=config.k1_cap_for_tier(tier),
         ).picks
         for tier in TIERS
     }

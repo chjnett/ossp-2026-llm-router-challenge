@@ -155,6 +155,36 @@ class Config:
         caps = self.relative_cost_cap
         return None if caps is None else float(caps[tier])
 
+    @property
+    def k1_cap(self) -> Dict[str, float] | None:
+        """등급별 K1 선택 건수 상한 (배치 대비 비율, 0~1).
+
+        K1 비용 꼬리에 대한 노출을 예측 오차와 무관하게 묶는다. None이면
+        상한 없음(기존 동작). ``0.11``이면 배치의 11%까지만 K1을 쓴다.
+        """
+
+        raw = self.alloc.get("k1_cap")
+        if raw is None:
+            return None
+        if isinstance(raw, (int, float)):
+            value = float(raw)
+            if not 0.0 <= value <= 1.0:
+                raise ValueError("k1_cap은 0~1 사이여야 한다")
+            return {tier: value for tier in TIERS}
+        if not isinstance(raw, Mapping):
+            raise ValueError("k1_cap은 숫자 또는 tier별 매핑이어야 한다")
+        result = {}
+        for tier in TIERS:
+            value = float(raw.get(tier, 1.0))
+            if not 0.0 <= value <= 1.0:
+                raise ValueError("k1_cap은 0~1 사이여야 한다")
+            result[tier] = value
+        return result
+
+    def k1_cap_for_tier(self, tier: str) -> float | None:
+        caps = self.k1_cap
+        return None if caps is None else float(caps[tier])
+
 
 def effective_util(
     config: Config, n_episodes: int, multipliers: Mapping[str, float]

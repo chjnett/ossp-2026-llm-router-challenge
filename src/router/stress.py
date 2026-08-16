@@ -139,6 +139,7 @@ def run_scenario(
     headroom: Dict[str, float] | None = None,
     epsilon: float | None = None,
     relative_cost_cap: Mapping[str, float] | None = None,
+    k1_cap: Mapping[str, float] | None = None,
 ) -> GateResult:
     """한 시나리오를 ``trials``회 돌려 등급별 파산 횟수를 센다.
 
@@ -214,6 +215,7 @@ def run_scenario(
                     sd=sd_i,
                     mu=tier_mu,
                     keys=keys_i,
+                    k1_cap=None if k1_cap is None else float(k1_cap.get(tier, 1.0)),
                 ).picks
             used = float(true_cost[np.arange(len(idx)), picks].sum())
             over = (used / light) / multipliers[tier]
@@ -261,6 +263,7 @@ def run_gate(
     headroom: Dict[str, float] | None = None,
     epsilon: float | None = None,
     relative_cost_cap: Mapping[str, float] | None = None,
+    k1_cap: Mapping[str, float] | None = None,
 ) -> list[GateResult]:
     """모든 시나리오를 돌린다. 하나라도 파산이 있으면 게이트 불통과다."""
 
@@ -285,6 +288,7 @@ def run_gate(
                 headroom=headroom,
                 epsilon=epsilon,
                 relative_cost_cap=relative_cost_cap,
+                k1_cap=k1_cap,
             )
         )
     return results

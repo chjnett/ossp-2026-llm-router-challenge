@@ -110,6 +110,39 @@ def _row_cost(c_hat: np.ndarray, picks: np.ndarray) -> np.ndarray:
     return c_hat[np.arange(len(picks)), picks]
 
 
+def _apply_k1_cap(
+    picks: np.ndarray,
+    effective: np.ndarray,
+    c_hat: np.ndarray,
+    keys: Sequence[str],
+    cap: float,
+    allow: np.ndarray | None,
+) -> np.ndarray:
+    """K1(모델 2) 선택 수를 배치 비율 cap 이하로 제한한다.
+
+    K1은 비용 꼬리가 두꺼워 문항 몇 건의 예측 오차가 등급 전체를 넘길 수
+    있다. 건수 상한은 예측 오차와 무관하게 노출을 묶어, 공격적 비용 q에서
+    파산을 막는 leelang7 식 안전 손잡이다. 초과분은 ROI 낮은 순으로 ax31
+    (허용 안 되면 light)로 되돌린다. 동률은 콘텐츠 해시로 깬다(RULES B).
+    """
+
+    cap_count = int(cap * len(picks))  # 비율(0~1)을 배치 건수로 환산
+    k1_idx = np.where(picks == 2)[0]
+    if len(k1_idx) <= cap_count:
+        return picks
+
+    def roi(i: int) -> tuple[float, str]:
+        gain = float(effective[i, 2] - effective[i, 1])
+        extra = float(c_hat[i, 2] - c_hat[i, 1])
+        return (gain / extra if extra > 0 else -math.inf, keys[i])
+
+    order = sorted(k1_idx, key=roi)  # ROI 오름차순
+    result = picks.copy()
+    for i in order[: len(k1_idx) - cap_count]:
+        result[i] = 1 if (allow is None or bool(allow[i, 1])) else 0
+    return result
+
+
 def allocate(
     s_hat: np.ndarray,
     c_hat: np.ndarray,
@@ -120,6 +153,7 @@ def allocate(
     sd: np.ndarray | None = None,
     mu: float = 0.0,
     keys: Sequence[str] | None = None,
+    k1_cap: float | None = None,
 ) -> AllocationPlan:
     """예산 안에서 문항별 모델을 고른다 (오목 포락선 그리디).
 
@@ -156,6 +190,8 @@ def allocate(
     )
     budget_extra = base * multiplier * util - start_cost
     picks = take_within_budget(segments, n, budget_extra)
+    if k1_cap is not None and k1_cap >= 0:
+        picks = _apply_k1_cap(picks, effective, c_hat, keys, k1_cap, allow)
     used = order_invariant_sum(_row_cost(c_hat, picks))
     return AllocationPlan(
         picks=picks,
