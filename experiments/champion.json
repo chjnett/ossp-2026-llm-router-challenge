@@ -1,10 +1,10 @@
 {
-  "id": "t36-prem-q07-urb120",
-  "at": "2026-08-16T20:30:00+00:00",
-  "commit": "b57c51e",
+  "id": "t37-prem-q072-urb120",
+  "at": "2026-08-16T21:00:00+00:00",
+  "commit": "1a70c8d",
   "folds": 5,
   "config": {
-    "id": "t36-prem-q07-urb120",
+    "id": "t37-prem-q072-urb120",
     "score": {
       "name": "tiered",
       "heads": {
@@ -30,7 +30,7 @@
       "heads": {
         "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
         "balanced": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
-        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.7, "unseen_family_risk": true, "unseen_risk_boost": 1.2, "risk_oof_folds": 4}
+        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.72, "unseen_family_risk": true, "unseen_risk_boost": 1.2, "risk_oof_folds": 4}
       }
     },
     "gate": {
@@ -51,38 +51,38 @@
       "mu": 0,
       "relative_cost_cap": {"balanced": 10, "premium": 70}
     },
-    "note": "T36(공격·LOFO 안전): Premium q=0.7 + unseen_risk_boost=1.2. 본 계열 공격(0.683551), 미지 계열 +20% 보수 → LOFO 결합 3.56 통과."
+    "note": "T37(파레토 최적·C4 준수): Premium q=0.72 + unseen_risk_boost=1.2. 스트레스 2/12,000, LOFO 3.45."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
-    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.7,ur=1,urb=1.2,rof=4))",
+    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.72,ur=1,urb=1.2,rof=4))",
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.666051",
+    "final_score": "0.665412",
     "all_passed": true
   },
   "dev": {
-    "final_score": "0.683551136364",
+    "final_score": "0.683210",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.655681818182",
-        "budget_ratio": "1.108755991426",
+        "score": "0.655682",
+        "budget_ratio": "1.108756",
         "passed": true,
         "counts": {"ax31-light": 529, "ax31": 351, "axk1-think": 0}
       },
       "balanced": {
-        "score": "0.684659090909",
-        "budget_ratio": "1.536882151664",
+        "score": "0.684659",
+        "budget_ratio": "1.536882",
         "passed": true,
         "counts": {"ax31-light": 119, "ax31": 759, "axk1-think": 2}
       },
       "premium": {
-        "score": "0.719602272727",
-        "budget_ratio": "2.877127292556",
+        "score": "0.718466",
+        "budget_ratio": "2.808109",
         "passed": true,
-        "counts": {"ax31-light": 68, "ax31": 579, "axk1-think": 233}
+        "counts": {"ax31-light": 68, "ax31": 589, "axk1-think": 223}
       }
     }
   },
@@ -91,19 +91,19 @@
     "fit_split": "public-train-dev",
     "trials": 2000,
     "passed": true,
-    "note": "스트레스 Premium 14/12,000(0.117%). LOFO 9/9 + 결합 통과(Premium 3.56).",
+    "note": "스트레스 Premium 2/12,000(0.017%) — C4(≤12회) 준수. LOFO 결합 Premium 3.45(13.8% 여유).",
     "scenarios": {
       "size-200": {"fast": 0, "balanced": 0, "premium": 1},
       "size-800": {"fast": 0, "balanced": 0, "premium": 0},
       "size-2640": {"fast": 0, "balanced": 0, "premium": 0},
       "shift-mild(conc=5)": {"fast": 0, "balanced": 0, "premium": 0},
-      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 5},
-      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 8}
+      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 1},
+      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 0}
     }
   },
   "adopted": {
-    "reason": "unseen_risk_boost로 본 계열 q=0.7(공격)과 미지 계열(+20% 보수)을 분리. q=0.7의 점수 0.683551을 LOFO 안전(결합 3.56)으로 달성. T30 대비 +0.0022.",
-    "replaced": "t35-prem-q077-blockcode",
-    "cv_delta": 0.001406
+    "reason": "파레토 표면 스윕: T36(q=0.7)은 스트레스 14회로 C4(≤12) 위반. q=0.72는 스트레스 2회로 C4 준수하면서 0.683210(+0.0019) 달성, LOFO 여유 13.8%(T30 수준). C4-준수 파레토 최적.",
+    "replaced": "t36-prem-q07-urb120",
+    "cv_delta": -0.000639
   }
 }

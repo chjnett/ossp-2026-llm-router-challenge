@@ -25,14 +25,15 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t36-prem-q07-urb120`**이다.
+현재 제출 챔피언은 **`t37-prem-q072-urb120`**이다.
 (파레토 EV 최적 채택 — RULES C4를 "파산 ≤0.1% 허용"으로 개정. T30은 `build/artifact-t30-backup.json`으로 롤백 가능.)
 
 > ⚠️ **T34(q=0.7, code K1 해제)는 LOFO 재검증에서 폐기**됐다. 미지 계열(계열 통째로
 > 제외)에서 결합 Premium이 4.5로 초과했다. 스트레스 게이트는 본 계열 재가중만 시험해
-> 이를 못 잡는다. **해법은 `unseen_risk_boost`** — 본 계열은 q=0.7(공격) 유지하고,
-> 미지 계열(unseen)에만 +20% 보수 리스크를 적용한다. 이로써 q=0.7 점수(0.683551)를
-> LOFO 안전(결합 Premium 3.56)으로 달성했다. 이것이 T36이다. code_io K1 차단은 유지.
+> 이를 못 잡는다. **해법은 `unseen_risk_boost`** — 본 계열은 공격 q 유지하고, 미지
+> 계열(unseen)에만 +20% 보수 리스크를 적용한다. 파레토 스윕 결과 C4(스트레스 ≤12/12,000)
+> 를 지키는 최적점은 **premium q=0.72 + boost=1.2**(T37): 0.683210, 스트레스 2/12,000,
+> LOFO 결합 3.45(13.8% 여유). T36(q=0.7)은 스트레스 14회로 C4 위반이라 폐기. code_io K1 차단 유지.
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
@@ -40,21 +41,21 @@ SPDX-License-Identifier: Apache-2.0
 | 비용 헤드 `[C]` | **tier별** hashed log-cost ridge + 4-fold 내부 OOF 상대오차. Fast/Balanced q80, **Premium q70**(공격). 미관측 계열은 관측 계열 최악 q로 폴백 |
 | 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX, `other` K1 꼬리, Balanced `code_io` ax31 상대비용 3.5 초과 차단. **code_io K1은 해제**(Premium에서 ROI로 판단) |
 | 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 0.75 / Balanced 1.075 / Premium 1.0, 문항별 상대비용 cap Balanced 10 / Premium 70 |
-| 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard. 스트레스 12,000회/등급 기준 **파산 ≤0.1% 허용**(Premium 14회) |
+| 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard. 스트레스 12,000회/등급 기준 **파산 ≤0.1% 허용**(Premium 2회) |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
 현재 실측은 다음과 같다.
 
 | 지표 | 값 |
 | --- | ---: |
-| **제출 점수 (Docker 검증 · 최종 재적합)** | **0.683551** |
-| 제출 tier | Fast 0.655682 · Balanced 0.684659 · Premium 0.719602 |
-| 제출 비용 비율 | 1.1088 / 1.5369 / 2.8771 (한도 1.25 / 2 / 4) |
-| Train 5-fold OOF | **0.666051** |
-| 최종 재적합 스트레스 | **Premium 14/12,000 (0.117%)**, Fast/Balanced 0회 — C4 허용범위 |
+| **제출 점수 (Docker 검증 · 최종 재적합)** | **0.683210** |
+| 제출 tier | Fast 0.655682 · Balanced 0.684659 · Premium 0.718466 |
+| 제출 비용 비율 | 1.1088 / 1.5369 / 2.8081 (한도 1.25 / 2 / 4) |
+| Train 5-fold OOF | **0.665412** |
+| 최종 재적합 스트레스 | **Premium 2/12,000 (0.017%)**, Fast/Balanced 0회 — C4 허용범위 |
 | leave-one-family-out | 9/9 family (T30 기준; T34는 Premium q70로 재검증 대상) |
 | arm64 실행 (Docker) | 2,640문항 fast 2.6s · balanced 2.5s · premium 4.5s / 한도 90초 |
-| Docker 재검증 (2026-08-16) | **0.683551** = self-check 가중 최종. 비용 1.1088 / 1.5369 / 2.8771 |
+| Docker 재검증 (2026-08-16) | **0.683210** = self-check 가중 최종. 비용 1.1088 / 1.5369 / 2.8081 |
 | 아티팩트 | 320.7 KB · SHA-256 `4b689271c7481ffcbe782089bbd000b920c035971e899f55be7b9d2516d678f8` |
 
 #### 최신 피벗 판정

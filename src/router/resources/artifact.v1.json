@@ -40,7 +40,7 @@
      "bins": 256,
      "name": "hash_ridge",
      "risk_oof_folds": 4,
-     "risk_quantile": 0.7,
+     "risk_quantile": 0.72,
      "unseen_family_risk": true,
      "unseen_risk_boost": 1.2
     }
@@ -59,8 +59,8 @@
    "name": "tail_exposure",
    "premium_code_k1_cap": 200
   },
-  "id": "t36-prem-q07-urb120",
-  "note": "T36(공격·LOFO 안전): Premium q=0.7 + unseen_risk_boost=1.2. 본 계열은 공격(0.683551), 미지 계열만 +20% 보수 → LOFO 결합 3.56 통과. code_io K1 차단 유지. 스트레스 Premium 12/12,000.",
+  "id": "t37-prem-q072-urb120",
+  "note": "T37(파레토 최적·C4 준수): Premium q=0.72 + unseen_risk_boost=1.2. 스트레스 2/12,000(0.017%)로 C4(≤12회) 준수. T36(q=0.7, 14회)을 교정.",
   "score": {
    "heads": {
     "balanced": {
@@ -139,9 +139,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "b57c51e43e37d0a6c57a273432d9cf65db74a51d",
-  "config_path": "experiments/configs/t36-prem-q07-urb120.json",
-  "created_at": "2026-08-16T13:05:05+00:00",
+  "commit": "1a70c8d0b685e37c008b633d1e1ecf677a4105c1",
+  "config_path": "experiments/configs/t37-prem-q072-urb120.json",
+  "created_at": "2026-08-16T15:35:36+00:00",
   "fit_episodes": 2640,
   "fit_inputs_sha256": "e05172440400a4f6b287640f730a7e94c7ba1a52b81a2951b55344d21436ecc0",
   "fit_outcomes_sha256": "c30799bc86761692e1ca6c4be023ed86188e10eb9e4bdea6ba34d7836eda73dd",
@@ -6195,48 +6195,48 @@
      "risk": [
       [
        1.0,
-       1.0269865802517104,
-       1.5731099018774588
+       1.0432462986328415,
+       1.690147004364535
       ],
       [
        1.0,
-       1.2331342956391096,
-       1.3273748501619171
+       1.2656215774384572,
+       1.4008587883964507
       ],
       [
        1.0,
-       1.1054968046781821,
-       1.300752113364475
+       1.1345858247618648,
+       1.3569278812589305
       ],
       [
        1.0,
-       1.041939913721361,
-       1.1078076409120032
+       1.043375447648883,
+       1.1498039788027052
       ],
       [
        1.0,
-       1.1291305084940804,
-       1.4861245766061641
+       1.1784260458013431,
+       1.5748030253119143
       ],
       [
        1.0,
-       1.1437128942129449,
-       1.6110008758365255
+       1.1845538829770996,
+       1.659447199004196
       ],
       [
        1.0,
-       1.1191134141930994,
-       1.2578816963558273
+       1.133190252849084,
+       1.3141678927453433
       ],
       [
        1.0,
-       1.1382869941076923,
-       1.897773506547453
+       1.1516225886195282,
+       1.9884518530035742
       ],
       [
        1.0,
-       1.22294053853769,
-       1.6183790298310552
+       1.239330665764828,
+       1.6651286320212395
       ]
      ],
      "sd_log": [
@@ -6257,8 +6257,8 @@
      ],
      "unseen_risk": [
       1.0,
-      1.4797611547669314,
-      2.2773282078569435
+      1.5187458929261486,
+      2.386142223604289
      ]
     }
    }
@@ -13670,7 +13670,7 @@
   }
  },
  "versions": {
-  "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.7,ur=1,urb=1.2,rof=4))",
+  "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.72,ur=1,urb=1.2,rof=4))",
   "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1",
   "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))"
  }
