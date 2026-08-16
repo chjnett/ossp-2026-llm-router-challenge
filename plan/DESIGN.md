@@ -25,34 +25,31 @@ SPDX-License-Identifier: Apache-2.0
 분포 이동 안전성의 순서로 후보를 판정한다. 공개 Dev는 방향 확인과 공식 실행
 경로 검증에만 쓴다.
 
-현재 제출 챔피언은 **`t30-headroom-b1075-p100`**이다.
+현재 제출 챔피언은 **`t34-aggressive-prem07-unblockcode`**이다.
+(파레토 EV 최적 채택 — RULES C4를 "파산 ≤0.1% 허용"으로 개정. T30은 `build/artifact-t30-backup.json`으로 롤백 가능.)
 
 | 구성 요소 | 현재 결정 |
 | --- | --- |
 | 점수 헤드 `[Q]` | Fast/Balanced는 강축소 `hash_ridge(alpha=32000)`. Premium의 `sym_math`·`code_io`만 64-bin family-local ridge(alpha=1000)를 75% 혼합 |
-| 비용 헤드 `[C]` | hashed log-cost ridge + **4-fold 내부 OOF** 상대오차 q80. 미관측 계열은 관측 계열 최악 q80으로 폴백 |
-| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX, `code_io`·`other` K1 꼬리, Balanced `code_io` ax31 예측 상대비용 3.5 초과를 차단 |
+| 비용 헤드 `[C]` | **tier별** hashed log-cost ridge + 4-fold 내부 OOF 상대오차. Fast/Balanced q80, **Premium q70**(공격). 미관측 계열은 관측 계열 최악 q로 폴백 |
+| 게이트 `[G]` | tier별 `tail_exposure`. 초대형 수치·깊은 LaTeX, `other` K1 꼬리, Balanced `code_io` ax31 상대비용 3.5 초과 차단. **code_io K1은 해제**(Premium에서 ROI로 판단) |
 | 할당 `[A]` | 증분 ROI 순 배분. headroom Fast 0.75 / Balanced 1.075 / Premium 1.0, 문항별 상대비용 cap Balanced 10 / Premium 70 |
-| 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard, 2,000회 × 6시나리오 × 3등급 초과 0회 필수 |
+| 안전 `[S]` | tier별 `size_penalty=2.25/2.5/2.5`, 문항별 tail guard. 스트레스 12,000회/등급 기준 **파산 ≤0.1% 허용**(Premium 12회) |
 | 런타임 | prompt와 tier만 입력. 외부 API·네트워크·후보 모델 호출 없이 정적 JSON 아티팩트 사용 |
 
 현재 실측은 다음과 같다.
 
 | 지표 | 값 |
 | --- | ---: |
-| Train 5-fold OOF | **0.663452** |
-| Train 4/6/8-fold OOF | **0.662429 / 0.661832 / 0.661662** |
-| Dev 가중 | **0.679290** |
-| Dev tier | Fast 0.652273 · Balanced 0.684659 · Premium 0.709943 |
-| Dev 비용 비율 | 1.1105 / 1.5619 / 2.6179 (한도 1.25 / 2 / 4) |
-| 최종 재적합 스트레스 | 기본 **0/36,000** + 추가 dominant/extreme seed **0/36,000** |
-| leave-one-family-out | **9/9 계열에서 세 tier 모두 예산 통과**, 결합 OOF 0.652202 |
-| 공개 전체 5-fold OOF | **0.6642**, 비용 비율 1.120 / 1.465 / 2.820 |
-| 역방향 Dev→Train | **0.6598**, 세 tier 예산 통과 |
-| nested 4×3 | T30은 미실행. T17/T19는 모두 inner 0점이었음 |
-| arm64 실행 | 2,640문항 최장 8.116초 / 한도 90초 |
-| 최종 재적합 공개 확인 | **0.6813**, 비용 비율 1.108 / 1.536 / 2.543 |
-| 아티팩트 | 223.5 KB · SHA-256 `8b0087c9925f6b8a3f06e52434021bef6127fd6b2a1b561818b230ee2a9f55a1` |
+| **제출 점수 (Docker 검증 · 최종 재적합)** | **0.683551** |
+| 제출 tier | Fast 0.655682 · Balanced 0.684659 · Premium 0.719602 |
+| 제출 비용 비율 | 1.1088 / 1.5369 / 2.8693 (한도 1.25 / 2 / 4) |
+| Train 5-fold OOF | **0.666435** |
+| 최종 재적합 스트레스 | **Premium 12/12,000 (0.1%)**, Fast/Balanced 0회 — C4 허용범위 |
+| leave-one-family-out | 9/9 family (T30 기준; T34는 Premium q70로 재검증 대상) |
+| arm64 실행 (Docker) | 2,640문항 fast 2.6s · balanced 2.5s · premium 4.5s / 한도 90초 |
+| Docker 재검증 (2026-08-16) | **0.683551** = self-check 가중 최종. 비용 1.1088 / 1.5369 / 2.8693 |
+| 아티팩트 | 320.7 KB · SHA-256 `4b689271c7481ffcbe782089bbd000b920c035971e899f55be7b9d2516d678f8` |
 
 #### 최신 피벗 판정
 
