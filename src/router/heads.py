@@ -1454,6 +1454,7 @@ class HashRidgeCost:
         calibration: bool = False,
         risk_quantile: float | None = None,
         unseen_family_risk: bool = False,
+        unseen_risk_boost: float = 1.0,
         risk_oof_folds: int | None = None,
         conditional_risk_families: Sequence[str] = (),
         conditional_risk_alpha: float = 10.0,
@@ -1470,6 +1471,7 @@ class HashRidgeCost:
             None if risk_quantile is None else float(risk_quantile)
         )
         self.unseen_family_risk = bool(unseen_family_risk)
+        self.unseen_risk_boost = float(unseen_risk_boost)
         self.risk_oof_folds = (
             None if risk_oof_folds is None else int(risk_oof_folds)
         )
@@ -1514,6 +1516,8 @@ class HashRidgeCost:
             else ("v4" if self.unseen_family_risk else "v3")
         )
         unseen = ",ur=1" if self.unseen_family_risk else ""
+        if self.unseen_risk_boost != 1.0:
+            unseen += f",urb={self.unseen_risk_boost:g}"
         risk_oof = (
             f",rof={self.risk_oof_folds}"
             if self.risk_oof_folds is not None
@@ -1593,7 +1597,8 @@ class HashRidgeCost:
         # 안전 방향으로만 작동하도록 승격 배율의 하한을 1로 둔다.
         self._risk[:, 0] = 1.0
         self._risk[:, 1:] = np.clip(self._risk[:, 1:], 1.0, 20.0)
-        self._unseen_risk = self._risk.max(axis=0)
+        self._unseen_risk = self._risk.max(axis=0) * self.unseen_risk_boost
+        self._unseen_risk[0] = 1.0  # light는 부스트하지 않는다 (비율 분모 보존)
 
         # family q분위 하나는 같은 계열의 모든 문항을 똑같이 비싸게 만든다.
         # q분위까지는 위 scalar risk가 이미 가격에 넣었으므로, 남은 양의

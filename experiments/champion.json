@@ -1,10 +1,10 @@
 {
-  "id": "t35-prem-q077-blockcode",
-  "at": "2026-08-16T20:00:00+00:00",
-  "commit": "8a23492",
+  "id": "t36-prem-q07-urb120",
+  "at": "2026-08-16T20:30:00+00:00",
+  "commit": "b57c51e",
   "folds": 5,
   "config": {
-    "id": "t35-prem-q077-blockcode",
+    "id": "t36-prem-q07-urb120",
     "score": {
       "name": "tiered",
       "heads": {
@@ -30,7 +30,7 @@
       "heads": {
         "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
         "balanced": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
-        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.77, "unseen_family_risk": true, "risk_oof_folds": 4}
+        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.7, "unseen_family_risk": true, "unseen_risk_boost": 1.2, "risk_oof_folds": 4}
       }
     },
     "gate": {
@@ -51,19 +51,19 @@
       "mu": 0,
       "relative_cost_cap": {"balanced": 10, "premium": 70}
     },
-    "note": "T35: Premium risk_quantile 0.77 + code_io K1 차단. LOFO 통과(결합 3.94) + 스트레스 1/12,000."
+    "note": "T36(공격·LOFO 안전): Premium q=0.7 + unseen_risk_boost=1.2. 본 계열 공격(0.683551), 미지 계열 +20% 보수 → LOFO 결합 3.56 통과."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
-    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.77,ur=1,rof=4))",
+    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.7,ur=1,urb=1.2,rof=4))",
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.664645",
+    "final_score": "0.666051",
     "all_passed": true
   },
   "dev": {
-    "final_score": "0.682528409091",
+    "final_score": "0.683551136364",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -79,10 +79,10 @@
         "counts": {"ax31-light": 119, "ax31": 759, "axk1-think": 2}
       },
       "premium": {
-        "score": "0.716193181818",
-        "budget_ratio": "2.646166172001",
+        "score": "0.719602272727",
+        "budget_ratio": "2.877127292556",
         "passed": true,
-        "counts": {"ax31-light": 68, "ax31": 616, "axk1-think": 196}
+        "counts": {"ax31-light": 68, "ax31": 579, "axk1-think": 233}
       }
     }
   },
@@ -91,19 +91,19 @@
     "fit_split": "public-train-dev",
     "trials": 2000,
     "passed": true,
-    "note": "스트레스 Premium 1/12,000(0.008%) — size-200 1회. LOFO 9/9 + 결합 통과(Premium 3.94).",
+    "note": "스트레스 Premium 14/12,000(0.117%). LOFO 9/9 + 결합 통과(Premium 3.56).",
     "scenarios": {
       "size-200": {"fast": 0, "balanced": 0, "premium": 1},
       "size-800": {"fast": 0, "balanced": 0, "premium": 0},
       "size-2640": {"fast": 0, "balanced": 0, "premium": 0},
       "shift-mild(conc=5)": {"fast": 0, "balanced": 0, "premium": 0},
-      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 0},
-      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 0}
+      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 5},
+      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 8}
     }
   },
   "adopted": {
-    "reason": "LOFO 재검증에서 T34(q=0.7, code 해제)가 결합 Premium 4.5 초과로 실패. LOFO를 통과하는 최대 공격점 q=0.77로 보정. T30 대비 +0.0012, 스트레스 0.008%.",
-    "replaced": "t34-aggressive-prem07-unblockcode",
-    "cv_delta": 0.001193
+    "reason": "unseen_risk_boost로 본 계열 q=0.7(공격)과 미지 계열(+20% 보수)을 분리. q=0.7의 점수 0.683551을 LOFO 안전(결합 3.56)으로 달성. T30 대비 +0.0022.",
+    "replaced": "t35-prem-q077-blockcode",
+    "cv_delta": 0.001406
   }
 }
