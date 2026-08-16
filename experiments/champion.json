@@ -1,10 +1,10 @@
 {
-  "id": "t37-prem-q072-urb120",
-  "at": "2026-08-16T21:00:00+00:00",
-  "commit": "1a70c8d",
+  "id": "t38-prem-q068-urb120",
+  "at": "2026-08-16T21:30:00+00:00",
+  "commit": "a3815c4",
   "folds": 5,
   "config": {
-    "id": "t37-prem-q072-urb120",
+    "id": "t38-prem-q068-urb120",
     "score": {
       "name": "tiered",
       "heads": {
@@ -30,7 +30,7 @@
       "heads": {
         "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
         "balanced": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
-        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.72, "unseen_family_risk": true, "unseen_risk_boost": 1.2, "risk_oof_folds": 4}
+        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.68, "unseen_family_risk": true, "unseen_risk_boost": 1.2, "risk_oof_folds": 4}
       }
     },
     "gate": {
@@ -51,19 +51,19 @@
       "mu": 0,
       "relative_cost_cap": {"balanced": 10, "premium": 70}
     },
-    "note": "T37(파레토 최적·C4 준수): Premium q=0.72 + unseen_risk_boost=1.2. 스트레스 2/12,000, LOFO 3.45."
+    "note": "T38(EV 우선): Premium q=0.68 + unseen_risk_boost=1.2. 스트레스 26/12,000(0.217%) — C4 ≤0.25% 완화. EV 최고점."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
-    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.72,ur=1,urb=1.2,rof=4))",
+    "cost": "tieredcost.v1(fast=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);balanced=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.8,ur=1,rof=4);premium=hashcost.v5(f=hash-regex-text.v1,a=100,b=256,z=0,zl=0,cal=0,rq=0.68,ur=1,urb=1.2,rof=4))",
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.665412",
+    "final_score": "0.666307",
     "all_passed": true
   },
   "dev": {
-    "final_score": "0.683210",
+    "final_score": "0.683892",
     "all_passed": true,
     "tiers": {
       "fast": {
@@ -79,10 +79,10 @@
         "counts": {"ax31-light": 119, "ax31": 759, "axk1-think": 2}
       },
       "premium": {
-        "score": "0.718466",
-        "budget_ratio": "2.808109",
+        "score": "0.720739",
+        "budget_ratio": "2.934702",
         "passed": true,
-        "counts": {"ax31-light": 68, "ax31": 589, "axk1-think": 223}
+        "counts": {"ax31-light": 68, "ax31": 571, "axk1-think": 241}
       }
     }
   },
@@ -91,19 +91,19 @@
     "fit_split": "public-train-dev",
     "trials": 2000,
     "passed": true,
-    "note": "스트레스 Premium 2/12,000(0.017%) — C4(≤12회) 준수. LOFO 결합 Premium 3.45(13.8% 여유).",
+    "note": "스트레스 Premium 26/12,000(0.217%) — C4(≤30회) 준수. LOFO 결합 3.60(10.1% 여유).",
     "scenarios": {
-      "size-200": {"fast": 0, "balanced": 0, "premium": 1},
+      "size-200": {"fast": 0, "balanced": 0, "premium": 2},
       "size-800": {"fast": 0, "balanced": 0, "premium": 0},
       "size-2640": {"fast": 0, "balanced": 0, "premium": 0},
-      "shift-mild(conc=5)": {"fast": 0, "balanced": 0, "premium": 0},
-      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 1},
-      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 0}
+      "shift-mild(conc=5)": {"fast": 0, "balanced": 0, "premium": 2},
+      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 8},
+      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 14}
     }
   },
   "adopted": {
-    "reason": "파레토 표면 스윕: T36(q=0.7)은 스트레스 14회로 C4(≤12) 위반. q=0.72는 스트레스 2회로 C4 준수하면서 0.683210(+0.0019) 달성, LOFO 여유 13.8%(T30 수준). C4-준수 파레토 최적.",
-    "replaced": "t36-prem-q07-urb120",
-    "cv_delta": -0.000639
+    "reason": "EV 우선 채택: 경쟁 팀 활발 확인 후 C4를 ≤0.25%로 완화하고 q=0.68 채택. 0.683892(+0.0026), 스트레스 26/12,000(0.217%), LOFO 3.60. EV 0.68342 = 프론티어 최고.",
+    "replaced": "t37-prem-q072-urb120",
+    "cv_delta": 0.000895
   }
 }
