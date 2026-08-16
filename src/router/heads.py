@@ -173,6 +173,75 @@ class HashRidgeScore:
         self._fitted = _unpack_hash_ridge(state["fitted"])
 
 
+def _hash_ridge_fit_weighted(
+    design: np.ndarray, target: np.ndarray, alpha: float, weights: np.ndarray
+) -> tuple:
+    """역분산 가중 ridge.
+
+    score는 num_generations(2 또는 4)회 생성의 평균이라 문항마다 노이즈
+    분산이 다르다(DESIGN §2.6). 노이즈가 작은(생성 수가 많은) 행에 더 큰
+    비중을 두는 가중 최소제곱이다. 가중치는 generations에 비례시킨다.
+    """
+
+    target = np.asarray(target, dtype=float)
+    if target.ndim == 1:
+        target = target[:, None]
+    weights = np.asarray(weights, dtype=float)
+    weights = weights / weights.mean()
+    w = weights[:, None]
+    sw = float(weights.sum())
+    mean = (design * w).sum(axis=0) / sw
+    centered_x = design - mean
+    var = (weights[:, None] * centered_x * centered_x).sum(axis=0) / sw
+    scale = np.sqrt(var)
+    scale = np.where(scale > 1e-12, scale, 1.0)
+    standardized = centered_x / scale
+    intercept = (target * w).sum(axis=0) / sw
+    centered = target - intercept
+    rows, columns = standardized.shape
+    if rows <= columns:
+        raise ValueError("가중 ridge는 rows > columns 전용이다")
+    xtw = standardized.T * weights  # [columns, rows]
+    system = xtw @ standardized + alpha * np.eye(columns)
+    coefficients = np.linalg.solve(system, xtw @ centered)
+    return mean, scale, intercept, coefficients
+
+
+@register(SCORE_HEADS, "hash_ridge_weighted")
+class HashRidgeWeightedScore:
+    """num_generations로 역분산 가중한 hashed ridge 점수 예측.
+
+    HashRidgeScore와 표현·계약이 같고, score 노이즈가 작은(생성 수가 많은)
+    문항에 더 큰 비중을 둔다. 노이즈 상한을 직접 공략하는 마지막 점수 헤드
+    시도.
+    """
+
+    def __init__(self, alpha: float = 100.0, bins: int = 256) -> None:
+        self.alpha = float(alpha)
+        self.bins = int(bins)
+        extract_hash_features((), self.bins)
+        self.version = (
+            f"hashscore-weighted.v1(f={HASH_FEATURE_VERSION},a={self.alpha:g},b={self.bins})"
+        )
+
+    def fit(self, train: Dataset) -> None:
+        design = extract_hash_features(train.texts, self.bins)
+        weights = np.asarray(train.generations, dtype=float)
+        self._fitted = _hash_ridge_fit_weighted(
+            design, train.score, self.alpha, weights
+        )
+
+    def predict(self, texts: Sequence[str]) -> np.ndarray:
+        design = extract_hash_features(texts, self.bins)
+        return np.clip(_hash_ridge_apply(design, self._fitted), 0.0, 1.0)
+
+    def state(self) -> dict:
+        return {"fitted": _pack_hash_ridge(self._fitted)}
+
+    def load_state(self, state: dict) -> None:
+        self._fitted = _unpack_hash_ridge(state["fitted"])
+
+
 @register(SCORE_HEADS, "family_hash_ridge")
 class FamilyHashRidgeScore:
     """선택한 prompt family마다 독립적인 hashed ridge를 적합한다.
