@@ -2160,6 +2160,7 @@ class TailExposureGate:
         premium_code_k1_cap: float = float("inf"),
         block_code_k1: bool = False,
         block_other_k1: bool = False,
+        k1_item_cap: float | None = None,
         inner: str = "none",
         **inner_kwargs,
     ) -> None:
@@ -2172,6 +2173,7 @@ class TailExposureGate:
         self.premium_code_k1_cap = float(premium_code_k1_cap)
         self.block_code_k1 = bool(block_code_k1)
         self.block_other_k1 = bool(block_other_k1)
+        self.k1_item_cap = None if k1_item_cap is None else float(k1_item_cap)
         self._inner = GATES[inner](**inner_kwargs)
         self.version = (
             "tailexposure.v1("
@@ -2224,6 +2226,13 @@ class TailExposureGate:
         if tier == "premium":
             allow[deep_latex, 2] = False
             allow[code & (relative[:, 2] > self.premium_code_k1_cap), 2] = False
+        if self.k1_item_cap is not None:
+            # 단일 K1 문항의 예측 비용이 배치 총 light 비용의 k1_item_cap
+            # 배를 넘으면 K1을 차단한다. 예측 오차와 무관하게 한 문항이 예산을
+            # 독점하는 것을 막는 leelang7 식 손잡이다.
+            light_total = float(c_hat[:, 0].sum())
+            item_limit = light_total * self.k1_item_cap
+            allow[c_hat[:, 2] > item_limit, 2] = False
         allow[:, 0] = True
         return allow
 
