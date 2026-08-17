@@ -9,6 +9,12 @@ SPDX-License-Identifier: Apache-2.0
 > HWP/DOCX 양식에 복사해 넣고, ⬜ 칸(팀 정보·시연영상 URL)만 채우면 된다.
 > 마감: 2026-08-27(목) 18:00 · 접수번호: 379
 > 제출: 원본 1부 + PDF 1부를 **zip 압축**해 osscontest.kr 업로드.
+>
+> **시각 자료** (아래 "그림 삽입 위치" 표시된 곳에 삽입, 파일은
+> `plan/submission/figures/`에 있음):
+> - `figures/pareto-frontier.png` — 점수-파산위험 파레토 프론티어 (핵심 차별점)
+> - `figures/budget-usage.png` — 등급별 예산 사용률
+> - `figures/model-cost.png` — 모델별 비용 구조
 
 ---
 
@@ -41,6 +47,10 @@ SPDX-License-Identifier: Apache-2.0
 - 대규모 LLM 서비스에서 비싼 모델을 모든 요청에 쓰면 비용이 폭증한다. 요청마다
   난이도와 가치가 다르므로, **예산 안에서 가장 가성비 좋게 모델을 배분**하는 것이
   실용적 과제다.
+- 세 모델의 비용은 최대 23.8배 차이(K1이 평균 23.8배, 문항별 5~566배)로, 비싼
+  모델을 언제 쓸지가 곧 비용 전체를 결정한다.
+
+**[그림 삽입: figures/model-cost.png — 모델별 비용 구조]**
 - 이 대회는 그 배분을 **"모델을 실행하지 않고 프롬프트 본문만 보고"** 해야 한다는
   극단적 제약을 건다. 즉 라우팅 품질을 예측 모델로 사전에 학습해야 한다.
 - 목표: 예산 초과(해당 등급 0점) 없이 가중 정답률을 최대화하는 것.
@@ -82,6 +92,10 @@ SPDX-License-Identifier: Apache-2.0
    프론티어를 실측. `unseen_risk_boost`로 "본 계열은 공격, 미지 계열은 보수"를 분리해,
    공격적 비용 설정에서도 미지 계열 일반화(결합 Premium 3.60 < 4.0)를 유지.
 
+**[그림 삽입: figures/pareto-frontier.png — 점수-파산위험 파레토 프론티어]**
+프론티어에서 기대값(EV)이 최고인 지점(q=0.68)을 채택했다. q=0.65로 더 공격적으로
+가도 EV는 같아지고 위험만 커진다.
+
 #### 구동 및 시연
 
 ```console
@@ -101,6 +115,8 @@ PYTHONPATH=src python3 -m ossp_router.cli self-check \
 | 공식 채점 | fast 0.655682 · balanced 0.684659 · premium 0.720739 · **가중 0.683892** |
 | 예산 사용률 | 88.7% / 76.8% / 73.4% — 모두 한도 내 |
 | 제출 관문 | `verify_release.py` 9항목 전부 통과 |
+
+**[그림 삽입: figures/budget-usage.png — 등급별 예산 사용률]**
 
 #### 기대효과 및 활용분야
 
