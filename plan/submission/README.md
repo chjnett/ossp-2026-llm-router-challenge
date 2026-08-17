@@ -22,10 +22,10 @@ SPDX-License-Identifier: Apache-2.0
 
 ## 1. 지금 해야 할 것 (사용자 몫)
 
-- [ ] **공식 결과보고서 양식 다운로드** — osscontest.kr
+- [ ] **공식 결과보고서 양식 다운로드** — osscontest.kr > 대회 소개 > 대회 개요 > [결과보고서 양식 다운로드]
       (HWP/DOCX 원본 + PDF 변환 파일 2개 제출)
 - [ ] **접수 정보 확인** — 팀명, 참가부문(학생/일반), 팀 인원
-- [ ] **데모 영상 촬영·업로드 (2~3분, 유튜브)** — 스크립트: `plan/submission/DEMO_SCRIPT.md`
+- [ ] **데모 영상 촬영·업로드 (3분 이내, 유튜브)** — 스크립트: `plan/submission/DEMO_SCRIPT.md`
 
 ## 2. 결과보고서 작성 (5페이지 이내, 맑은고딕 10pt)
 
@@ -43,8 +43,10 @@ SPDX-License-Identifier: Apache-2.0
 
 ## 3. 제출 (osscontest.kr, 마감 전)
 
-- [ ] **HWP/DOCX 1부 + PDF 1부** 업로드
-- [ ] 마감 전 재업로드 가능 — **마지막 접수분이 심사됨** (전략: `plan/submission/SUBMIT_EARLY.md`)
+- [ ] **zip 압축**: ① 결과보고서 원본(HWPX/DOCX) ② PDF 변환 ③ 중복수혜 확인서(해당 시)
+- [ ] 접수 및 조회 > 출품작 제출 > 제출하기 > 파일 업로드 > [출품작 제출 완료하기]
+- [ ] **제출 완료 확인**: 화면 상태 "제출 완료" + 완료 안내 메일 수신 — 둘 다 확인 필수
+- [ ] 마감 전 재업로드 가능 — **마감 시점 최종 제출본이 심사됨** (전략: `plan/submission/SUBMIT_EARLY.md`)
 
 ## 4. 이후 라우터를 개선해 재제출할 때
 
