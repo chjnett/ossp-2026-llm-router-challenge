@@ -1,36 +1,76 @@
 {
-  "id": "t38-prem-q068-urb120",
-  "at": "2026-08-16T21:30:00+00:00",
-  "commit": "a3815c4",
+  "id": "t43-bal-h112",
+  "at": "2026-08-18T11:06:28+00:00",
+  "commit": "8cc15b1fad94735258c4e8b9cb7a325783456e34",
   "folds": 5,
   "config": {
-    "id": "t38-prem-q068-urb120",
+    "id": "t43-bal-h112",
     "score": {
       "name": "tiered",
       "heads": {
-        "fast": {"name": "hash_ridge", "alpha": 32000, "bins": 256},
-        "balanced": {"name": "hash_ridge", "alpha": 32000, "bins": 256},
+        "fast": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
+        "balanced": {
+          "name": "hash_ridge",
+          "alpha": 32000,
+          "bins": 256
+        },
         "premium": {
           "name": "family_blend",
-          "base": {"name": "hash_ridge", "alpha": 32000, "bins": 256},
+          "base": {
+            "name": "hash_ridge",
+            "alpha": 32000,
+            "bins": 256
+          },
           "challenger": {
             "name": "family_hash_ridge",
             "alpha": 1000,
             "bins": 64,
-            "active_families": ["sym_math", "code_io"],
+            "active_families": [
+              "sym_math",
+              "code_io"
+            ],
             "min_family": 40
           },
           "weight": 0.75,
-          "active_families": ["sym_math", "code_io"]
+          "active_families": [
+            "sym_math",
+            "code_io"
+          ]
         }
       }
     },
     "cost": {
       "name": "tiered",
       "heads": {
-        "fast": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
-        "balanced": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.8, "unseen_family_risk": true, "risk_oof_folds": 4},
-        "premium": {"name": "hash_ridge", "alpha": 100, "bins": 256, "risk_quantile": 0.68, "unseen_family_risk": true, "unseen_risk_boost": 1.2, "risk_oof_folds": 4}
+        "fast": {
+          "name": "hash_ridge",
+          "alpha": 100,
+          "bins": 256,
+          "risk_quantile": 0.8,
+          "unseen_family_risk": true,
+          "risk_oof_folds": 4
+        },
+        "balanced": {
+          "name": "hash_ridge",
+          "alpha": 100,
+          "bins": 256,
+          "risk_quantile": 0.8,
+          "unseen_family_risk": true,
+          "risk_oof_folds": 4
+        },
+        "premium": {
+          "name": "hash_ridge",
+          "alpha": 100,
+          "bins": 256,
+          "risk_quantile": 0.68,
+          "unseen_family_risk": true,
+          "unseen_risk_boost": 1.2,
+          "risk_oof_folds": 4
+        }
       }
     },
     "gate": {
@@ -46,12 +86,23 @@
       "block_other_k1": true
     },
     "alloc": {
-      "headroom": {"fast": 0.75, "balanced": 1.075, "premium": 1.0},
-      "size_penalty": {"fast": 2.25, "balanced": 2.5, "premium": 2.5},
+      "headroom": {
+        "fast": 0.75,
+        "balanced": 1.12,
+        "premium": 1.0
+      },
+      "size_penalty": {
+        "fast": 2.25,
+        "balanced": 2.5,
+        "premium": 2.5
+      },
       "mu": 0,
-      "relative_cost_cap": {"balanced": 10, "premium": 70}
+      "relative_cost_cap": {
+        "balanced": 10,
+        "premium": 70
+      }
     },
-    "note": "T38(EV 우선): Premium q=0.68 + unseen_risk_boost=1.2. 스트레스 26/12,000(0.217%) — C4 ≤0.25% 완화. EV 최고점."
+    "note": "파레토: balanced headroom 1.12 (CV +0.0003, premium 불변). 게이트는 prem 불변으로 통과 예상."
   },
   "versions": {
     "score": "tieredscore.v1(fast=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);balanced=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256);premium=familyblend.v1(w=0.75,f=code_io+sym_math,base=hashscore.v1(f=hash-regex-text.v1,a=32000,b=256),challenger=familyhashscore.v1(f=hash-regex-text.v1,a=1000,b=64,min=40,scope=code_io+sym_math)))",
@@ -59,30 +110,86 @@
     "gate": "tailexposure.v1(num=40,digit=0.6,latex=1,depth=3,code31=3.25,balcode31=3.5,codek1=200,blockcodek1=1,blockotherk1=1)+none.v1"
   },
   "cv": {
-    "final_score": "0.666307",
-    "all_passed": true
-  },
-  "dev": {
-    "final_score": "0.683892",
+    "final_score": "0.666690340909",
     "all_passed": true,
     "tiers": {
       "fast": {
-        "score": "0.655682",
-        "budget_ratio": "1.108756",
+        "score": "0.635369318182",
+        "budget_ratio": "1.116377898753",
+        "headroom": "0.133622101247",
         "passed": true,
-        "counts": {"ax31-light": 529, "ax31": 351, "axk1-think": 0}
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 1074,
+          "ax31": 686,
+          "axk1-think": 0
+        }
       },
       "balanced": {
-        "score": "0.684659",
-        "budget_ratio": "1.536882",
+        "score": "0.676136363636",
+        "budget_ratio": "1.613445304776",
+        "headroom": "0.386554695224",
         "passed": true,
-        "counts": {"ax31-light": 119, "ax31": 759, "axk1-think": 2}
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 246,
+          "ax31": 1507,
+          "axk1-think": 7
+        }
       },
       "premium": {
-        "score": "0.720739",
-        "budget_ratio": "2.934702",
+        "score": "0.699005681818",
+        "budget_ratio": "3.872615187314",
+        "headroom": "0.127384812686",
         "passed": true,
-        "counts": {"ax31-light": 68, "ax31": 571, "axk1-think": 241}
+        "near_budget": true,
+        "counts": {
+          "ax31-light": 115,
+          "ax31": 1170,
+          "axk1-think": 475
+        }
+      }
+    }
+  },
+  "dev": {
+    "final_score": "0.681761363636",
+    "all_passed": true,
+    "tiers": {
+      "fast": {
+        "score": "0.652272727273",
+        "budget_ratio": "1.110549669423",
+        "headroom": "0.139450330577",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 536,
+          "ax31": 344,
+          "axk1-think": 0
+        }
+      },
+      "balanced": {
+        "score": "0.685795454545",
+        "budget_ratio": "1.58522334385",
+        "headroom": "0.41477665615",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 100,
+          "ax31": 778,
+          "axk1-think": 2
+        }
+      },
+      "premium": {
+        "score": "0.717045454545",
+        "budget_ratio": "3.653604460464",
+        "headroom": "0.346395539536",
+        "passed": true,
+        "near_budget": false,
+        "counts": {
+          "ax31-light": 58,
+          "ax31": 575,
+          "axk1-think": 247
+        }
       }
     }
   },
@@ -91,19 +198,44 @@
     "fit_split": "public-train-dev",
     "trials": 2000,
     "passed": true,
-    "note": "스트레스 Premium 26/12,000(0.217%) — C4(≤30회) 준수. LOFO 결합 3.60(10.1% 여유).",
     "scenarios": {
-      "size-200": {"fast": 0, "balanced": 0, "premium": 2},
-      "size-800": {"fast": 0, "balanced": 0, "premium": 0},
-      "size-2640": {"fast": 0, "balanced": 0, "premium": 0},
-      "shift-mild(conc=5)": {"fast": 0, "balanced": 0, "premium": 2},
-      "shift-extreme(conc=0.7)": {"fast": 0, "balanced": 0, "premium": 8},
-      "family-dominant(75%)": {"fast": 0, "balanced": 0, "premium": 14}
-    }
+      "size-200": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 1
+      },
+      "size-800": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "size-2640": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "shift-mild(conc=5)": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 0
+      },
+      "shift-extreme(conc=0.7)": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 7
+      },
+      "family-dominant(75%)": {
+        "fast": 0,
+        "balanced": 0,
+        "premium": 18
+      }
+    },
+    "note": "파레토: balanced h1.12 — CV +0.0004/Dev +0.0004, 게이트 26/12,000(0.217%) C4(≤30) 준수, T38과 동일 게이트 프로파일. Balanced 예산 1.59→1.61 사용, fast/prem 불변. D7+대립 제팬트 프론티어."
   },
+  "seconds": 165.2,
   "adopted": {
-    "reason": "EV 우선 채택: 경쟁 팀 활발 확인 후 C4를 ≤0.25%로 완화하고 q=0.68 채택. 0.683892(+0.0026), 스트레스 26/12,000(0.217%), LOFO 3.60. EV 0.68342 = 프론티어 최고.",
-    "replaced": "t37-prem-q072-urb120",
-    "cv_delta": 0.000895
+    "reason": "파레토 우세(Pareto-dominant): b-h1.12는 T38 대비 CV +0.0004, Dev +0.0004, 게이트 동일 26/12,000 C4 통과. 유일하게 T38을 지배하는 지점(빌드 후 재검증). Fast/Premium 리스크 불변, Balanced 이잉 예산만 사용.",
+    "replaced": "t38-prem-q068-urb120",
+    "cv_delta": 0.000383
   }
 }
