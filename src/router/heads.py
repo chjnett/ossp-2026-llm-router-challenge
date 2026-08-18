@@ -1539,11 +1539,24 @@ class HashRidgeCost:
             f"{risk_oof}{conditional})"
         )
 
+    # 통합 로그 비용 회귀 기준을 갈아끼울 수 있는 봉합(seam). 기본은 공식
+    # 베이스라인과 같은 표준화 ridge이고, GBM 파생 클래스만 셋을 재정의한다.
+    # 계약: fit_logcost(design, log_cost) -> fitted ;
+    #        apply_logcost(design, fitted) -> log_cost_pred ;  fitted는 opaque.
+    def _fit_logcost(self, design, log_cost):
+        return _hash_ridge_fit(design, log_cost, self.alpha)
+
+    def _apply_logcost(self, design, fitted):
+        return _hash_ridge_apply(design, fitted)
+
+    def _oof_logcost(self, design, log_cost, folds):
+        return _hash_ridge_oof_apply(design, log_cost, folds, self.alpha)
+
     def fit(self, train: Dataset) -> None:
         design = extract_hash_features(train.texts, self.bins)
         log_cost = np.log(train.cost)
-        self._fitted = _hash_ridge_fit(design, log_cost, self.alpha)
-        residual = log_cost - _hash_ridge_apply(design, self._fitted)
+        self._fitted = self._fit_logcost(design, log_cost)
+        residual = log_cost - self._apply_logcost(design, self._fitted)
         self._sd_log = residual.std(axis=0)
         # 비공개 입력의 이상치 하나가 exp를 폭주시켜 전체를 all-light로 만드는
         # 것을 막되, 학습 범위 주변의 정상 외삽은 허용한다.
@@ -1554,7 +1567,7 @@ class HashRidgeCost:
         # 로그 평균을 exp로 되돌리면 heavy tail의 산술 평균을 체계적으로
         # 과소추정한다(Jensen). 예산은 개별 중앙값이 아니라 **총합**에 걸리므로
         # 프롬프트 계열·모델별 학습 총합이 맞도록 배율을 보정한다.
-        raw_cost = np.exp(_hash_ridge_apply(design, self._fitted))
+        raw_cost = np.exp(self._apply_logcost(design, self._fitted))
         codes = family_codes(train.texts)
         self._seen_families = np.bincount(
             codes, minlength=len(FAMILIES)
@@ -1576,11 +1589,10 @@ class HashRidgeCost:
         # 넣는다. 문항별 outcome lookup이 아니라 Train에서 학습한 정적 통계다.
         risk_cost = raw_cost
         if self.risk_oof_folds is not None:
-            oof_log_cost = _hash_ridge_oof_apply(
+            oof_log_cost = self._oof_logcost(
                 design,
                 log_cost,
                 train.folds(self.risk_oof_folds),
-                self.alpha,
             )
             risk_cost = np.exp(np.clip(oof_log_cost, self._log_lo, self._log_hi))
         actual_relative = train.cost / np.maximum(train.cost[:, [0]], 1e-12)
@@ -1631,7 +1643,7 @@ class HashRidgeCost:
 
     def predict(self, texts: Sequence[str]) -> tuple[np.ndarray, np.ndarray]:
         design = extract_hash_features(texts, self.bins)
-        log_cost = _hash_ridge_apply(design, self._fitted)
+        log_cost = self._apply_logcost(design, self._fitted)
         bias = np.full(N_MODELS, self.z)
         bias[0] = self.z_light
         log_cost = np.clip(
@@ -1723,6 +1735,133 @@ class HashRidgeCost:
         if self.unseen_family_risk:
             self._seen_families = np.asarray(state["seen_families"], dtype=bool)
             self._unseen_risk = np.asarray(state["unseen_risk"], dtype=float)
+
+
+@register(COST_HEADS, "gbm_hash_ridge")
+class GBMHashRidgeCost(HashRidgeCost):
+    """HashRidgeCost와 동일한 risk/calibration/unseen 머신을 쓰되, 로그 비용
+    회귀의 기준을 Gradient Boosting(HistGBM, 학습 전용)으로 대체한 실험 헤드.
+
+    이 설계는 경쟁사가 독립적으로 검증한 '릿지+비선형 비용 예측을 섞으면
+    예산이 건강해진다'는 방향을 우리 매커니즘에 적용한 것(아이디어만 참조).
+    sklearn은 **학습 단계에서만** 쓰고, 추론은 pickle로 저장된 estimator를
+    순수 파이썬으로 옮기지 않는 한 런타임에 sklearn이 필요하다. 따라서 이
+    헤드는 'GBM이 실제로 dev 점수를 올리는가'를 판정하는 실험 헤드로만 쓰고,
+    채택 시 순수 파이썬 트리 inference로 전환한다.
+    """
+
+    def __init__(
+        self,
+        alpha: float = 100.0,
+        bins: int = 256,
+        z: float = 0.0,
+        z_light: float = 0.0,
+        calibration: bool = False,
+        risk_quantile: float | None = None,
+        unseen_family_risk: bool = False,
+        unseen_risk_boost: float = 1.0,
+        risk_oof_folds: int | None = None,
+        conditional_risk_families: Sequence[str] = (),
+        conditional_risk_alpha: float = 10.0,
+        conditional_risk_bins: int = 128,
+        conditional_risk_strength: float = 1.0,
+        conditional_risk_min_family: int = 40,
+        # GBM 전용
+        gbm_max_leaf_nodes: int = 15,
+        gbm_min_samples_leaf: int = 10,
+        gbm_max_iter: int = 100,
+        gbm_learning_rate: float = 0.1,
+        gbm_l2: float = 1.0,
+        # 0<=gbm_w<=1: >0이면 ridge와 GBM의 로그비용 예측을 평균한다
+        # (gbm_w=0 → 순수 ridge, gbm_w=1 → 순수 GBM).
+        gbm_ensemble_w: float = 1.0,
+    ) -> None:
+        super().__init__(
+            alpha=alpha, bins=bins, z=z, z_light=z_light,
+            calibration=calibration, risk_quantile=risk_quantile,
+            unseen_family_risk=unseen_family_risk,
+            unseen_risk_boost=unseen_risk_boost,
+            risk_oof_folds=risk_oof_folds,
+            conditional_risk_families=conditional_risk_families,
+            conditional_risk_alpha=conditional_risk_alpha,
+            conditional_risk_bins=conditional_risk_bins,
+            conditional_risk_strength=conditional_risk_strength,
+            conditional_risk_min_family=conditional_risk_min_family,
+        )
+        self.gbm_max_leaf_nodes = int(gbm_max_leaf_nodes)
+        self.gbm_min_samples_leaf = int(gbm_min_samples_leaf)
+        self.gbm_max_iter = int(gbm_max_iter)
+        self.gbm_learning_rate = float(gbm_learning_rate)
+        self.gbm_l2 = float(gbm_l2)
+        self.gbm_ensemble_w = float(gbm_ensemble_w)
+        if not 0.0 <= self.gbm_ensemble_w <= 1.0:
+            raise ValueError("gbm_ensemble_w는 0..1 이어야 한다")
+        self.version = "gbmhashcost.probe(urb=%g,gmm=%d,gml=%d,gmi=%d,glr=%g,gl2=%g,w=%g)" % (
+            self.unseen_risk_boost, self.gbm_max_leaf_nodes,
+            self.gbm_min_samples_leaf, self.gbm_max_iter,
+            self.gbm_learning_rate, self.gbm_l2, self.gbm_ensemble_w,
+        )
+
+    def _gbm_estimator(self, seed: int):
+        from sklearn.ensemble import HistGradientBoostingRegressor
+        return HistGradientBoostingRegressor(
+            l2_regularization=self.gbm_l2,
+            max_leaf_nodes=self.gbm_max_leaf_nodes,
+            min_samples_leaf=self.gbm_min_samples_leaf,
+            max_iter=self.gbm_max_iter,
+            learning_rate=self.gbm_learning_rate,
+            random_state=seed,
+        )
+
+    def _fit_logcost(self, design, log_cost):
+        estimators = []
+        ridge_fitted = None
+        if 0.0 <= self.gbm_ensemble_w < 1.0:
+            ridge_fitted = _hash_ridge_fit(design, log_cost, self.alpha)
+        for m in range(log_cost.shape[1]):
+            g = self._gbm_estimator(0 + m)
+            g.fit(design, log_cost[:, m])
+            estimators.append(g)
+        if self.gbm_ensemble_w >= 1.0:
+            return estimators, None
+        return estimators, ridge_fitted
+
+    def _apply_logcost(self, design, fitted):
+        estimators, ridge_fitted = fitted
+        gbm_pred = np.column_stack([g.predict(design) for g in estimators])
+        if ridge_fitted is None:
+            return gbm_pred
+        ridge_pred = _hash_ridge_apply(design, ridge_fitted)
+        return self.gbm_ensemble_w * gbm_pred + (1.0 - self.gbm_ensemble_w) * ridge_pred
+
+    def _oof_logcost(self, design, log_cost, folds):
+        pred = np.full_like(log_cost, np.nan, dtype=float)
+        all_rows = np.arange(len(design))
+        coverage = np.zeros(len(design), dtype=int)
+        for held_out in folds:
+            held_out = np.asarray(held_out, dtype=int)
+            if len(held_out) == 0:
+                continue
+            tr = all_rows[~np.isin(all_rows, held_out)]
+            # OOF에서는 ensemble의 ridge 부분도 train fold에서 다시 적합해야
+            # 하므로, 함수형 경로를 그대로 쓴다.
+            fitted = self._fit_logcost(design[tr], log_cost[tr])
+            pred[held_out] = self._apply_logcost(design[held_out], fitted)
+            coverage[held_out] += 1
+        if not np.all(coverage == 1):
+            raise ValueError("OOF GBM fold가 모든 학습 행을 정확히 포함해야 한다")
+        return pred
+
+    def state(self) -> dict:
+        raise NotImplementedError(
+            "GBMHashRidgeCost는 실험 전용(probe) 헤드다. 채택 시 순수 파이썬 "
+            "트리 inference로 전환한 뒤 직렬화한다."
+        )
+
+    def load_state(self, state: dict, policy) -> None:
+        raise NotImplementedError(
+            "GBMHashRidgeCost는 실험 전용(probe) 헤드다."
+        )
 
 
 @register(COST_HEADS, "tiered")
