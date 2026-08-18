@@ -2,7 +2,7 @@
  "config": {
   "alloc": {
    "headroom": {
-    "balanced": 1.075,
+    "balanced": 1.12,
     "fast": 0.75,
     "premium": 1.0
    },
@@ -59,8 +59,8 @@
    "name": "tail_exposure",
    "premium_code_k1_cap": 200
   },
-  "id": "t38-prem-q068-urb120",
-  "note": "T38(EV 우선): Premium q=0.68 + unseen_risk_boost=1.2. 스트레스 26/12,000(0.217%) — C4를 ≤0.25%로 완화. EV 최고점.",
+  "id": "t43-bal-h112",
+  "note": "파레토: balanced headroom 1.12 (CV +0.0003, premium 불변). 게이트는 prem 불변으로 통과 예상.",
   "score": {
    "heads": {
     "balanced": {
@@ -139,9 +139,9 @@
   "axk1-think"
  ],
  "provenance": {
-  "commit": "910f6821d6d2d7f6b988906e8caa2167ebda5d59",
-  "config_path": "experiments/configs/t38-prem-q068-urb120.json",
-  "created_at": "2026-08-17T06:41:38+00:00",
+  "commit": "22d00b7732c5057e0af2cc9376da9f1aa44fff68",
+  "config_path": "experiments/configs/t43-bal-h112.json",
+  "created_at": "2026-08-18T11:19:05+00:00",
   "fit_episodes": 2640,
   "fit_inputs_sha256": "e05172440400a4f6b287640f730a7e94c7ba1a52b81a2951b55344d21436ecc0",
   "fit_outcomes_sha256": "c30799bc86761692e1ca6c4be023ed86188e10eb9e4bdea6ba34d7836eda73dd",
