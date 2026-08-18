@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: Copyright 2026 chjnett
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # 경쟁자 정황 검증 + GBM 비용헤드 실험 판정 (2026-08-19)
 
 공개 저장소의 최신 실험 기록을 확인해 두 경쟁팀의 "릿지+GBM 앙상블"이 실제로
