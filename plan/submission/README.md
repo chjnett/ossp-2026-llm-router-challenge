@@ -13,10 +13,10 @@ SPDX-License-Identifier: Apache-2.0
 
 | 항목 | 값 |
 | --- | --- |
-| 챔피언 | `t38-prem-q068-urb120` — Docker 0.683892 |
-| 이미지 | `ghcr.io/chjnett/ossp-router@sha256:13b166e5d3c37277b8631aa4f6ea4c7faae893302b15d91110ecc275affbcc6d` |
-| 코드 커밋 | `4f811afd1ee414b352665d006c7b4985cd7593a4` |
-| JSON 커밋 | `22178dd` (main, origin push됨) |
+| 챔피언 | `t43-bal-h112` — 공식 채점 가중 0.6844 |
+| 이미지 | `ghcr.io/chjnett/ossp-router@sha256:970e504f67f02371ce71393818df2855563a701f1793d1e0984902c5d4e5f4fb` |
+| 코드 커밋 | `35a8398d9316c9a7deef7d9d874b72aa86648309` |
+| JSON 커밋 | `fbf73c0` (main, origin push됨) |
 | 제출 관문 | `tools/verify_release.py` 9/9 통과 · `validate_technical_submission.py` 통과 |
 | 전체 절차 | `plan/submission/SUBMISSION_TODO.md` |
 
@@ -34,8 +34,8 @@ SPDX-License-Identifier: Apache-2.0
 - [ ] ⬜ 팀명 · 참가부문 기재
 - [ ] ⬜ **시연영상 URL** (유튜브)
 - [ ] **프로젝트 등록 URL**:
-      `https://github.com/chjnett/ossp-2026-llm-router-challenge/tree/22178dd`
-      → `git rev-parse 22178dd`로 전체 40자리 확인 후 `tree/<전체SHA>` 형식으로
+      `https://github.com/chjnett/ossp-2026-llm-router-challenge/tree/fbf73c0`
+      → `git rev-parse fbf73c0`로 전체 40자리 확인 후 `tree/<전체SHA>` 형식으로
 - [ ] SBOM: `container/sbom.cdx.json` (108개) — 붙임1에 기재
 - [ ] 붙임2: AI 모델 **"해당 없음"** + Claude·Codex 사용 범위 (REPORT_FORM.md에 이미 작성)
 - [ ] 회색 가이드 문구 삭제, 5페이지 이내 확인

@@ -120,7 +120,7 @@ PYTHONPATH=src python3 -m ossp_router.cli self-check \
 | 항목 | 결과 |
 | --- | --- |
 | 실행 (2,640문항, 3등급) | fast 7.7s · balanced 7.2s · premium 18.2s (한도 90s) |
-| 공식 채점 | fast 0.655682 · balanced 0.684659 · premium 0.720739 · **가중 0.683892** |
+| 공식 채점 | fast 0.6556 · balanced 0.6863 · premium 0.7207 · **가중 0.6844** |
 | 예산 사용률 | 88.7% / 76.8% / 73.4% — 모두 한도 내 |
 | 제출 관문 | `verify_release.py` 9항목 전부 통과 |
 

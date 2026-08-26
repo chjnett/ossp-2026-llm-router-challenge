@@ -25,8 +25,9 @@ SPDX-License-Identifier: Apache-2.0
 ## A. 챔피언 확정 (지금 — 8/19)
 
 - [x] 챔피언 T38 (`t38-prem-q068-urb120`) 선정, Docker 0.683892
-- [ ] T38 최종 재검증: 4/6/8-fold OOF, LOFO 9/9+결합 3.60, 스트레스 26/12,000
-      `PYTHONPATH=src python3 tools/evaluate_generalization.py experiments/configs/t38-prem-q068-urb120.json --skip-nested`
+- [x] **T43 파레토 우세로 승격** (`t43-bal-h112`, 8/26) — 공식 채점 가중 **0.6844**,
+      게이트 26/12,000 C4 통과(T38과 동일), 이미지 `970e504f`·커밋 `35a8398`
+- [ ] 최종 재검증: 4/6/8-fold OOF, LOFO, 스트레스 26/12,000
 - [ ] **8/19 24:00: 새 트랙 착수 금지** (이후 점수·임계값 변경 없음)
 
 ## B. 제출 산출물 (8/20–8/24) — 코드 커밋 전에 마무리

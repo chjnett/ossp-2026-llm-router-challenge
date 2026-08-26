@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ```bash
 # 1) 이미지 (이미 빌드돼 있음: ghcr.io/chjnett/ossp-router:submission)
-docker pull ghcr.io/chjnett/ossp-router@sha256:13b166e5...bcc6d
+docker pull ghcr.io/chjnett/ossp-router@sha256:970e504f67f02371ce71393818df2855563a701f1793d1e0984902c5d4e5f4fb
 
 # 2) 3등급 실행 (씬 4)
 for t in fast balanced premium; do
