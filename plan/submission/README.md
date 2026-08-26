@@ -9,6 +9,10 @@ SPDX-License-Identifier: Apache-2.0
 
 이 폴더(`plan/submission/`)에 제출 관련 문서가 모두 있습니다.
 
+현재 상태를 반영한 실제 실행 순서는
+[`FINAL_CHECKLIST.md`](FINAL_CHECKLIST.md)를 기준으로 확인합니다. 특히 결과보고서
+삽입용 그림의 t43 수치 최신화 항목을 먼저 처리해야 합니다.
+
 ## 0. 이미 완료·검증된 것 (참고만)
 
 | 항목 | 값 |
@@ -63,6 +67,7 @@ SPDX-License-Identifier: Apache-2.0
 | 문서 | 경로 |
 | --- | --- |
 | 제출 TODO (전체) | `plan/submission/SUBMISSION_TODO.md` |
+| 최종 실행 체크리스트 | `plan/submission/FINAL_CHECKLIST.md` |
 | 보고서 원고 (채울 것) | `plan/submission/REPORT_FORM.md` |
 | 조기제출+지속수정 전략 | `plan/submission/SUBMIT_EARLY.md` |
 | 데모 영상 스크립트 | `plan/submission/DEMO_SCRIPT.md` |
