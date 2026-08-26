@@ -57,8 +57,18 @@ python3 "$ROOT/plan/submission/summarize_demo_report.py" "$DEMO/report.json" \
   | tee -a "$DEMO/logs/scene5-self-check.txt"
 
 printf '\nSCENE 6  Release gate\n'
+# 제출 다이제스트의 로컬 OCI 레이아웃에서 공식 크기 증거를 다시 만든다.
+mkdir -p "$DEMO/oci" "$DEMO/measure"
+chmod 0700 "$DEMO/measure"
+docker image save "$IMAGE" -o "$DEMO/t43-image.tar"
+tar -xf "$DEMO/t43-image.tar" -C "$DEMO/oci"
+PYTHONPATH="$ROOT/src" python3 -m ossp_router.image_evidence \
+  --oci-layout "$DEMO/oci" \
+  --image "$IMAGE" \
+  --output "$DEMO/measure/evidence.json" \
+  > "$DEMO/logs/scene6-size-evidence.txt"
 if ! PYTHONPATH="$ROOT/src" python3 "$ROOT/tools/verify_release.py" \
-  --evidence "$ROOT/build/measure-t43/evidence.json" \
+  --evidence "$DEMO/measure/evidence.json" \
   > "$DEMO/logs/scene6-release.txt" 2>&1; then
   cat "$DEMO/logs/scene6-release.txt"
   exit 1

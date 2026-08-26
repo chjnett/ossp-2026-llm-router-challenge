@@ -32,7 +32,22 @@ sh plan/submission/run_demo.sh
 
 `run_demo.sh`는 변경 가능한 태그가 아니라 제출 다이제스트를 실행하며, 등급별
 `submission.json`을 `build/demo/submissions/{fast,balanced,premium}.json`으로
-분리한 뒤 공식 self-check와 9개 제출 관문까지 연속으로 검증합니다.
+분리한 뒤 공식 self-check와 이미지 크기 증거, 9개 제출 관문까지 연속으로
+검증합니다.
+
+## 자동 렌더링 (초안 MP4)
+
+씬 4~6 실측이 끝난 뒤 macOS에서 다음 명령을 실행하면 기존 그림, 실제 로그,
+한국어 Yuna TTS를 합쳐 1920×1080 영상 초안을 만듭니다.
+
+```bash
+python3 tools/render_demo_video.py
+```
+
+출력: `build/demo/Efficient-LLM-Router-OSSP-2026.mp4` (2분 45초)
+
+TTS 음성은 업로드 가능한 초안이며, 본인 목소리를 선호하면 같은 타임라인으로
+나레이션만 교체하면 됩니다.
 
 ## 대본 참고 (표시용 수치)
 
