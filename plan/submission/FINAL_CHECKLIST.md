@@ -57,7 +57,7 @@ SPDX-License-Identifier: Apache-2.0
 - [ ] `figures/model-choices.png`: Balanced `ax31-light 119 / ax31 759` → 실제
       `107 / 771` (`axk1-think 2`)
 - [ ] `figures/champion-progress.png`: T38에서 끝남 → t43 `0.6844` 추가
-- [ ] `figures/pareto-frontier.png`: 제목의 `T38 champion`을 t43 채택 상태로 수정
+- [x] `figures/pareto-frontier.png`: `T38 champion` 표기를 제거하고 t43 채택·C4 통과 상태로 수정
 - [ ] 수정한 모든 그림의 숫자를 `build/demo/report.json`과 한 번 더 대조
 
 ## 4. 영상 — 사용자 작업
