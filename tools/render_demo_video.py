@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -28,6 +29,9 @@ MUTED = "0xa7b5c7"
 CYAN = "0x54d2d2"
 GREEN = "0x62d394"
 AMBER = "0xf4bf60"
+VOICE = os.environ.get("OSSP_DEMO_VOICE", "Yuna")
+VOICE_RATE = os.environ.get("OSSP_DEMO_VOICE_RATE", "170")
+REUSE_AUDIO = os.environ.get("OSSP_DEMO_REUSE_AUDIO") == "1"
 
 
 SCENES = (
@@ -36,7 +40,7 @@ SCENES = (
         "duration": 15,
         "title": "Efficient LLM Router",
         "body": "예산 제약 하의 compute-optimal 프롬프트 라우팅\nOSSP 2026 · SK텔레콤 지정과제",
-        "narration": "프롬프트마다 예산에 가장 잘 맞는 엘엘엠을 고르는 오픈소스 라우터입니다. 모델을 실행하지 않고, 프롬프트 본문과 예산 등급만 보고 결정합니다.",
+        "narration": "프롬프트마다, 예산에 가장 잘 맞는 엘엘엠을 고르는 오픈소스 라우터입니다. 모델을 직접 실행하지 않고, 프롬프트 본문과 예산 등급만 보고 결정합니다.",
         "kind": "title",
     },
     {
@@ -44,7 +48,7 @@ SCENES = (
         "duration": 20,
         "title": "비용은 최대 23.8배, 예산 초과는 0점",
         "body": "FAST       1.25× budget     40% weight\nBALANCED   2.00× budget     30% weight\nPREMIUM    4.00× budget     30% weight",
-        "narration": "세 모델은 최대 이십삼 점 팔 배의 비용 차이가 납니다. 등급마다 예산이 정해져 있어, 한 번이라도 넘기면 그 등급은 영 점입니다. 그래서 어느 문제에 비싼 모델을 쓸지가 전부입니다.",
+        "narration": "세 모델은, 최대 이십삼 점 팔 배의 비용 차이가 납니다. 등급마다 예산이 정해져 있고, 한 번이라도 넘기면 그 등급은 영 점입니다. 결국, 어느 문제에 비싼 모델을 쓸지가 핵심입니다.",
         "kind": "cost",
     },
     {
@@ -52,7 +56,7 @@ SCENES = (
         "duration": 25,
         "title": "파레토 최적점 t43 — 공격성과 생존성의 균형",
         "body": "실측 Train-CV × 파산 스트레스\n\n✓ t43  0.6667 CV · C4 통과\n✓ unseen-family risk 보정\n✓ 미공개 분포에서는 비용을 보수 평가\n\n규칙 준수: 단일 모델 선택 · 외부 호출 없음",
-        "narration": "점수와 파산 위험 사이의 파레토 프론티어를 실측하고, 기대값이 가장 높은 티 사십삼을 선택했습니다. 본 계열은 공격적으로 배정하되, 학습에서 보지 못한 계열은 비용을 보수적으로 평가해 미공개 데이터의 일반화 위험을 낮춥니다.",
+        "narration": "점수와 파산 위험 사이의 파레토 프론티어를 실측하고, 기대값이 가장 높은 티 사십삼을 선택했습니다. 학습에서 본 계열은 공격적으로 배정합니다. 반면, 처음 보는 계열은 비용을 보수적으로 평가해, 미공개 데이터의 일반화 위험을 낮춥니다.",
         "kind": "pareto",
     },
     {
@@ -60,7 +64,7 @@ SCENES = (
         "duration": 30,
         "title": "실제 실행 — 네트워크 없이 880문항 라우팅",
         "body": "",
-        "narration": "제출할 고정 다이제스트 이미지를 세 등급에 실제로 실행합니다. 네트워크는 완전히 차단하고, 씨피유 두 개와 메모리 이 기가바이트만 사용합니다. 팔백팔십 문항을 각 등급에서 수 초 안에 처리해 단 하나의 모델 선택 제이슨을 만듭니다.",
+        "narration": "제출할 고정 다이제스트 이미지를, 세 등급에서 실제로 실행합니다. 네트워크는 완전히 차단하고, 씨피유 두 개와 메모리 이 기가바이트만 사용합니다. 팔백팔십 문항을 수 초 안에 처리해, 각 문항마다 하나의 모델 선택 결과를 만듭니다.",
         "kind": "terminal4",
     },
     {
@@ -68,7 +72,7 @@ SCENES = (
         "duration": 30,
         "title": "공식 self-check — 가중 점수 0.6844",
         "body": "",
-        "narration": "공식 채점기로 방금 생성한 세 결과를 검증합니다. 패스트 영 점 육오오칠, 밸런스드 영 점 육팔육사, 프리미엄 영 점 칠이영칠, 가중 최종 영 점 육팔사사입니다. 예산 사용률은 팔십팔 점 칠, 칠십칠 점 칠, 칠십삼 점 사 퍼센트로 세 등급 모두 통과합니다.",
+        "narration": "공식 채점기로, 방금 생성한 세 결과를 검증합니다. 패스트는 영 점 육오오칠. 밸런스드는 영 점 육팔육사. 프리미엄은 영 점 칠이영칠이며, 가중 최종 점수는 영 점 육팔사사입니다. 예산 사용률도 각각, 팔십팔 점 칠, 칠십칠 점 칠, 칠십삼 점 사 퍼센트로, 세 등급 모두 통과합니다.",
         "kind": "terminal5",
     },
     {
@@ -76,7 +80,7 @@ SCENES = (
         "duration": 25,
         "title": "제출 관문 — 9개 항목 전부 통과",
         "body": "",
-        "narration": "마지막으로 제출 메타데이터와 실제 산출물이 맞물리는지 확인합니다. 공개 커밋, 리눅스 에이알엠 육십사 이미지, 볼륨 미선언, 커밋과 이미지의 바이트 일치, 산출물 최신성, 이미지 크기까지 아홉 개 검사가 모두 통과했습니다.",
+        "narration": "마지막으로, 제출 메타데이터와 실제 산출물이 정확히 맞물리는지 확인합니다. 공개 커밋, 리눅스 에이알엠 육십사 이미지, 볼륨 미선언, 커밋과 이미지의 바이트 일치, 산출물 최신성, 이미지 크기까지. 아홉 개 검사가 모두 통과했습니다.",
         "kind": "terminal6",
     },
     {
@@ -84,7 +88,7 @@ SCENES = (
         "duration": 20,
         "title": "Apache-2.0 Open Source",
         "body": "github.com/chjnett/ossp-2026-llm-router-challenge\n\n전체 라우터 코드 · 학습 절차 · 재현 실험 · 검증 도구 공개\n\nEfficient LLM Router — OSSP 2026",
-        "narration": "전체 프로젝트는 아파치 투 점 영 라이선스로 공개되어 있습니다. 저장소에서 라우터 코드와 학습 절차, 재현 실험, 검증 도구를 모두 확인할 수 있습니다. 감사합니다.",
+        "narration": "전체 프로젝트는, 아파치 투 점 영 라이선스로 공개되어 있습니다. 저장소에서 라우터 코드와 학습 절차, 재현 실험, 그리고 검증 도구를 모두 확인할 수 있습니다. 감사합니다.",
         "kind": "closing",
     },
 )
@@ -174,17 +178,22 @@ def make_slide(scene: dict[str, object]) -> Path:
 
 def make_audio(scene: dict[str, object]) -> Path:
     output = AUDIO / f"{scene['id']}.aiff"
-    run(["say", "-v", "Yuna", "-r", "190", "-o", str(output), str(scene["narration"])])
-    duration = float(
-        subprocess.check_output(
-            [
-                "ffprobe", "-v", "error", "-select_streams", "a:0",
-                "-show_entries", "stream=duration", "-of", "default=nk=1:nw=1",
-                str(output),
-            ],
-            text=True,
-        ).strip()
-    )
+    command = ["say", "-v", VOICE, "-r", VOICE_RATE, "-o", str(output), str(scene["narration"])]
+    if not REUSE_AUDIO or not output.exists():
+        print("+", " ".join(command[:6]), "...")
+        try:
+            subprocess.run(command, check=True, timeout=45)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(f"scene {scene['id']} macOS TTS timed out") from exc
+    probe = subprocess.check_output(
+        [
+            "ffprobe", "-v", "error", "-select_streams", "a:0",
+            "-show_entries", "stream=duration", "-of", "default=nk=1:nw=1",
+            str(output),
+        ],
+        text=True,
+    ).strip()
+    duration = float(probe)
     if duration <= 0 or duration > int(scene["duration"]):
         raise RuntimeError(
             f"scene {scene['id']} narration duration {duration:.2f}s is invalid "
@@ -197,7 +206,13 @@ def make_clip(scene: dict[str, object], slide: Path, audio: Path) -> Path:
     duration = int(scene["duration"])
     output = CLIPS / f"{scene['id']}.mp4"
     visual = f"fade=t=in:st=0:d=0.35,fade=t=out:st={duration - 0.35}:d=0.35,format=yuv420p"
-    sound = f"apad,atrim=duration={duration},afade=t=in:st=0:d=0.2,afade=t=out:st={duration - 0.4}:d=0.4"
+    sound = (
+        "adelay=350,highpass=f=75,lowpass=f=9800,"
+        "acompressor=threshold=0.12:ratio=2:attack=20:release=250:makeup=1.25,"
+        "loudnorm=I=-16:LRA=7:TP=-1.5,apad,"
+        f"atrim=duration={duration},afade=t=in:st=0:d=0.25,"
+        f"afade=t=out:st={duration - 0.5}:d=0.5"
+    )
     run(
         [
             "ffmpeg", "-y", "-loop", "1", "-i", str(slide), "-i", str(audio),

@@ -46,8 +46,10 @@ python3 tools/render_demo_video.py
 
 출력: `build/demo/Efficient-LLM-Router-OSSP-2026.mp4` (2분 45초)
 
-TTS 음성은 업로드 가능한 초안이며, 본인 목소리를 선호하면 같은 타임라인으로
-나레이션만 교체하면 됩니다.
+TTS는 표준 한국어 `Yuna` 음성을 170 wpm으로 사용하고 문장 호흡·압축·음량
+정규화를 적용합니다. 다른 macOS 음성을 시험하려면
+`OSSP_DEMO_VOICE`, `OSSP_DEMO_VOICE_RATE` 환경 변수로 바꿀 수 있습니다.
+본인 목소리를 선호하면 같은 타임라인으로 나레이션만 교체하면 됩니다.
 
 ## 대본 참고 (표시용 수치)
 
