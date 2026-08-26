@@ -2,7 +2,7 @@
   "schema_version": 1,
   "challenge_id": "ossp-2026-llm-router-challenge",
   "repository_url": "https://github.com/chjnett/ossp-2026-llm-router-challenge",
-  "commit_sha": "35a8398",
+  "commit_sha": "35a8398d9316c9a7deef7d9d874b72aa86648309",
   "image_digest": "ghcr.io/chjnett/ossp-router@sha256:970e504f67f02371ce71393818df2855563a701f1793d1e0984902c5d4e5f4fb",
   "primary_license": "Apache-2.0"
 }
